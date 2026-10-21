@@ -1,3 +1,12 @@
 name = "banana-nut-burgers"
 pages_build_output_dir = "."
 compatibility_date = "2026-10-20"
+
+# D1 database for booking requests (CRM).
+# 1) npx wrangler d1 create banana-nut-burgers-db
+# 2) Paste the returned database_id below (replacing the placeholder).
+# 3) npx wrangler d1 execute banana-nut-burgers-db --remote --file=schema.sql
+[[d1_databases]]
+binding = "DB"
+database_name = "banana-nut-burgers-db"
+database_id = "00000000-0000-0000-0000-000000000000"

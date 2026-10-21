@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Banana Nut Burgers · Bookings CRM</title>
+<style>
+:root{--bg:#fff8e6;--card:#fff;--ink:#0a2533;--mut:#5a6e78;--pri:#0a86b0;--ban:#ffc928;--line:#eadfc2;--ok:#17a35c;--red:#d64545}
+@media (prefers-color-scheme:dark){:root{--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:0}h2{font-size:18px;margin:0}
+input,button,select{font:inherit}input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:48px}
+button{cursor:pointer;border:0;border-radius:12px;padding:10px 16px;background:var(--pri);color:#fff;font-weight:700;min-height:44px}
+.ghost{background:transparent;color:var(--pri);border:1px solid var(--line)}
+.danger{background:transparent;color:var(--red);border:1px solid var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.hide{display:none}.mut{color:var(--mut);font-size:14px}.err{color:var(--red);font-weight:600}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}.bar input{flex:1;min-width:180px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;cursor:pointer}
+.stat b{display:block;font-size:26px}.stat.on{outline:2px solid var(--pri)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tab{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:99px;min-height:40px;padding:8px 16px}
+.tab.on{background:var(--ban);color:#0a2533;border-color:var(--ban)}
+.bk{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;background:var(--card)}
+.bk.fresh{border-left:6px solid var(--ban)}
+.bkhead{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--line);color:var(--ink)}
+.pill.new{background:var(--ban);color:#0a2533}.pill.confirmed{background:#cdeccd;color:#14532d}.pill.done{background:var(--line);color:var(--mut)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.acts button,.acts a{min-height:40px;padding:8px 12px;font-size:14px}
+a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px;background:var(--ok);color:#fff;font-weight:700;text-decoration:none;min-height:40px;font-size:14px}
+.det{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;font-size:14px;white-space:pre-wrap}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Login -->
+  <div id="loginView">
+    <h1>🍌 <span data-i="title"></span></h1>
+    <p class="mut" data-i="loginSub"></p>
+    <div class="card">
+      <label for="pw" data-i="password"></label>
+      <input id="pw" type="password" autocomplete="current-password" style="margin-top:8px">
+      <p><button id="loginBtn" style="width:100%" data-i="login"></button></p>
+      <p class="err" id="loginErr"></p>
+    </div>
+  </div>
+
+  <!-- CRM -->
+  <div id="crmView" class="hide">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <h1>🍌 <span data-i="title"></span></h1>
+      <div style="display:flex;gap:8px">
+        <button class="ghost" id="langBtn">ES</button>
+        <button class="ghost" id="logoutBtn" data-i="logout"></button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat" data-f=""><b id="sTotal">0</b><span data-i="total"></span></div>
+      <div class="stat" data-f="new"><b id="sNew">0</b><span data-i="new"></span></div>
+      <div class="stat" data-f="confirmed"><b id="sConf">0</b><span data-i="confirmed"></span></div>
+      <div class="stat" data-f="done"><b id="sDone">0</b><span data-i="done"></span></div>
+    </div>
+    <div class="bar">
+      <input id="q" data-ph="searchPh">
+      <button class="ghost" id="csvBtn" data-i="csv"></button>
+      <button class="ghost" id="refreshBtn" data-i="refresh"></button>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-f="" data-i="all"></button>
+      <button class="tab" data-f="new" data-i="new"></button>
+      <button class="tab" data-f="confirmed" data-i="confirmed"></button>
+      <button class="tab" data-f="done" data-i="done"></button>
+    </div>
+    <p class="mut" id="updated"></p>
+    <div id="list"></div>
+    <p class="mut hide" id="empty" data-i="empty"></p>
+  </div>
+</div>
+
+<script>
+const T = {
+  en:{title:"Bookings CRM",loginSub:"Owner login for Banana Nut Burgers Dive Shop.",password:"Password",login:"Log in",logout:"Log out",total:"Total",new:"New",confirmed:"Confirmed",done:"Done",all:"All",searchPh:"Search name, contact, email, service…",csv:"Export CSV",refresh:"Refresh",empty:"No bookings yet. New requests from the website will appear here automatically.",wrong:"Wrong password.",updated:"Updated",guests:"guests",confirm:"Confirm",reopen:"Reopen",del:"Delete",delSure:"Delete this booking?",details:"Details",hide:"Hide",submitted:"Submitted",divers:"Divers",cruise:"Cruise",note:"Notes",wa:"WhatsApp guest"},
+  es:{title:"CRM de reservas",loginSub:"Acceso del dueño de Banana Nut Burgers Dive Shop.",password:"Contraseña",login:"Entrar",logout:"Salir",total:"Total",new:"Nuevas",confirmed:"Confirmadas",done:"Hechas",all:"Todas",searchPh:"Buscar nombre, contacto, correo, servicio…",csv:"Exportar CSV",refresh:"Actualizar",empty:"Aún no hay reservas. Las solicitudes del sitio aparecerán aquí automáticamente.",wrong:"Contraseña incorrecta.",updated:"Actualizado",guests:"personas",confirm:"Confirmar",reopen:"Reabrir",del:"Borrar",delSure:"¿Borrar esta reserva?",details:"Detalles",hide:"Ocultar",submitted:"Enviado",divers:"Buzos",cruise:"Crucero",note:"Notas",wa:"WhatsApp al cliente"}
+};
+let L = localStorage.getItem("bnb_admin_lang") || ((navigator.language||"en").startsWith("es") ? "es" : "en");
+let filter = "", rows = [], openId = null;
+
+const $ = i => document.getElementById(i);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function applyLang(){
+  const t = T[L];
+  document.documentElement.lang = L;
+  document.querySelectorAll("[data-i]").forEach(e => { if (t[e.dataset.i]) e.textContent = t[e.dataset.i]; });
+  document.querySelectorAll("[data-ph]").forEach(e => e.placeholder = t[e.dataset.ph] || "");
+  $("langBtn").textContent = L === "en" ? "ES" : "EN";
+  render();
+}
+
+async function api(path, opts = {}){
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  if (r.status === 401) { showLogin(); throw new Error("unauthorized"); }
+  return r;
+}
+
+function showLogin(){ $("crmView").classList.add("hide"); $("loginView").classList.remove("hide"); }
+function showCRM(){ $("loginView").classList.add("hide"); $("crmView").classList.remove("hide"); load(); }
+
+$("loginBtn").onclick = async () => {
+  $("loginErr").textContent = "";
+  const r = await fetch("/api/login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ password: $("pw").value }) });
+  if (r.ok) { $("pw").value = ""; showCRM(); }
+  else { const d = await r.json().catch(() => ({})); $("loginErr").textContent = d.error === "Wrong password" ? T[L].wrong : (d.error || T[L].wrong); }
+};
+$("pw").addEventListener("keydown", e => { if (e.key === "Enter") $("loginBtn").click(); });
+$("logoutBtn").onclick = async () => { await fetch("/api/login", { method:"DELETE" }); showLogin(); };
+$("langBtn").onclick = () => { L = L === "en" ? "es" : "en"; localStorage.setItem("bnb_admin_lang", L); applyLang(); };
+
+let debounce;
+$("q").addEventListener("input", () => { clearTimeout(debounce); debounce = setTimeout(load, 250); });
+$("refreshBtn").onclick = load;
+document.querySelectorAll("[data-f]").forEach(el => el.onclick = () => { filter = el.dataset.f; syncTabs(); load(); });
+
+function syncTabs(){
+  document.querySelectorAll("#tabs .tab").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+  document.querySelectorAll(".stat").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+}
+
+async function load(){
+  try {
+    const params = new URLSearchParams();
+    if (filter) params.set("status", filter);
+    if ($("q").value.trim()) params.set("q", $("q").value.trim());
+    const r = await api("/api/bookings?" + params);
+    const d = await r.json();
+    rows = d.bookings || [];
+    $("sTotal").textContent = d.stats.total || 0;
+    $("sNew").textContent = d.stats.fresh || 0;
+    $("sConf").textContent = d.stats.confirmed || 0;
+    $("sDone").textContent = d.stats.done || 0;
+    $("updated").textContent = T[L].updated + ": " + new Date().toLocaleTimeString();
+    render();
+  } catch(e) { /* login view already shown */ }
+}
+
+function fmtDate(b){
+  if (!b.date) return "—";
+  const d = new Date(b.date + "T12:00:00");
+  return d.toLocaleDateString(L === "es" ? "es" : "en", { weekday:"short", month:"short", day:"numeric", year:"numeric" }) + (b.time ? " · " + b.time : "");
+}
+
+function details(b){
+  const lines = [];
+  try {
+    const dv = JSON.parse(b.divers || "[]");
+    if (dv.length) lines.push(T[L].divers + ":\n" + dv.map((d,i) => ` ${i+1}. ${esc(d.name||"")} cert:${esc(d.cert||"-")} logged:${esc(d.logged||"-")} last:${esc(d.last||"-")} fun:${esc(d.fun||"-")} course:${esc(d.course||"-")}${d.courses ? " ("+esc(d.courses)+")" : ""}`).join("\n"));
+    const cr = b.cruise ? JSON.parse(b.cruise) : null;
+    if (cr) lines.push(`${T[L].cruise}: fun=${esc(cr.fun||"-")} snorkel=${esc(cr.snorkel||"-")} tryScuba=${esc(cr.tryScuba||"-")}`);
+  } catch(e) {}
+  if (b.note) lines.push(T[L].note + ": " + esc(b.note));
+  lines.push(T[L].submitted + ": " + new Date(b.created_at).toLocaleString(L === "es" ? "es" : "en"));
+  return lines.join("\n");
+}
+
+function render(){
+  const t = T[L], list = $("list");
+  $("empty").classList.toggle("hide", rows.length > 0);
+  list.innerHTML = rows.map(b => {
+    const digits = String(b.contact || "").replace(/\D/g, "");
+    const wa = digits.length >= 7 ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${digits}">${t.wa}</a>` : "";
+    const mail = b.email ? `<a class="btn" style="background:var(--pri)" href="mailto:${esc(b.email)}">Email</a>` : "";
+    const next = b.status === "new" ? `<button data-act="confirmed" data-id="${b.id}">${t.confirm}</button>`
+      : b.status === "confirmed" ? `<button data-act="done" data-id="${b.id}">${t.done}</button>`
+      : `<button class="ghost" data-act="new" data-id="${b.id}">${t.reopen}</button>`;
+    return `<div class="bk ${b.status === "new" ? "fresh" : ""}">
+      <div class="bkhead"><div><b>${esc(b.name)}</b> · ${esc(b.service)}<br>
+      <span class="mut">${fmtDate(b)} · ${b.guests} ${t.guests}<br>${esc(b.contact)}${b.email ? " · " + esc(b.email) : ""}</span></div>
+      <span class="pill ${b.status}">${t[b.status] || b.status}</span></div>
+      <div class="acts">${wa}${mail}${next}
+      <button class="ghost" data-act="toggle" data-id="${b.id}">${openId === b.id ? t.hide : t.details}</button>
+      <button class="danger" data-act="del" data-id="${b.id}">${t.del}</button></div>
+      ${openId === b.id ? `<div class="det">${details(b)}</div>` : ""}
+    </div>`;
+  }).join("");
+  list.querySelectorAll("button[data-act]").forEach(btn => btn.onclick = () => act(btn.dataset.act, Number(btn.dataset.id)));
+}
+
+async function act(action, id){
+  if (action === "toggle") { openId = openId === id ? null : id; render(); return; }
+  if (action === "del") { if (!confirm(T[L].delSure)) return; await api("/api/bookings/" + id, { method: "DELETE" }); load(); return; }
+  await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ status: action }) });
+  load();
+}
+
+$("csvBtn").onclick = () => {
+  const head = ["id","created_at","status","name","first_name","last_name","contact","email","guests","date","time","service","note"];
+  const csv = [head.join(",")].concat(rows.map(b => head.map(h => `"${String(b[h] ?? "").replace(/"/g, '""')}"`).join(","))).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "banana-nut-burgers-bookings.csv"; a.click(); URL.revokeObjectURL(a.href);
+};
+
+applyLang();
+fetch("/api/bookings").then(r => { if (r.ok) showCRM(); else showLogin(); }).catch(showLogin);
+setInterval(() => { if (!$("crmView").classList.contains("hide")) load(); }, 30000);
+</script>
+</body>
+</html>
