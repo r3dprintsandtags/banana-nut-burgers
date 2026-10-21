@@ -9,7 +9,7 @@ compatibility_date = "2026-10-20"
 [[d1_databases]]
 binding = "DB"
 database_name = "banana-nut-burgers-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "c9aae575-c976-47f7-90b1-f52077b0cec1"
 
 # Private R2 bucket for signed registration documents + signature images.
 # Create once (after login):  npx wrangler r2 bucket create banana-nut-burgers-docs
