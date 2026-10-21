@@ -58,6 +58,13 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
         <button class="ghost" id="logoutBtn" data-i="logout"></button>
       </div>
     </div>
+    <div class="tabs" id="viewTabs">
+      <button class="tab on" data-v="bookings">📅 Bookings</button>
+      <button class="tab" data-v="regs">📋 Registrations</button>
+      <button class="tab" data-v="corr">✏️ Corrections</button>
+      <button class="tab" data-v="audit">🧾 Audit</button>
+    </div>
+    <div id="view-bookings">
     <div class="stats">
       <div class="stat" data-f=""><b id="sTotal">0</b><span data-i="total"></span></div>
       <div class="stat" data-f="new"><b id="sNew">0</b><span data-i="new"></span></div>
@@ -78,6 +85,27 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
     <p class="mut" id="updated"></p>
     <div id="list"></div>
     <p class="mut hide" id="empty" data-i="empty"></p>
+    </div><!-- /view-bookings -->
+
+    <div id="view-regs" class="hide">
+      <div class="bar"><input id="rq" placeholder="Search name, phone, email or reference (BNB-2026-…)">
+      <select id="rstatus" style="min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 10px">
+        <option value="">All statuses</option><option>submitted</option><option>under_review</option><option>approved</option>
+        <option>rejected</option><option>flagged</option><option>corrections_requested</option></select>
+      <button class="ghost" id="rRefresh">Refresh</button></div>
+      <p class="mut" id="rStats"></p>
+      <div id="rlist"></div>
+    </div>
+
+    <div id="view-corr" class="hide">
+      <div class="bar"><button class="ghost" id="cRefresh">Refresh</button></div>
+      <div id="clist"></div>
+    </div>
+
+    <div id="view-audit" class="hide">
+      <div class="bar"><button class="ghost" id="aRefresh">Refresh</button></div>
+      <div id="alist" style="font-size:14px"></div>
+    </div>
   </div>
 </div>
 
@@ -203,6 +231,88 @@ $("csvBtn").onclick = () => {
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "banana-nut-burgers-bookings.csv"; a.click(); URL.revokeObjectURL(a.href);
 };
+
+// ---- views ----
+document.querySelectorAll("#viewTabs .tab").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#viewTabs .tab").forEach(x => x.classList.toggle("on", x === b));
+  ["bookings","regs","corr","audit"].forEach(v => $("view-" + v).classList.toggle("hide", v !== b.dataset.v));
+  if (b.dataset.v === "regs") loadRegs();
+  if (b.dataset.v === "corr") loadCorr();
+  if (b.dataset.v === "audit") loadAudit();
+});
+
+// ---- registrations CRM ----
+let regs = [], openReg = null, regDetail = null;
+const RSTAT = ["submitted","under_review","approved","rejected","flagged","corrections_requested"];
+let rDeb; $("rq").addEventListener("input", () => { clearTimeout(rDeb); rDeb = setTimeout(loadRegs, 250); });
+$("rstatus").onchange = loadRegs; $("rRefresh").onclick = loadRegs;
+
+async function loadRegs(){
+  try {
+    const p = new URLSearchParams();
+    if ($("rq").value.trim()) p.set("q", $("rq").value.trim());
+    if ($("rstatus").value) p.set("status", $("rstatus").value);
+    const d = await (await api("/api/registrations?" + p)).json();
+    regs = d.registrations || [];
+    const s = d.stats || {};
+    $("rStats").textContent = `Total ${s.total||0} · Submitted ${s.submitted||0} · Under review ${s.under_review||0} · Approved ${s.approved||0} · Flagged ${s.flagged||0} · Corrections ${s.corrections||0}`;
+    renderRegs();
+  } catch(e) {}
+}
+function renderRegs(){
+  $("rlist").innerHTML = regs.length ? regs.map(r => `<div class="bk ${r.status==="submitted"?"fresh":""}">
+    <div class="bkhead"><div><b>${esc(r.first_name)} ${esc(r.last_name)}</b> · <span class="mut">${esc(r.ref)}</span>${r.is_duplicate ? ' <span class="pill new">duplicate?</span>' : ""}<br>
+    <span class="mut">${esc(r.phone)}${r.email ? " · " + esc(r.email) : ""} · ${new Date(r.created_at).toLocaleString()}</span></div>
+    <span class="pill ${r.status==="approved"?"confirmed":r.status==="submitted"?"new":""}">${esc(r.status)}</span></div>
+    <div class="acts"><button class="ghost" data-r="${r.id}">${openReg === r.id ? "Hide" : "Review"}</button></div>
+    ${openReg === r.id ? `<div class="det" id="rdet">Loading…</div>` : ""}
+  </div>`).join("") : '<p class="mut">No registrations found.</p>';
+  $("rlist").querySelectorAll("button[data-r]").forEach(b => b.onclick = () => openRegDetail(Number(b.dataset.r)));
+}
+async function openRegDetail(id){
+  openReg = openReg === id ? null : id; regDetail = null; renderRegs();
+  if (!openReg) return;
+  try {
+    regDetail = await (await api("/api/registrations/" + id)).json();
+    const el = $("rdet"); if (!el) return;
+    const r = regDetail.registration, data = JSON.parse(r.data || "{}");
+    el.innerHTML =
+      `<b>Form data</b>\n${Object.entries(data).map(([k,v]) => `${esc(k)}: ${esc(v||"-")}`).join("\n")}\n\n` +
+      `<b>Consents</b>\n${(regDetail.consents||[]).map(c => `${esc(c.purpose)}: ${c.granted ? "AGREED" : "no"} (${esc(c.text_version)})`).join("\n")}\n\n` +
+      (regDetail.signature ? `<b>Signature</b> — ${esc(regDetail.signature.signer_name)} · ${new Date(regDetail.signature.created_at).toLocaleString()}\nSHA-256: ${esc(regDetail.signature.document_sha256)}\n<img src="/api/registrations/${r.id}/signature" alt="Signature" style="max-width:280px;background:#fff;border:1px solid var(--line);border-radius:8px">\n\n` : "<b>Signature</b> — none\n\n") +
+      `<b>Customer history</b>\n${(regDetail.history||[]).map(h => `${esc(h.ref)} · ${esc(h.status)} · ${new Date(h.created_at).toLocaleDateString()}`).join("\n")}\n\n` +
+      `<b>Review</b>\nStatus: <select id="revStatus">${RSTAT.map(s => `<option ${s===r.status?"selected":""}>${s}</option>`).join("")}</select>\n` +
+      `<textarea id="revNote" rows="2" placeholder="Review note (visible to staff only)" style="width:100%;margin-top:8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px">${esc(r.review_note||"")}</textarea>\n` +
+      `<span class="acts"><button id="revSave">Save review</button> <a class="btn" href="/api/registrations/${r.id}/document">Download signed document</a></span>`;
+    $("revSave").onclick = async () => {
+      await api("/api/registrations/" + r.id, { method: "PATCH", body: JSON.stringify({ status: $("revStatus").value, reviewNote: $("revNote").value }) });
+      loadRegs();
+    };
+  } catch(e) {}
+}
+
+// ---- corrections ----
+$("cRefresh").onclick = loadCorr;
+async function loadCorr(){
+  try {
+    const d = await (await api("/api/corrections")).json();
+    $("clist").innerHTML = (d.corrections||[]).length ? d.corrections.map(c => `<div class="bk">
+      <div class="bkhead"><div><b>${esc(c.ref || "—")}</b> · ${esc(c.name)} <span class="mut">${esc(c.phone)} · ${new Date(c.created_at).toLocaleString()}</span><br>${esc(c.message)}</div>
+      <span class="pill ${c.status==="open"?"new":""}">${esc(c.status)}</span></div>
+      <div class="acts"><button class="ghost" data-c="${c.id}" data-s="${c.status==="open"?"resolved":"open"}">${c.status==="open"?"Mark resolved":"Reopen"}</button></div></div>`).join("")
+      : '<p class="mut">No correction requests.</p>';
+    $("clist").querySelectorAll("button[data-c]").forEach(b => b.onclick = async () => { await api("/api/corrections", { method: "PATCH", body: JSON.stringify({ id: Number(b.dataset.c), status: b.dataset.s }) }); loadCorr(); });
+  } catch(e) {}
+}
+
+// ---- audit ----
+$("aRefresh").onclick = loadAudit;
+async function loadAudit(){
+  try {
+    const d = await (await api("/api/audit")).json();
+    $("alist").innerHTML = (d.audit||[]).map(a => `<div class="bk" style="padding:10px 14px"><span class="mut">${new Date(a.created_at).toLocaleString()}</span> · <b>${esc(a.actor)}</b> · ${esc(a.action)} · ${esc(a.entity)} ${esc(a.entity_id)}<br><span class="mut">${esc(a.details)}</span></div>`).join("") || '<p class="mut">No audit entries yet.</p>';
+  } catch(e) {}
+}
 
 applyLang();
 fetch("/api/bookings").then(r => { if (r.ok) showCRM(); else showLogin(); }).catch(showLogin);

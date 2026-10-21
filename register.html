@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Customer Registration & Forms · Banana Nut Burgers Dive Shop</title>
+<meta name="description" content="Register with Banana Nut Burgers Dive Shop, West End, Roatán. Complete your registration and sign electronically.">
+<style>
+:root{--bg:#fff8e6;--card:#fff;--ink:#0a2533;--mut:#5a6e78;--pri:#0a86b0;--ban:#ffc928;--line:#eadfc2;--ok:#17a35c;--red:#d64545}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}}
+:root[data-theme="dark"]{--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:40px}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.top{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px 0;max-width:760px;margin:0 auto}
+.top button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:99px;min-height:40px;padding:8px 14px;font-weight:700;cursor:pointer}
+h1{font-size:28px;margin:14px 0 4px}h2{font-size:20px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+label{display:block;font-weight:600;margin-top:14px;font-size:15px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:48px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.row{grid-template-columns:1fr}}
+button,.btn{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;background:var(--pri);color:#fff;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
+.ghost{background:transparent;color:var(--pri);border:1px solid var(--line)}
+.ban{background:var(--ban);color:#0a2533}
+.hide{display:none}.mut{color:var(--mut);font-size:14px}.err{color:var(--red);font-weight:600;font-size:14px;min-height:20px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-weight:600;margin-top:14px}
+.chk input{width:22px;min-height:22px;height:22px;flex:none;margin-top:2px}
+.decl{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);margin-top:10px}
+.steps{display:flex;gap:6px;margin:16px 0 4px}.steps span{flex:1;height:8px;border-radius:99px;background:var(--line)}.steps span.on{background:var(--pri)}
+canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radius:12px;background:#fff;touch-action:none}
+.ref{font-size:28px;font-weight:800;letter-spacing:1px;color:var(--pri)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;font-size:15px}.kv b{color:var(--mut);font-weight:600}
+.doc{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);font-size:14px;white-space:pre-wrap;max-height:300px;overflow:auto}
+</style>
+</head>
+<body>
+<div class="top"><button id="langBtn" type="button">ES</button></div>
+<div class="wrap">
+  <h1>📋 <span data-i="h1"></span></h1>
+  <p class="mut" data-i="sub"></p>
+  <div class="steps" id="steps"><span></span><span></span><span></span><span></span><span></span></div>
+
+  <!-- A: intro -->
+  <section class="card" data-step="0">
+    <h2 data-i="aH"></h2>
+    <p data-i="aP1"></p><p data-i="aP2"></p>
+    <p class="mut"><span data-i="help"></span> <a href="https://wa.me/50498763374" target="_blank" rel="noopener">WhatsApp +504 9876-3374</a> · <a href="mailto:banananutburgers@gmail.com">banananutburgers@gmail.com</a></p>
+    <p><button type="button" id="startBtn" data-i="start"></button></p>
+    <p><button type="button" class="ghost" id="corrBtn" data-i="corrOpen"></button></p>
+  </section>
+
+  <!-- B: customer info -->
+  <section class="card hide" data-step="1">
+    <h2 data-i="bH"></h2>
+    <div class="row">
+      <div><label for="fn" data-i="first"></label><input id="fn" autocomplete="given-name"></div>
+      <div><label for="ln" data-i="last"></label><input id="ln" autocomplete="family-name"></div>
+    </div>
+    <label for="pn" data-i="pref"></label><input id="pn" autocomplete="nickname">
+    <div class="row">
+      <div><label for="ph" data-i="phone"></label><input id="ph" type="tel" autocomplete="tel" inputmode="tel"></div>
+      <div><label for="em" data-i="email"></label><input id="em" type="email" autocomplete="email"></div>
+    </div>
+    <div class="row">
+      <div><label for="cert" data-i="cert"></label><select id="cert">
+        <option value="" data-i="sel"></option><option value="None">None</option><option value="Open Water">Open Water</option>
+        <option value="Advanced Open Water">Advanced Open Water</option><option value="Rescue">Rescue</option><option value="Other">Other</option></select></div>
+      <div><label for="logged" data-i="logged"></label><input id="logged" type="number" min="0" inputmode="numeric"></div>
+    </div>
+    <div class="row">
+      <div><label for="lastdive" data-i="lastdive"></label><input id="lastdive" type="date"></div>
+      <div><label for="en" data-i="emgName"></label><input id="en" autocomplete="off"></div>
+    </div>
+    <label for="ep" data-i="emgPhone"></label><input id="ep" type="tel" inputmode="tel">
+    <label for="notes" data-i="notes"></label><textarea id="notes" rows="2"></textarea>
+    <p class="err" id="errB" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="0" data-i="back"></button> <button type="button" id="toC" data-i="next"></button></p>
+  </section>
+
+  <!-- C: declarations -->
+  <section class="card hide" data-step="2">
+    <h2 data-i="cH"></h2>
+    <div class="decl"><b id="declTitle"></b><p id="declText"></p>
+      <label class="chk"><input type="checkbox" id="cbDecl"><span id="declCheck"></span></label></div>
+    <div class="decl"><p id="privText"></p>
+      <label class="chk"><input type="checkbox" id="cbPriv"><span data-i="privCheck"></span></label></div>
+    <div class="decl"><p id="mktText"></p>
+      <label class="chk"><input type="checkbox" id="cbMkt"><span data-i="mktCheck"></span></label></div>
+    <p class="err" id="errC" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="1" data-i="back"></button> <button type="button" id="toD" data-i="next"></button></p>
+  </section>
+
+  <!-- D: review document + sign -->
+  <section class="card hide" data-step="3">
+    <h2 data-i="dH"></h2>
+    <p class="mut" data-i="dSub"></p>
+    <div class="doc" id="docPreview"></div>
+    <label for="signer" data-i="signer"></label><input id="signer" autocomplete="name">
+    <label data-i="draw"></label>
+    <canvas class="sigpad" id="pad" width="640" height="180"></canvas>
+    <p><button type="button" class="ghost" id="clearPad" data-i="clear"></button></p>
+    <p class="err" id="errD" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="2" data-i="back"></button> <button type="button" id="toE" data-i="next"></button></p>
+  </section>
+
+  <!-- E: review + submit -->
+  <section class="card hide" data-step="4">
+    <h2 data-i="eH"></h2>
+    <div class="kv" id="review"></div>
+    <p class="err" id="errE" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="1" data-i="edit"></button></p>
+    <p><button type="button" id="submitBtn" class="ban" style="width:100%" data-i="submit"></button></p>
+  </section>
+
+  <!-- F: confirmation -->
+  <section class="card hide" data-step="5">
+    <h2>✅ <span data-i="fH"></span></h2>
+    <p data-i="fRef"></p><p class="ref" id="confRef"></p>
+    <p class="mut" id="confWhen"></p>
+    <p data-i="fNext"></p>
+    <p><a class="btn" href="./" data-i="fBack"></a></p>
+  </section>
+
+  <!-- Correction request -->
+  <section class="card hide" id="corrCard">
+    <h2 data-i="corrH"></h2>
+    <p class="mut" data-i="corrSub"></p>
+    <label for="cRef" data-i="corrRef"></label><input id="cRef" placeholder="BNB-2026-XXXXXX">
+    <label for="cPhone" data-i="phone"></label><input id="cPhone" type="tel" inputmode="tel">
+    <label for="cName" data-i="fullName"></label><input id="cName">
+    <label for="cMsg" data-i="corrMsg"></label><textarea id="cMsg" rows="3"></textarea>
+    <p class="err" id="corrErr" aria-live="polite"></p>
+    <p><button type="button" id="corrSend" data-i="corrSend"></button></p>
+  </section>
+  <input id="hp" class="hide" tabindex="-1" autocomplete="off" aria-hidden="true">
+</div>
+
+<script>
+const DECL = {
+  en:{title:"Customer Information Accuracy Declaration",text:"I certify that the information I have provided in this registration form is true, accurate, complete, and current to the best of my knowledge and belief. I understand that I am responsible for reviewing my answers and notifying Banana Nut Burger of any material changes or corrections.",check:"I have read and agree to this Customer Information Accuracy Declaration.",
+      priv:"I acknowledge that Banana Nut Burger will store my registration information and signed documents privately to manage my customer record and bookings, and that I may request corrections by contacting the business.",
+      mkt:"I agree to receive occasional offers and news from Banana Nut Burger by WhatsApp or email. (Optional)"},
+  es:{title:"Declaración de exactitud de la información del cliente",text:"Certifico que la información que he proporcionado en este formulario de registro es verdadera, exacta, completa y actual, según mi leal saber y entender. Entiendo que soy responsable de revisar mis respuestas y notificar a Banana Nut Burger de cualquier cambio o corrección importante.",check:"He leído y acepto esta Declaración de exactitud de la información del cliente.",
+      priv:"Reconozco que Banana Nut Burger guardará mi información de registro y documentos firmados de forma privada para gestionar mi registro de cliente y reservas, y que puedo solicitar correcciones contactando al negocio.",
+      mkt:"Acepto recibir ofertas y novedades ocasionales de Banana Nut Burger por WhatsApp o correo. (Opcional)"}
+};
+const T = {
+  en:{h1:"Customer Registration & Forms",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Before you start",aP1:"Registering lets us keep your diver/customer record, certifications, and signed forms together so check-in is fast on your next visit.",aP2:"We'll collect your contact details and diving background, ask you to confirm a short accuracy declaration, and let you sign electronically. Your documents are stored privately and are only visible to authorized staff.",help:"Need help? Contact us:",start:"Start registration",corrOpen:"I need to correct an existing registration",bH:"Your information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",cH:"Declarations & consent",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",dH:"Review & sign",dSub:"This is the document your signature will be attached to. Please read it before signing.",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",eH:"Check everything",edit:"Edit information",submit:"Sign and Submit Registration",fH:"Registration received",fRef:"Your registration reference:",fNext:"Status: received and pending staff review. Keep your reference number. To request a correction, use the correction form on this page or contact us on WhatsApp.",fBack:"Back to the digital card",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",corrRef:"Registration reference *",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needName:"First name, last name and a valid phone are required.",needDecl:"Please accept the accuracy declaration and privacy acknowledgement to continue.",needSign:"Type your full legal name and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed. Please try again or contact us on WhatsApp."},
+  es:{h1:"Registro de clientes y formularios",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Antes de empezar",aP1:"Registrarte nos permite guardar tu registro de buzo/cliente, certificaciones y formularios firmados para un check-in rápido en tu próxima visita.",aP2:"Recopilaremos tus datos de contacto y experiencia de buceo, te pediremos confirmar una breve declaración de exactitud y firmar electrónicamente. Tus documentos se guardan de forma privada y solo los ve el personal autorizado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Iniciar registro",corrOpen:"Necesito corregir un registro existente",bH:"Tu información",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",cH:"Declaraciones y consentimiento",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",dH:"Revisar y firmar",dSub:"Este es el documento al que se adjuntará tu firma. Léelo antes de firmar.",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",eH:"Revisa todo",edit:"Editar información",submit:"Firmar y enviar registro",fH:"Registro recibido",fRef:"Tu número de referencia de registro:",fNext:"Estado: recibido y pendiente de revisión. Guarda tu número de referencia. Para corregir algo, usa el formulario de corrección en esta página o contáctanos por WhatsApp.",fBack:"Volver a la tarjeta digital",corrH:"Solicitar una corrección",corrSub:"Ingresa tu número de referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",corrRef:"Referencia de registro *",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad para continuar.",needSign:"Escribe tu nombre legal completo y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló. Inténtalo de nuevo o contáctanos por WhatsApp."}
+};
+let L = (navigator.language||"en").startsWith("es") ? "es" : "en";
+let step = 0, signed = false;
+const $ = i => document.getElementById(i);
+const V = i => $(i).value.trim();
+
+function applyLang(){
+  const t = T[L], d = DECL[L];
+  document.documentElement.lang = L;
+  document.querySelectorAll("[data-i]").forEach(e => { if (t[e.dataset.i]) e.textContent = t[e.dataset.i]; });
+  $("langBtn").textContent = L === "en" ? "ES" : "EN";
+  $("declTitle").textContent = d.title; $("declText").textContent = d.text; $("declCheck").textContent = d.check;
+  $("privText").textContent = d.priv; $("mktText").textContent = d.mkt;
+  buildDoc(); buildReview();
+}
+$("langBtn").onclick = () => { L = L === "en" ? "es" : "en"; applyLang(); };
+
+function go(n){
+  step = n;
+  document.querySelectorAll("[data-step]").forEach(s => s.classList.toggle("hide", Number(s.dataset.step) !== n));
+  document.querySelectorAll("#steps span").forEach((s, i) => s.classList.toggle("on", i < Math.min(n, 4) || n === 5));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (n === 3) { buildDoc(); sizePad(); }
+  if (n === 4) buildReview();
+}
+document.querySelectorAll(".nav").forEach(b => b.onclick = () => go(Number(b.dataset.to)));
+$("startBtn").onclick = () => go(1);
+$("corrBtn").onclick = () => { $("corrCard").classList.toggle("hide"); $("corrCard").scrollIntoView({ behavior: "smooth" }); };
+
+function collect(){
+  return { firstName: V("fn"), lastName: V("ln"), preferredName: V("pn"), phone: V("ph"), email: V("em"),
+    cert: V("cert"), loggedDives: V("logged"), lastDive: V("lastdive"),
+    emergencyName: V("en"), emergencyPhone: V("ep"), notes: V("notes") };
+}
+$("toC").onclick = () => {
+  const d = collect();
+  const digits = d.phone.replace(/\D/g, "");
+  if (!d.firstName || !d.lastName || digits.length < 8) { $("errB").textContent = T[L].needName; return; }
+  $("errB").textContent = ""; go(2);
+};
+$("toD").onclick = () => {
+  if (!$("cbDecl").checked || !$("cbPriv").checked) { $("errC").textContent = T[L].needDecl; return; }
+  $("errC").textContent = ""; go(3);
+};
+function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function buildDoc(){
+  const d = collect(), dec = DECL[L];
+  $("docPreview").textContent =
+`BANANA NUT BURGERS DIVE SHOP — CUSTOMER REGISTRATION (registration-v1)
+
+${d.firstName} ${d.lastName}${d.preferredName ? " (" + d.preferredName + ")" : ""}
+Phone: ${d.phone}  Email: ${d.email || "-"}
+Certification: ${d.cert || "-"}  Logged dives: ${d.loggedDives || "-"}  Last dive: ${d.lastDive || "-"}
+Emergency: ${d.emergencyName || "-"} ${d.emergencyPhone || ""}
+
+${dec.title.toUpperCase()}
+${dec.text}
+
+Privacy: ${$("cbPriv").checked ? "acknowledged" : "—"} · Marketing: ${$("cbMkt").checked ? "agreed" : "not granted"}`;
+}
+function buildReview(){
+  const d = collect(), t = T[L];
+  const rows = [[t.first, d.firstName],[t.last, d.lastName],[t.pref, d.preferredName],[t.phone, d.phone],[t.email, d.email],[t.cert, d.cert],[t.logged, d.loggedDives],[t.lastdive, d.lastDive],[t.emgName, d.emergencyName],[t.emgPhone, d.emergencyPhone],[t.notes, d.notes]];
+  $("review").innerHTML = rows.filter(r => r[1]).map(r => `<b>${esc(r[0])}</b><span>${esc(r[1])}</span>`).join("");
+}
+
+// signature pad
+const pad = $("pad"), ctx = pad.getContext("2d"); let drawing = false;
+function sizePad(){
+  const r = pad.getBoundingClientRect(), img = signed ? pad.toDataURL() : null;
+  pad.width = Math.round(r.width * 2); pad.height = 360;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pad.width, pad.height);
+  ctx.strokeStyle = "#0a2533"; ctx.lineWidth = 4; ctx.lineCap = "round";
+  if (img) { const i = new Image(); i.onload = () => ctx.drawImage(i, 0, 0, pad.width, pad.height); i.src = img; }
+}
+function pos(e){ const r = pad.getBoundingClientRect(); return { x: (e.clientX - r.left) * pad.width / r.width, y: (e.clientY - r.top) * pad.height / r.height }; }
+pad.addEventListener("pointerdown", e => { drawing = true; signed = true; pad.setPointerCapture(e.pointerId); const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+pad.addEventListener("pointermove", e => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+pad.addEventListener("pointerup", () => drawing = false);
+$("clearPad").onclick = () => { signed = false; ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pad.width, pad.height); };
+
+$("toE").onclick = () => {
+  if (!V("signer") || !signed) { $("errD").textContent = T[L].needSign; return; }
+  $("errD").textContent = ""; go(4);
+};
+
+$("submitBtn").onclick = async () => {
+  const t = T[L], d = collect(), missing = [];
+  if (!d.firstName || !d.lastName) missing.push(t.first);
+  if (!$("cbDecl").checked) missing.push("declaration");
+  if (!signed) missing.push("signature");
+  if (missing.length) { $("errE").textContent = t.missing + missing.join(", "); return; }
+  $("submitBtn").disabled = true; $("submitBtn").textContent = t.sending;
+  try {
+    const r = await fetch("/api/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      ...d, accuracyDeclaration: $("cbDecl").checked, privacyAck: $("cbPriv").checked, marketingConsent: $("cbMkt").checked,
+      signerName: V("signer"), signatureDataUrl: pad.toDataURL("image/png"), hp: V("hp")
+    })});
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(out.error || "failed");
+    $("confRef").textContent = out.ref;
+    $("confWhen").textContent = new Date(out.submittedAt).toLocaleString(L === "es" ? "es" : "en");
+    $("cRef").value = out.ref;
+    go(5);
+  } catch(e) {
+    $("errE").textContent = e.message && e.message !== "failed" ? e.message : t.failed;
+    $("submitBtn").disabled = false; $("submitBtn").textContent = t.submit;
+  }
+};
+
+$("corrSend").onclick = async () => {
+  const body = { ref: V("cRef"), phone: V("cPhone"), name: V("cName"), message: V("cMsg"), hp: V("hp") };
+  if (!body.ref || !body.phone || !body.message) { $("corrErr").textContent = T[L].needName; return; }
+  await fetch("/api/corrections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
+  $("corrErr").textContent = ""; $("corrSend").textContent = "✓ " + T[L].corrOk;
+  $("cMsg").value = "";
+};
+
+applyLang(); go(0);
+</script>
+</body>
+</html>

@@ -42,3 +42,28 @@ export async function isAuthed(request, env) {
 }
 
 export const str = (v, max = 200) => String(v ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max);
+
+export const normalizePhone = (v) => {
+  let d = String(v ?? "").replace(/\D/g, "");
+  if (d.length === 8) d = "504" + d; // Honduras local number
+  return d.slice(0, 15);
+};
+
+export async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", enc.encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function audit(env, actor, action, entity, entityId, details = "") {
+  try {
+    await env.DB.prepare("INSERT INTO audit_log (created_at,actor,action,entity,entity_id,details) VALUES (?,?,?,?,?,?)")
+      .bind(Date.now(), actor, action, entity, String(entityId ?? ""), String(details).slice(0, 500)).run();
+  } catch (e) { /* audit must never break the main flow */ }
+}
+
+export function makeRef() {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  return `BNB-${new Date().getFullYear()}-` + [...bytes].map((b) => chars[b % chars.length]).join("");
+}

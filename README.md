@@ -52,6 +52,20 @@ npx wrangler pages dev . --binding ADMIN_PASSWORD=test123 --binding SESSION_SECR
 
 CRM features: live stats, status flow (New → Confirmed → Done), search, booking details (divers, cruise, notes), one-tap WhatsApp/email to the guest, CSV export, auto-refresh, English/Spanish.
 
+## Customer registration, e-signature & compliance
+Customers register at **`/register`** (linked from the card as "Customer Registration & Forms"): intro → information → accuracy declaration & separate consents → document review + drawn e-signature → review → confirmation with a public reference like `BNB-2026-AB12CD`. Signed documents and signature images are stored in a **private R2 bucket** (never public); staff view/download them only from the CRM's **Registrations** tab, and every view/download/review is written to the **Audit** tab. Customers can request corrections from `/register` (reference + phone must match; records are never displayed publicly).
+
+**Setup (in addition to the CRM setup above):**
+```powershell
+npx wrangler r2 bucket create banana-nut-burgers-docs
+npx wrangler d1 execute banana-nut-burgers-db --remote --file=migrations/0002_registration.sql
+```
+(`schema.sql` contains both migrations for fresh databases.)
+
+> ⚠️ **Forms approval required:** No business-approved legal forms were in this workspace, so `registration-v1` in `functions/_form.js` is a safe **default template — not a liability waiver and not legal advice**. Have the business (with qualified legal review) approve or replace the declaration/privacy wording and bump `FORM_VERSION` before production use. Each signature records the exact version + SHA-256 hash of the signed content.
+
+**Corrections & retention:** correction requests are reviewed in the CRM's Corrections tab. No automated deletion/retention policy is enforced yet — set one with the business before production.
+
 ## Change content
 - Phone, WhatsApp, email: search for `50498763374` and `banananutburgers@gmail.com`.
 - Text (English and Spanish): the `T` object at the top of the script.
