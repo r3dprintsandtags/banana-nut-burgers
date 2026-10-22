@@ -32,7 +32,7 @@ export async function onRequestPatch({ request, env, params }) {
   let b;
   try { b = await request.json(); } catch { return json({ error: "Bad request" }, 400); }
   const status = str(b.status, 30), note = str(b.reviewNote, 1000);
-  if (status && !["submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested"].includes(status))
+  if (status && !["submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested", "complete"].includes(status))
     return json({ error: "Invalid status" }, 422);
   await env.DB.prepare("UPDATE registrations SET status=?, review_note=?, updated_at=? WHERE id=?")
     .bind(status || reg.status, note || reg.review_note, Date.now(), reg.id).run();

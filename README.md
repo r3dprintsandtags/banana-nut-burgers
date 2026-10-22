@@ -66,6 +66,22 @@ npx wrangler d1 execute banana-nut-burgers-db --remote --file=migrations/0002_re
 
 **Corrections & retention:** correction requests are reviewed in the CRM's Corrections tab. No automated deletion/retention policy is enforced yet — set one with the business before production.
 
+## Digital dive check-in journey (redesigned)
+The card now opens with a **Digital dive check-in** section: primary **Start Registration**, plus Resume Registration, Dive Shop Information, Contact, and Registration Requirements. `/register` is a 6-step guided wizard with a live progress tracker that reflects actual saved state:
+
+1. **Trip & activity** (activity, date, participants, optional booking ref) → 2. **Diver information** → 3. **Required forms** (loaded from the admin-configurable forms registry, filtered by activity) → 4. **Waivers & acknowledgments + e-signature** → 5. **Safety & medical** (no business-approved medical form exists yet, so this step explains staff will complete screening with the diver — a submitted registration is *never* represented as medical clearance) → 6. **Review & submit** → confirmation showing **Submitted · Awaiting Review** with the reference.
+
+- **Drafts:** progress auto-saves server-side after step 2. Resume needs the reference + resume code (stored hashed; a phone or name alone can never open a draft). Same-device resume is one tap.
+- **Idempotency:** every attempt carries a key; double-taps/retries return the original reference instead of duplicating.
+- **Admin form configuration:** CRM → **Forms** tab manages form names (EN/ES), descriptions, required/optional, ordering, applicable activities, versions, and staff-review flags. Every edit snapshots the previous version into `form_versions`; previously signed documents keep their original version + hash.
+- **Stack note:** the working vanilla HTML/JS + Pages Functions + D1/R2 app was extended rather than rewritten in React/TypeScript, to preserve the deployed site, branding, and tested flows.
+
+**Deploy this update:**
+```powershell
+npx wrangler d1 execute banana-nut-burgers-db --remote --file=migrations/0003_drafts_forms.sql
+npx wrangler pages deploy . --project-name banana-nut-burgers
+```
+
 ## Change content
 - Phone, WhatsApp, email: search for `50498763374` and `banananutburgers@gmail.com`.
 - Text (English and Spanish): the `T` object at the top of the script.

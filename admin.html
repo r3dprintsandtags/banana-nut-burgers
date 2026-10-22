@@ -63,6 +63,7 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
       <button class="tab" data-v="regs">📋 Registrations</button>
       <button class="tab" data-v="corr">✏️ Corrections</button>
       <button class="tab" data-v="audit">🧾 Audit</button>
+      <button class="tab" data-v="forms">🧩 Forms</button>
     </div>
     <div id="view-bookings">
     <div class="stats">
@@ -90,8 +91,8 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
     <div id="view-regs" class="hide">
       <div class="bar"><input id="rq" placeholder="Search name, phone, email or reference (BNB-2026-…)">
       <select id="rstatus" style="min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 10px">
-        <option value="">All statuses</option><option>submitted</option><option>under_review</option><option>approved</option>
-        <option>rejected</option><option>flagged</option><option>corrections_requested</option></select>
+        <option value="">All statuses</option><option>draft</option><option>submitted</option><option>under_review</option><option>approved</option>
+        <option>rejected</option><option>flagged</option><option>corrections_requested</option><option>complete</option></select>
       <button class="ghost" id="rRefresh">Refresh</button></div>
       <p class="mut" id="rStats"></p>
       <div id="rlist"></div>
@@ -105,6 +106,18 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
     <div id="view-audit" class="hide">
       <div class="bar"><button class="ghost" id="aRefresh">Refresh</button></div>
       <div id="alist" style="font-size:14px"></div>
+    </div>
+
+    <div id="view-forms" class="hide">
+      <p class="mut">Configure the customer registration flow without touching code. Edits snapshot the previous version (history is kept; already-signed documents never change). Liability/medical wording changes need qualified approval first.</p>
+      <div id="flist"></div>
+      <div class="card">
+        <h2>Add a form</h2>
+        <div class="bar"><input id="nfKey" placeholder="key (e.g. liability-waiver)"><input id="nfName" placeholder="Name (English)"><input id="nfNameEs" placeholder="Nombre (Español)"></div>
+        <div class="bar"><input id="nfVer" placeholder="Version (e.g. waiver-v1)"><input id="nfOrder" type="number" placeholder="Order" style="max-width:110px">
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="nfReq" checked style="width:auto;min-height:auto"> Required</label>
+        <button id="nfAdd">Add form</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -235,10 +248,11 @@ $("csvBtn").onclick = () => {
 // ---- views ----
 document.querySelectorAll("#viewTabs .tab").forEach(b => b.onclick = () => {
   document.querySelectorAll("#viewTabs .tab").forEach(x => x.classList.toggle("on", x === b));
-  ["bookings","regs","corr","audit"].forEach(v => $("view-" + v).classList.toggle("hide", v !== b.dataset.v));
+  ["bookings","regs","corr","audit","forms"].forEach(v => $("view-" + v).classList.toggle("hide", v !== b.dataset.v));
   if (b.dataset.v === "regs") loadRegs();
   if (b.dataset.v === "corr") loadCorr();
   if (b.dataset.v === "audit") loadAudit();
+  if (b.dataset.v === "forms") loadFormsAdmin();
 });
 
 // ---- registrations CRM ----
@@ -255,7 +269,7 @@ async function loadRegs(){
     const d = await (await api("/api/registrations?" + p)).json();
     regs = d.registrations || [];
     const s = d.stats || {};
-    $("rStats").textContent = `Total ${s.total||0} · Submitted ${s.submitted||0} · Under review ${s.under_review||0} · Approved ${s.approved||0} · Flagged ${s.flagged||0} · Corrections ${s.corrections||0}`;
+    $("rStats").textContent = `Total ${s.total||0} · Drafts ${s.drafts||0} · Submitted ${s.submitted||0} · Under review ${s.under_review||0} · Approved ${s.approved||0} · Flagged ${s.flagged||0} · Corrections ${s.corrections||0}`;
     renderRegs();
   } catch(e) {}
 }
@@ -264,6 +278,7 @@ function renderRegs(){
     <div class="bkhead"><div><b>${esc(r.first_name)} ${esc(r.last_name)}</b> · <span class="mut">${esc(r.ref)}</span>${r.is_duplicate ? ' <span class="pill new">duplicate?</span>' : ""}<br>
     <span class="mut">${esc(r.phone)}${r.email ? " · " + esc(r.email) : ""} · ${new Date(r.created_at).toLocaleString()}</span></div>
     <span class="pill ${r.status==="approved"?"confirmed":r.status==="submitted"?"new":""}">${esc(r.status)}</span></div>
+    ${r.checklist ? `<p class="mut" style="margin:8px 0 0">${Object.entries(r.checklist).map(([k, v]) => `${v === "complete" ? "✅" : v === "pending_approved_form" ? "🩺" : "⚠️"} ${esc(k)}`).join(" · ")}</p>` : ""}
     <div class="acts"><button class="ghost" data-r="${r.id}">${openReg === r.id ? "Hide" : "Review"}</button></div>
     ${openReg === r.id ? `<div class="det" id="rdet">Loading…</div>` : ""}
   </div>`).join("") : '<p class="mut">No registrations found.</p>';
@@ -313,6 +328,38 @@ async function loadAudit(){
     $("alist").innerHTML = (d.audit||[]).map(a => `<div class="bk" style="padding:10px 14px"><span class="mut">${new Date(a.created_at).toLocaleString()}</span> · <b>${esc(a.actor)}</b> · ${esc(a.action)} · ${esc(a.entity)} ${esc(a.entity_id)}<br><span class="mut">${esc(a.details)}</span></div>`).join("") || '<p class="mut">No audit entries yet.</p>';
   } catch(e) {}
 }
+
+// ---- forms configuration ----
+async function loadFormsAdmin(){
+  try {
+    const d = await (await api("/api/forms")).json();
+    const rows = (d.forms || []).map(f => `<div class="bk" data-fid="${f.id}">
+      <div class="bkhead"><div><b>${esc(f.key)}</b> · ${esc(f.version)} <span class="mut">order ${f.sort_order}</span></div>
+      <span class="pill ${f.active ? "confirmed" : ""}">${f.active ? "active" : "off"}</span></div>
+      <div class="bar"><input data-k="name_en" value="${esc(f.name_en)}" placeholder="Name EN"><input data-k="name_es" value="${esc(f.name_es)}" placeholder="Nombre ES"></div>
+      <div class="bar"><input data-k="desc_en" value="${esc(f.desc_en)}" placeholder="Description EN"><input data-k="desc_es" value="${esc(f.desc_es)}" placeholder="Descripción ES"></div>
+      <div class="bar"><input data-k="version" value="${esc(f.version)}" placeholder="Version" style="max-width:160px">
+      <input data-k="sort_order" type="number" value="${f.sort_order}" style="max-width:90px">
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-k="required" ${f.required ? "checked" : ""} style="width:auto;min-height:auto"> Required</label>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-k="review_required" ${f.review_required ? "checked" : ""} style="width:auto;min-height:auto"> Staff review</label>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-k="active" ${f.active ? "checked" : ""} style="width:auto;min-height:auto"> Active</label>
+      <button data-save="${f.id}">Save</button></div></div>`).join("");
+    $("flist").innerHTML = rows || '<p class="mut">No forms configured.</p>';
+    $("flist").querySelectorAll("button[data-save]").forEach(b => b.onclick = async () => {
+      const card = b.closest("[data-fid]"), body = {};
+      card.querySelectorAll("[data-k]").forEach(i => body[i.dataset.k] = i.type === "checkbox" ? i.checked : (i.type === "number" ? Number(i.value) : i.value));
+      await api("/api/forms/" + b.dataset.save, { method: "PATCH", body: JSON.stringify(body) });
+      loadFormsAdmin();
+    });
+  } catch(e) {}
+}
+$("nfAdd").onclick = async () => {
+  const body = { key: $("nfKey").value, name_en: $("nfName").value, name_es: $("nfNameEs").value, version: $("nfVer").value || "v1", sort_order: Number($("nfOrder").value || 99), required: $("nfReq").checked };
+  if (!body.key || !body.name_en) return;
+  await api("/api/forms", { method: "POST", body: JSON.stringify(body) });
+  $("nfKey").value = $("nfName").value = $("nfNameEs").value = "";
+  loadFormsAdmin();
+};
 
 applyLang();
 fetch("/api/bookings").then(r => { if (r.ok) showCRM(); else showLogin(); }).catch(showLogin);

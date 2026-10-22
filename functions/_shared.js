@@ -61,6 +61,28 @@ export async function audit(env, actor, action, entity, entityId, details = "") 
   } catch (e) { /* audit must never break the main flow */ }
 }
 
+export function makeToken() {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Checklist computed from a registration row (+ signature/consent presence).
+// Never counts an unsigned or unsubmitted item as complete.
+export function checklist(reg, { hasSignature = false, hasDeclaration = false } = {}) {
+  let data = {};
+  try { data = JSON.parse(reg.data || "{}"); } catch (e) {}
+  const done = (ok) => (ok ? "complete" : "action_required");
+  return {
+    activity: done(!!(reg.activity || data.activity)),
+    diverInfo: done(!!(data.firstName || reg.first_name) && !!(data.phone || reg.phone)),
+    forms: done(reg.status !== "draft" && hasDeclaration),
+    waivers: done(hasSignature && hasDeclaration),
+    safety: "pending_approved_form", // no business-approved medical form exists yet — never auto-complete
+    review: reg.status === "draft" ? "not_started" : "complete",
+  };
+}
+
 export function makeRef() {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const bytes = new Uint8Array(6);

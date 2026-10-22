@@ -34,6 +34,19 @@ export async function onRequestPost({ request, env }) {
   };
   const customerIn = { firstName, lastName, preferredName: str(b.preferredName, 60), phone, email };
 
+  // Idempotency: a retried/double submission with the same key returns the original.
+  const idemKey = str(b.idempotencyKey, 80);
+  if (idemKey) {
+    const dup = await env.DB.prepare("SELECT ref, created_at FROM registrations WHERE idempotency_key=? AND status<>'draft'").bind(idemKey).first();
+    if (dup) return json({ ok: true, ref: dup.ref, submittedAt: new Date(dup.created_at).toISOString(), status: "submitted", duplicate: true });
+  }
+  // Resuming a saved draft? It will be converted (same ref kept) on submit.
+  let draftReg = null;
+  if (b.draftRef && b.draftToken) {
+    const cand = await env.DB.prepare("SELECT * FROM registrations WHERE upper(ref)=? AND status='draft'").bind(str(b.draftRef, 20).toUpperCase()).first();
+    if (cand && cand.draft_token_hash && (await sha256(String(b.draftToken))) === cand.draft_token_hash) draftReg = cand;
+  }
+
   // rate limit: 5 registrations / IP / 10 min
   const ipHash = await hashIP(env.SESSION_SECRET || "bnb", request.headers.get("CF-Connecting-IP") || "");
   if (ipHash) {
@@ -45,7 +58,7 @@ export async function onRequestPost({ request, env }) {
   // --- duplicate detection: same normalized phone (or email) = same customer ---
   let customer = await env.DB.prepare("SELECT * FROM customers WHERE phone=? OR (email<>'' AND email=?) ORDER BY id LIMIT 1")
     .bind(phone, email).first();
-  const isDuplicate = customer ? 1 : 0;
+  const isDuplicate = customer && !(draftReg && draftReg.customer_id === customer.id) ? 1 : 0;
   const now = Date.now();
   if (!customer) {
     const r = await env.DB.prepare("INSERT INTO customers (created_at,updated_at,first_name,last_name,preferred_name,phone,email) VALUES (?,?,?,?,?,?,?)")
@@ -66,18 +79,29 @@ export async function onRequestPost({ request, env }) {
   const canonical = JSON.stringify({ v: FORM_VERSION, customer: customerIn, data, consents: consents.map(c => [c.purpose, c.granted, c.text]), signerName });
   const docHash = await sha256(canonical);
 
-  // --- unique public reference ---
-  let ref = makeRef();
-  for (let i = 0; i < 3; i++) {
+  // --- unique public reference (draft conversion keeps its ref) ---
+  let ref = draftReg?.ref || makeRef();
+  if (!draftReg) for (let i = 0; i < 3; i++) {
     const exists = await env.DB.prepare("SELECT id FROM registrations WHERE ref=?").bind(ref).first();
     if (!exists) break;
     ref = makeRef();
   }
+  const trip = { activity: str(b.activity, 60), plannedDate: str(b.plannedDate, 10),
+    participants: Math.min(20, Math.max(1, parseInt(b.participants, 10) || 1)), bookingRef: str(b.bookingRef, 40) };
+  const fullData = { ...customerIn, ...data, ...trip, preferredLanguage: str(b.preferredLanguage, 10), emergencyRelationship: str(b.emergencyRelationship, 40) };
 
-  const reg = await env.DB.prepare(
-    "INSERT INTO registrations (ref,customer_id,created_at,updated_at,status,form_version,data,is_duplicate,ip_hash) VALUES (?,?,?,?, 'submitted',?,?,?,?)"
-  ).bind(ref, customer.id, now, now, FORM_VERSION, JSON.stringify(data), isDuplicate, ipHash).run();
-  const regId = reg.meta.last_row_id;
+  let regId;
+  if (draftReg) {
+    await env.DB.prepare(
+      "UPDATE registrations SET customer_id=?, updated_at=?, status='submitted', form_version=?, data=?, is_duplicate=?, ip_hash=?, draft_token_hash='', idempotency_key=?, activity=?, planned_date=?, participants=?, booking_ref=? WHERE id=?"
+    ).bind(customer.id, now, FORM_VERSION, JSON.stringify(fullData), isDuplicate, ipHash, idemKey || null, trip.activity, trip.plannedDate, trip.participants, trip.bookingRef, draftReg.id).run();
+    regId = draftReg.id;
+  } else {
+    const reg = await env.DB.prepare(
+      "INSERT INTO registrations (ref,customer_id,created_at,updated_at,status,form_version,data,is_duplicate,ip_hash,idempotency_key,activity,planned_date,participants,booking_ref) VALUES (?,?,?,?, 'submitted',?,?,?,?,?,?,?,?,?)"
+    ).bind(ref, customer.id, now, now, FORM_VERSION, JSON.stringify(fullData), isDuplicate, ipHash, idemKey || null, trip.activity, trip.plannedDate, trip.participants, trip.bookingRef).run();
+    regId = reg.meta.last_row_id;
+  }
 
   for (const c of consents)
     await env.DB.prepare("INSERT INTO consents (registration_id,created_at,purpose,granted,text_version) VALUES (?,?,?,?,?)")

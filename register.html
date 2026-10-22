@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Customer Registration & Forms · Banana Nut Burgers Dive Shop</title>
-<meta name="description" content="Register with Banana Nut Burgers Dive Shop, West End, Roatán. Complete your registration and sign electronically.">
+<title>Digital Dive Check-In · Banana Nut Burgers Dive Shop</title>
+<meta name="description" content="Complete your Banana Nut Burgers dive registration before arrival: guided check-in, forms, electronic signature, and confirmation.">
 <style>
-:root{--bg:#fff8e6;--card:#fff;--ink:#0a2533;--mut:#5a6e78;--pri:#0a86b0;--ban:#ffc928;--line:#eadfc2;--ok:#17a35c;--red:#d64545}
+:root{--bg:#fff8e6;--card:#fff;--ink:#0a2533;--navy:#06161f;--mut:#5a6e78;--pri:#0a86b0;--teal:#0e7a6d;--ban:#ffc928;--line:#eadfc2;--ok:#17a35c;--red:#d64545}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}}
 :root[data-theme="dark"]{--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:40px}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px}
-.top{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px 0;max-width:760px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0;max-width:760px;margin:0 auto}
 .top button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:99px;min-height:40px;padding:8px 14px;font-weight:700;cursor:pointer}
+.brand{display:flex;gap:10px;align-items:center}.brand b{font-size:15px;letter-spacing:.5px}
 h1{font-size:28px;margin:14px 0 4px}h2{font-size:20px;margin:0 0 8px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
 label{display:block;font-weight:600;margin-top:14px;font-size:15px}
@@ -21,35 +22,72 @@ input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;bo
 button,.btn{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;background:var(--pri);color:#fff;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
 .ghost{background:transparent;color:var(--pri);border:1px solid var(--line)}
 .ban{background:var(--ban);color:#0a2533}
-.hide{display:none}.mut{color:var(--mut);font-size:14px}.err{color:var(--red);font-weight:600;font-size:14px;min-height:20px}
+.hide{display:none}.mut{color:var(--mut);font-size:14px}.err{color:var(--red);font-weight:600;font-size:14px;min-height:20px}.okmsg{color:var(--ok);font-weight:600;font-size:14px}
 .chk{display:flex;gap:10px;align-items:flex-start;font-weight:600;margin-top:14px}
 .chk input{width:22px;min-height:22px;height:22px;flex:none;margin-top:2px}
 .decl{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);margin-top:10px}
 .steps{display:flex;gap:6px;margin:16px 0 4px}.steps span{flex:1;height:8px;border-radius:99px;background:var(--line)}.steps span.on{background:var(--pri)}
+.track{list-style:none;margin:10px 0;padding:0}.track li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-top:6px;background:var(--card);font-size:15px}
+.track .st{margin-left:auto;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.st.done{color:var(--ok)}.st.todo{color:var(--red)}.st.wait{color:var(--mut)}
 canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radius:12px;background:#fff;touch-action:none}
-.ref{font-size:28px;font-weight:800;letter-spacing:1px;color:var(--pri)}
+.ref{font-size:26px;font-weight:800;letter-spacing:1px;color:var(--pri)}
 .kv{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;font-size:15px}.kv b{color:var(--mut);font-weight:600}
 .doc{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);font-size:14px;white-space:pre-wrap;max-height:300px;overflow:auto}
+.formitem{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--bg)}
+.pill{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--ban);color:#0a2533}
+.pill.opt{background:var(--line);color:var(--ink)}
 </style>
 </head>
 <body>
-<div class="top"><button id="langBtn" type="button">ES</button></div>
+<div class="top">
+  <div class="brand">
+    <svg viewBox="0 0 120 120" width="40" height="40" role="img" aria-label="Banana Nut Burgers logo"><circle cx="60" cy="60" r="58" fill="#0a86b0" stroke="#ffc928" stroke-width="4"/><path d="M22 56a38 30 0 0 1 76 0z" fill="#d98b3a"/><rect x="22" y="58" width="76" height="10" rx="5" fill="#7ac74f"/><path d="M22 74a38 18 0 0 0 76 0z" fill="#d98b3a"/></svg>
+    <b>BANANA NUT BURGER<br>DIVE SHOP</b>
+  </div>
+  <button id="langBtn" type="button">ES</button>
+</div>
 <div class="wrap">
-  <h1>📋 <span data-i="h1"></span></h1>
+  <h1>🤿 <span data-i="h1"></span></h1>
   <p class="mut" data-i="sub"></p>
-  <div class="steps" id="steps"><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="steps" id="steps"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <p class="mut" id="stepLabel"></p>
+  <ul class="track" id="tracker"></ul>
 
-  <!-- A: intro -->
+  <!-- 0 landing -->
   <section class="card" data-step="0">
     <h2 data-i="aH"></h2>
     <p data-i="aP1"></p><p data-i="aP2"></p>
+    <div id="requirements"><b data-i="reqH"></b><p class="mut" data-i="reqP"></p></div>
+    <p class="mut"><span data-i="priv"></span></p>
     <p class="mut"><span data-i="help"></span> <a href="https://wa.me/50498763374" target="_blank" rel="noopener">WhatsApp +504 9876-3374</a> · <a href="mailto:banananutburgers@gmail.com">banananutburgers@gmail.com</a></p>
-    <p><button type="button" id="startBtn" data-i="start"></button></p>
-    <p><button type="button" class="ghost" id="corrBtn" data-i="corrOpen"></button></p>
+    <p><button type="button" id="startBtn" class="ban" style="width:100%;font-size:18px" data-i="start"></button></p>
+    <p><button type="button" class="ghost" id="resumeOpen" data-i="resumeOpen"></button>
+       <button type="button" class="ghost" id="corrBtn" data-i="corrOpen"></button></p>
+    <div id="resumePanel" class="hide">
+      <label for="rRef" data-i="corrRef"></label><input id="rRef" placeholder="BNB-2026-XXXXXX">
+      <label for="rTok" data-i="resumeCode"></label><input id="rTok" autocomplete="off">
+      <p class="err" id="resumeErr" aria-live="polite"></p>
+      <p><button type="button" id="resumeBtn" data-i="resumeBtn"></button></p>
+      <p class="mut" data-i="resumeNote"></p>
+    </div>
   </section>
 
-  <!-- B: customer info -->
+  <!-- 1 trip & activity -->
   <section class="card hide" data-step="1">
+    <h2 data-i="tH"></h2>
+    <label for="act" data-i="activity"></label><select id="act"><option value="" id="actPh"></option></select>
+    <div class="row">
+      <div><label for="pdate" data-i="pdate"></label><input id="pdate" type="date"></div>
+      <div><label for="parts" data-i="parts"></label><input id="parts" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
+    </div>
+    <label for="bref" data-i="bref"></label><input id="bref" autocomplete="off">
+    <p class="err" id="err1" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="0" data-i="back"></button> <button type="button" class="toNext" data-from="1" data-i="next"></button></p>
+  </section>
+
+  <!-- 2 diver info -->
+  <section class="card hide" data-step="2">
     <h2 data-i="bH"></h2>
     <div class="row">
       <div><label for="fn" data-i="first"></label><input id="fn" autocomplete="given-name"></div>
@@ -60,6 +98,7 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
       <div><label for="ph" data-i="phone"></label><input id="ph" type="tel" autocomplete="tel" inputmode="tel"></div>
       <div><label for="em" data-i="email"></label><input id="em" type="email" autocomplete="email"></div>
     </div>
+    <label for="plang" data-i="plang"></label><select id="plang"><option value="en">English</option><option value="es">Español</option></select>
     <div class="row">
       <div><label for="cert" data-i="cert"></label><select id="cert">
         <option value="" data-i="sel"></option><option value="None">None</option><option value="Open Water">Open Water</option>
@@ -70,57 +109,71 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
       <div><label for="lastdive" data-i="lastdive"></label><input id="lastdive" type="date"></div>
       <div><label for="en" data-i="emgName"></label><input id="en" autocomplete="off"></div>
     </div>
-    <label for="ep" data-i="emgPhone"></label><input id="ep" type="tel" inputmode="tel">
+    <div class="row">
+      <div><label for="erel" data-i="emgRel"></label><input id="erel" autocomplete="off"></div>
+      <div><label for="ep" data-i="emgPhone"></label><input id="ep" type="tel" inputmode="tel"></div>
+    </div>
     <label for="notes" data-i="notes"></label><textarea id="notes" rows="2"></textarea>
-    <p class="err" id="errB" aria-live="polite"></p>
-    <p><button type="button" class="ghost nav" data-to="0" data-i="back"></button> <button type="button" id="toC" data-i="next"></button></p>
+    <p class="okmsg" id="draftMsg"></p>
+    <p class="err" id="err2" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="1" data-i="back"></button> <button type="button" id="saveNext2" data-i="saveNext"></button></p>
   </section>
 
-  <!-- C: declarations -->
-  <section class="card hide" data-step="2">
-    <h2 data-i="cH"></h2>
+  <!-- 3 required forms -->
+  <section class="card hide" data-step="3">
+    <h2 data-i="fH2"></h2>
+    <p class="mut" data-i="fSub"></p>
+    <div id="formList"></div>
+    <p><button type="button" class="ghost nav" data-to="2" data-i="back"></button> <button type="button" class="toNext" data-from="3" data-i="next"></button></p>
+  </section>
+
+  <!-- 4 waivers & signature -->
+  <section class="card hide" data-step="4">
+    <h2 data-i="dH"></h2>
+    <p class="mut" data-i="dSub"></p>
+    <div class="doc" id="docPreview"></div>
     <div class="decl"><b id="declTitle"></b><p id="declText"></p>
       <label class="chk"><input type="checkbox" id="cbDecl"><span id="declCheck"></span></label></div>
     <div class="decl"><p id="privText"></p>
       <label class="chk"><input type="checkbox" id="cbPriv"><span data-i="privCheck"></span></label></div>
     <div class="decl"><p id="mktText"></p>
       <label class="chk"><input type="checkbox" id="cbMkt"><span data-i="mktCheck"></span></label></div>
-    <p class="err" id="errC" aria-live="polite"></p>
-    <p><button type="button" class="ghost nav" data-to="1" data-i="back"></button> <button type="button" id="toD" data-i="next"></button></p>
-  </section>
-
-  <!-- D: review document + sign -->
-  <section class="card hide" data-step="3">
-    <h2 data-i="dH"></h2>
-    <p class="mut" data-i="dSub"></p>
-    <div class="doc" id="docPreview"></div>
     <label for="signer" data-i="signer"></label><input id="signer" autocomplete="name">
     <label data-i="draw"></label>
     <canvas class="sigpad" id="pad" width="640" height="180"></canvas>
     <p><button type="button" class="ghost" id="clearPad" data-i="clear"></button></p>
-    <p class="err" id="errD" aria-live="polite"></p>
-    <p><button type="button" class="ghost nav" data-to="2" data-i="back"></button> <button type="button" id="toE" data-i="next"></button></p>
+    <p class="err" id="err4" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="3" data-i="back"></button> <button type="button" id="toSafety" data-i="next"></button></p>
   </section>
 
-  <!-- E: review + submit -->
-  <section class="card hide" data-step="4">
+  <!-- 5 safety & medical -->
+  <section class="card hide" data-step="5">
+    <h2 data-i="sH"></h2>
+    <div class="decl"><b data-i="sPend"></b><p data-i="sP"></p></div>
+    <p><button type="button" class="ghost nav" data-to="4" data-i="back"></button> <button type="button" class="toNext" data-from="5" data-i="next"></button></p>
+  </section>
+
+  <!-- 6 review & submit -->
+  <section class="card hide" data-step="6">
     <h2 data-i="eH"></h2>
     <div class="kv" id="review"></div>
-    <p class="err" id="errE" aria-live="polite"></p>
-    <p><button type="button" class="ghost nav" data-to="1" data-i="edit"></button></p>
+    <p class="err" id="err6" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="2" data-i="edit"></button></p>
     <p><button type="button" id="submitBtn" class="ban" style="width:100%" data-i="submit"></button></p>
   </section>
 
-  <!-- F: confirmation -->
-  <section class="card hide" data-step="5">
-    <h2>✅ <span data-i="fH"></span></h2>
+  <!-- 7 confirmation -->
+  <section class="card hide" data-step="7">
+    <h2>✅ <span data-i="doneH"></span></h2>
+    <p><span class="pill" data-i="statusAwait"></span></p>
     <p data-i="fRef"></p><p class="ref" id="confRef"></p>
     <p class="mut" id="confWhen"></p>
+    <div id="confList"></div>
     <p data-i="fNext"></p>
     <p><a class="btn" href="./" data-i="fBack"></a></p>
   </section>
 
-  <!-- Correction request -->
+  <!-- correction request -->
   <section class="card hide" id="corrCard">
     <h2 data-i="corrH"></h2>
     <p class="mut" data-i="corrSub"></p>
@@ -143,15 +196,45 @@ const DECL = {
       priv:"Reconozco que Banana Nut Burger guardará mi información de registro y documentos firmados de forma privada para gestionar mi registro de cliente y reservas, y que puedo solicitar correcciones contactando al negocio.",
       mkt:"Acepto recibir ofertas y novedades ocasionales de Banana Nut Burger por WhatsApp o correo. (Opcional)"}
 };
+const ACTS = ["Try Scuba","Dives & courses","Island tours","Snorkel","Beach & bar","Hike & explore"];
 const T = {
-  en:{h1:"Customer Registration & Forms",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Before you start",aP1:"Registering lets us keep your diver/customer record, certifications, and signed forms together so check-in is fast on your next visit.",aP2:"We'll collect your contact details and diving background, ask you to confirm a short accuracy declaration, and let you sign electronically. Your documents are stored privately and are only visible to authorized staff.",help:"Need help? Contact us:",start:"Start registration",corrOpen:"I need to correct an existing registration",bH:"Your information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",cH:"Declarations & consent",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",dH:"Review & sign",dSub:"This is the document your signature will be attached to. Please read it before signing.",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",eH:"Check everything",edit:"Edit information",submit:"Sign and Submit Registration",fH:"Registration received",fRef:"Your registration reference:",fNext:"Status: received and pending staff review. Keep your reference number. To request a correction, use the correction form on this page or contact us on WhatsApp.",fBack:"Back to the digital card",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",corrRef:"Registration reference *",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needName:"First name, last name and a valid phone are required.",needDecl:"Please accept the accuracy declaration and privacy acknowledgement to continue.",needSign:"Type your full legal name and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed. Please try again or contact us on WhatsApp."},
-  es:{h1:"Registro de clientes y formularios",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Antes de empezar",aP1:"Registrarte nos permite guardar tu registro de buzo/cliente, certificaciones y formularios firmados para un check-in rápido en tu próxima visita.",aP2:"Recopilaremos tus datos de contacto y experiencia de buceo, te pediremos confirmar una breve declaración de exactitud y firmar electrónicamente. Tus documentos se guardan de forma privada y solo los ve el personal autorizado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Iniciar registro",corrOpen:"Necesito corregir un registro existente",bH:"Tu información",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",cH:"Declaraciones y consentimiento",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",dH:"Revisar y firmar",dSub:"Este es el documento al que se adjuntará tu firma. Léelo antes de firmar.",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",eH:"Revisa todo",edit:"Editar información",submit:"Firmar y enviar registro",fH:"Registro recibido",fRef:"Tu número de referencia de registro:",fNext:"Estado: recibido y pendiente de revisión. Guarda tu número de referencia. Para corregir algo, usa el formulario de corrección en esta página o contáctanos por WhatsApp.",fBack:"Volver a la tarjeta digital",corrH:"Solicitar una corrección",corrSub:"Ingresa tu número de referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",corrRef:"Referencia de registro *",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad para continuar.",needSign:"Escribe tu nombre legal completo y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló. Inténtalo de nuevo o contáctanos por WhatsApp."}
+  en:{h1:"Digital dive check-in",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Welcome to your digital dive check-in",aP1:"Complete your registration before arrival to help make your check-in faster. No account needed.",aP2:"You'll answer a few guided steps, read and sign your forms electronically, and get a registration reference to show our staff when you arrive.",reqH:"What you may need",reqP:"Your certification card details (if certified), emergency contact, and a phone or email we can reach you on. Signed forms are stored privately; only authorized staff can view them.",priv:"Privacy: we only collect what this registration needs. Never share your resume code — it opens your saved draft.",help:"Need help? Contact us:",start:"Start Registration",resumeOpen:"Resume Registration",corrOpen:"Correct an existing registration",corrRef:"Registration reference *",resumeCode:"Resume code *",resumeBtn:"Resume my draft",resumeNote:"Your resume code was shown when your draft was saved (and is kept on this device). Without it, a draft cannot be opened — contact us for help.",tH:"Step 1 of 6 · Trip and activity",activity:"Activity / dive type *",pdate:"Planned date",parts:"Number of participants",bref:"Booking reference (if you have one)",bH:"Step 2 of 6 · Diver information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgRel:"Emergency contact relationship",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",saveNext:"Save & continue",fH2:"Step 3 of 6 · Required registration forms",fSub:"These forms apply to your activity. Required forms must be completed before you can dive with us.",dH:"Step 4 of 6 · Waivers & acknowledgments",dSub:"Read the document, accept each item separately, then sign. Nothing is pre-checked.",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",sH:"Step 5 of 6 · Safety & medical information",sPend:"No approved medical form has been added yet",sP:"For your safety, our staff will complete any required medical screening with you. Nothing here counts as medical clearance, and submitting this registration does not clear you to dive — that decision is always made by qualified staff.",eH:"Step 6 of 6 · Review & submit",edit:"Edit information",submit:"Sign and Submit Registration",doneH:"Registration submitted",statusAwait:"Submitted · Awaiting Review",fRef:"Your registration reference — show this to staff when you arrive:",fNext:"Next: our staff will review your registration. If anything is missing we'll contact you. To correct something, use the correction form on this page or message us on WhatsApp.",fBack:"Back to the digital card",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needAct:"Please choose your activity.",needName:"First name, last name and a valid phone are required.",needDecl:"Accept the accuracy declaration and privacy acknowledgement, type your name, and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed (connection?). Your draft is saved — try again, or contact us on WhatsApp.",saved:"Draft saved ✓ Reference",req:"Required",opt:"Optional",ver:"Version",stepOf:"Step",of:"of",trActivity:"Activity Details",trDiver:"Diver Information",trForms:"Registration Forms",trWaivers:"Waivers & Acknowledgments",trSafety:"Safety Information",trReview:"Final Review",stDone:"Complete",stTodo:"Action Required",stWait:"Not Started",stPend:"Staff will complete with you",resumeBad:"Draft not found. Check the reference and resume code."},
+  es:{h1:"Check-in digital de buceo",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Bienvenido a tu check-in digital de buceo",aP1:"Completa tu registro antes de llegar para un check-in más rápido. Sin crear cuenta.",aP2:"Responderás unos pasos guiados, leerás y firmarás tus formularios electrónicamente, y recibirás una referencia para mostrar al personal al llegar.",reqH:"Lo que puedes necesitar",reqP:"Datos de tu certificación (si estás certificado), un contacto de emergencia y un teléfono o correo donde contactarte. Los formularios firmados se guardan de forma privada; solo el personal autorizado puede verlos.",priv:"Privacidad: solo recopilamos lo necesario para este registro. Nunca compartas tu código de continuación: abre tu borrador guardado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Iniciar registro",resumeOpen:"Continuar registro",corrOpen:"Corregir un registro existente",corrRef:"Referencia de registro *",resumeCode:"Código de continuación *",resumeBtn:"Continuar mi borrador",resumeNote:"Tu código se mostró al guardar el borrador (y queda en este dispositivo). Sin él, el borrador no puede abrirse: contáctanos para ayuda.",tH:"Paso 1 de 6 · Viaje y actividad",activity:"Actividad / tipo de buceo *",pdate:"Fecha planificada",parts:"Número de participantes",bref:"Referencia de reserva (si tienes)",bH:"Paso 2 de 6 · Información del buzo",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgRel:"Relación del contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",saveNext:"Guardar y continuar",fH2:"Paso 3 de 6 · Formularios de registro requeridos",fSub:"Estos formularios aplican a tu actividad. Los requeridos deben completarse antes de bucear con nosotros.",dH:"Paso 4 de 6 · Exenciones y reconocimientos",dSub:"Lee el documento, acepta cada punto por separado y firma. Nada viene marcado.",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",sH:"Paso 5 de 6 · Seguridad e información médica",sPend:"Aún no se ha añadido un formulario médico aprobado",sP:"Por tu seguridad, nuestro personal completará contigo cualquier evaluación médica requerida. Nada aquí cuenta como autorización médica, y enviar este registro no te autoriza a bucear: esa decisión siempre la toma el personal calificado.",eH:"Paso 6 de 6 · Revisar y enviar",edit:"Editar información",submit:"Firmar y enviar registro",doneH:"Registro enviado",statusAwait:"Enviado · En espera de revisión",fRef:"Tu referencia de registro — muéstrala al personal al llegar:",fNext:"Siguiente: nuestro personal revisará tu registro. Si falta algo, te contactaremos. Para corregir algo, usa el formulario de corrección en esta página o escríbenos por WhatsApp.",fBack:"Volver a la tarjeta digital",corrH:"Solicitar una corrección",corrSub:"Ingresa tu referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needAct:"Elige tu actividad.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad, escribe tu nombre y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló (¿conexión?). Tu borrador está guardado: inténtalo de nuevo o contáctanos por WhatsApp.",saved:"Borrador guardado ✓ Referencia",req:"Requerido",opt:"Opcional",ver:"Versión",stepOf:"Paso",of:"de",trActivity:"Detalles de la actividad",trDiver:"Información del buzo",trForms:"Formularios de registro",trWaivers:"Exenciones y reconocimientos",trSafety:"Información de seguridad",trReview:"Revisión final",stDone:"Completo",stTodo:"Acción requerida",stWait:"Sin empezar",stPend:"El personal lo completa contigo",resumeBad:"Borrador no encontrado. Revisa la referencia y el código."}
 };
 let L = (navigator.language||"en").startsWith("es") ? "es" : "en";
-let step = 0, signed = false;
+let step = 0, signed = false, forms = [], submittedRef = "";
+let draft = {};
+try { draft = JSON.parse(localStorage.getItem("bnb_reg_draft") || "{}"); } catch(e) { draft = {}; }
+if (!draft.idempotencyKey) { draft.idempotencyKey = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()); saveLocal(); }
+function saveLocal(){ try { localStorage.setItem("bnb_reg_draft", JSON.stringify(draft)); } catch(e) {} }
 const $ = i => document.getElementById(i);
 const V = i => $(i).value.trim();
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+function collect(){
+  return { activity: V("act"), plannedDate: V("pdate"), participants: V("parts"), bookingRef: V("bref"),
+    firstName: V("fn"), lastName: V("ln"), preferredName: V("pn"), phone: V("ph"), email: V("em"), preferredLanguage: V("plang"),
+    cert: V("cert"), loggedDives: V("logged"), lastDive: V("lastdive"), emergencyName: V("en"), emergencyRelationship: V("erel"), emergencyPhone: V("ep"), notes: V("notes") };
+}
+function fill(d){
+  const map = { act:"activity", pdate:"plannedDate", parts:"participants", bref:"bookingRef", fn:"firstName", ln:"lastName", pn:"preferredName", ph:"phone", em:"email", plang:"preferredLanguage", cert:"cert", logged:"loggedDives", lastdive:"lastDive", en:"emergencyName", erel:"emergencyRelationship", ep:"emergencyPhone", notes:"notes" };
+  Object.entries(map).forEach(([id, k]) => { if (d[k] !== undefined && d[k] !== "") $(id).value = d[k]; });
+}
+function state(){
+  const d = collect();
+  const formsDone = $("cbDecl").checked && $("cbPriv").checked && signed && !!V("signer");
+  return {
+    activity: !!d.activity, diver: !!(d.firstName && d.lastName && d.phone.replace(/\D/g,"").length >= 8),
+    forms: formsDone, waivers: formsDone, safety: false, review: !!submittedRef
+  };
+}
+function tracker(){
+  const t = T[L], s = state();
+  const item = (label, val, pend) => `<li><span>${label}</span><span class="st ${pend ? "wait" : val ? "done" : (step > 0 ? "todo" : "wait")}">${pend ? t.stPend : val ? t.stDone : (step > 0 ? t.stTodo : t.stWait)}</span></li>`;
+  $("tracker").innerHTML = item(t.trActivity, s.activity) + item(t.trDiver, s.diver) + item(t.trForms, s.forms)
+    + item(t.trWaivers, s.waivers) + item(t.trSafety, false, true) + item(t.trReview, s.review);
+  $("stepLabel").textContent = step >= 1 && step <= 6 ? `${t.stepOf} ${step} ${t.of} 6` : "";
+}
 function applyLang(){
   const t = T[L], d = DECL[L];
   document.documentElement.lang = L;
@@ -159,47 +242,98 @@ function applyLang(){
   $("langBtn").textContent = L === "en" ? "ES" : "EN";
   $("declTitle").textContent = d.title; $("declText").textContent = d.text; $("declCheck").textContent = d.check;
   $("privText").textContent = d.priv; $("mktText").textContent = d.mkt;
-  buildDoc(); buildReview();
+  $("actPh").textContent = t.sel;
+  if ($("act").options.length <= 1) ACTS.forEach(a => { const o = document.createElement("option"); o.textContent = a; $("act").append(o); });
+  $("pdate").min = new Date().toISOString().slice(0, 10);
+  renderForms(); buildDoc(); tracker();
 }
 $("langBtn").onclick = () => { L = L === "en" ? "es" : "en"; applyLang(); };
 
 function go(n){
   step = n;
   document.querySelectorAll("[data-step]").forEach(s => s.classList.toggle("hide", Number(s.dataset.step) !== n));
-  document.querySelectorAll("#steps span").forEach((s, i) => s.classList.toggle("on", i < Math.min(n, 4) || n === 5));
+  document.querySelectorAll("#steps span").forEach((s, i) => s.classList.toggle("on", i < Math.min(Math.max(n - 1, 0), 5)));
   window.scrollTo({ top: 0, behavior: "smooth" });
-  if (n === 3) { buildDoc(); sizePad(); }
-  if (n === 4) buildReview();
+  if (n === 3) loadForms();
+  if (n === 4) { buildDoc(); sizePad(); }
+  if (n === 6) buildReview();
+  tracker();
 }
 document.querySelectorAll(".nav").forEach(b => b.onclick = () => go(Number(b.dataset.to)));
 $("startBtn").onclick = () => go(1);
 $("corrBtn").onclick = () => { $("corrCard").classList.toggle("hide"); $("corrCard").scrollIntoView({ behavior: "smooth" }); };
+$("resumeOpen").onclick = () => { $("resumePanel").classList.toggle("hide"); if (draft.ref) $("rRef").value = draft.ref; if (draft.token) $("rTok").value = draft.token; };
 
-function collect(){
-  return { firstName: V("fn"), lastName: V("ln"), preferredName: V("pn"), phone: V("ph"), email: V("em"),
-    cert: V("cert"), loggedDives: V("logged"), lastDive: V("lastdive"),
-    emergencyName: V("en"), emergencyPhone: V("ep"), notes: V("notes") };
-}
-$("toC").onclick = () => {
+document.querySelectorAll(".toNext").forEach(b => b.onclick = async () => {
+  const from = Number(b.dataset.from);
+  if (from === 1 && !V("act")) { $("err1").textContent = T[L].needAct; return; }
+  $("err1").textContent = "";
+  await saveDraft();
+  go(from + 1);
+});
+$("saveNext2").onclick = async () => {
   const d = collect();
-  const digits = d.phone.replace(/\D/g, "");
-  if (!d.firstName || !d.lastName || digits.length < 8) { $("errB").textContent = T[L].needName; return; }
-  $("errB").textContent = ""; go(2);
+  if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) { $("err2").textContent = T[L].needName; return; }
+  $("err2").textContent = "";
+  await saveDraft(true);
+  go(3);
 };
-$("toD").onclick = () => {
-  if (!$("cbDecl").checked || !$("cbPriv").checked) { $("errC").textContent = T[L].needDecl; return; }
-  $("errC").textContent = ""; go(3);
+
+async function saveDraft(show){
+  const d = collect();
+  if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) return;
+  try {
+    const body = draft.ref && draft.token ? { ref: draft.ref, token: draft.token, data: d } : { data: d };
+    const r = await fetch("/api/register/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const out = await r.json().catch(() => ({}));
+    if (r.ok && out.ref) {
+      draft.ref = out.ref; if (out.token) draft.token = out.token; saveLocal();
+      if (show) $("draftMsg").textContent = `${T[L].saved}: ${out.ref} · ${T[L].resumeCode.replace(" *","")}: ${draft.token}`;
+    }
+  } catch(e) { /* offline: data stays on this device and in the form */ }
+}
+
+$("resumeBtn").onclick = async () => {
+  const ref = V("rRef").toUpperCase(), token = V("rTok");
+  try {
+    const r = await fetch(`/api/register/draft?ref=${encodeURIComponent(ref)}&token=${encodeURIComponent(token)}`);
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error("bad");
+    draft.ref = out.ref; draft.token = token; saveLocal();
+    fill(out.data || {});
+    if (out.data?.preferredLanguage) { L = out.data.preferredLanguage === "es" ? "es" : "en"; applyLang(); }
+    go(1);
+  } catch(e) { $("resumeErr").textContent = T[L].resumeBad; }
 };
-function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+async function loadForms(){
+  try {
+    const r = await fetch("/api/forms?activity=" + encodeURIComponent(V("act")));
+    const out = await r.json().catch(() => ({}));
+    forms = out.forms && out.forms.length ? out.forms : [{ name_en:"Customer Registration", name_es:"Registro de clientes", desc_en:"Your contact and diver information, accuracy declaration, and electronic signature.", desc_es:"Tu información de contacto y de buzo, declaración de exactitud y firma electrónica.", required:1, version:"registration-v1" }];
+  } catch(e) { forms = [{ name_en:"Customer Registration", name_es:"Registro de clientes", desc_en:"", desc_es:"", required:1, version:"registration-v1" }]; }
+  renderForms();
+}
+function renderForms(){
+  const t = T[L], s = state();
+  if (!$("formList")) return;
+  $("formList").innerHTML = forms.map(f => `<div class="formitem">
+    <b>${esc(L === "es" ? (f.name_es || f.name_en) : f.name_en)}</b> <span class="pill ${f.required ? "" : "opt"}">${f.required ? t.req : t.opt}</span>
+    <span class="pill opt">${t.ver}: ${esc(f.version)}</span>
+    <span class="st ${s.forms ? "done" : "todo"}" style="float:right">${s.forms ? t.stDone : t.stTodo}</span>
+    <p class="mut" style="margin:6px 0 0">${esc(L === "es" ? (f.desc_es || f.desc_en || "") : (f.desc_en || ""))}</p></div>`).join("");
+}
+
 function buildDoc(){
   const d = collect(), dec = DECL[L];
   $("docPreview").textContent =
 `BANANA NUT BURGERS DIVE SHOP — CUSTOMER REGISTRATION (registration-v1)
+${d.activity || "-"} · ${d.plannedDate || "-"} · ${d.participants || 1}
 
 ${d.firstName} ${d.lastName}${d.preferredName ? " (" + d.preferredName + ")" : ""}
 Phone: ${d.phone}  Email: ${d.email || "-"}
 Certification: ${d.cert || "-"}  Logged dives: ${d.loggedDives || "-"}  Last dive: ${d.lastDive || "-"}
-Emergency: ${d.emergencyName || "-"} ${d.emergencyPhone || ""}
+Emergency: ${d.emergencyName || "-"}${d.emergencyRelationship ? " (" + d.emergencyRelationship + ")" : ""} ${d.emergencyPhone || ""}
 
 ${dec.title.toUpperCase()}
 ${dec.text}
@@ -208,8 +342,9 @@ Privacy: ${$("cbPriv").checked ? "acknowledged" : "—"} · Marketing: ${$("cbMk
 }
 function buildReview(){
   const d = collect(), t = T[L];
-  const rows = [[t.first, d.firstName],[t.last, d.lastName],[t.pref, d.preferredName],[t.phone, d.phone],[t.email, d.email],[t.cert, d.cert],[t.logged, d.loggedDives],[t.lastdive, d.lastDive],[t.emgName, d.emergencyName],[t.emgPhone, d.emergencyPhone],[t.notes, d.notes]];
+  const rows = [[t.activity, d.activity],[t.pdate, d.plannedDate],[t.first + " / " + t.last, (d.firstName + " " + d.lastName).trim()],[t.phone, d.phone],[t.email, d.email],[t.cert, d.cert],[t.emgName, d.emergencyName]];
   $("review").innerHTML = rows.filter(r => r[1]).map(r => `<b>${esc(r[0])}</b><span>${esc(r[1])}</span>`).join("");
+  tracker();
 }
 
 // signature pad
@@ -222,36 +357,44 @@ function sizePad(){
   if (img) { const i = new Image(); i.onload = () => ctx.drawImage(i, 0, 0, pad.width, pad.height); i.src = img; }
 }
 function pos(e){ const r = pad.getBoundingClientRect(); return { x: (e.clientX - r.left) * pad.width / r.width, y: (e.clientY - r.top) * pad.height / r.height }; }
-pad.addEventListener("pointerdown", e => { drawing = true; signed = true; pad.setPointerCapture(e.pointerId); const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+pad.addEventListener("pointerdown", e => { drawing = true; signed = true; pad.setPointerCapture(e.pointerId); const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); tracker(); });
 pad.addEventListener("pointermove", e => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-pad.addEventListener("pointerup", () => drawing = false);
-$("clearPad").onclick = () => { signed = false; ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pad.width, pad.height); };
+pad.addEventListener("pointerup", () => { drawing = false; tracker(); });
+$("clearPad").onclick = () => { signed = false; ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, pad.width, pad.height); tracker(); };
+["cbDecl","cbPriv","cbMkt"].forEach(id => $(id).addEventListener("change", () => { buildDoc(); tracker(); }));
+$("signer").addEventListener("input", tracker);
 
-$("toE").onclick = () => {
-  if (!V("signer") || !signed) { $("errD").textContent = T[L].needSign; return; }
-  $("errD").textContent = ""; go(4);
+$("toSafety").onclick = () => {
+  if (!$("cbDecl").checked || !$("cbPriv").checked || !V("signer") || !signed) { $("err4").textContent = T[L].needDecl; return; }
+  $("err4").textContent = ""; saveDraft(); go(5);
 };
 
 $("submitBtn").onclick = async () => {
   const t = T[L], d = collect(), missing = [];
+  if (!d.activity) missing.push(t.activity);
   if (!d.firstName || !d.lastName) missing.push(t.first);
-  if (!$("cbDecl").checked) missing.push("declaration");
-  if (!signed) missing.push("signature");
-  if (missing.length) { $("errE").textContent = t.missing + missing.join(", "); return; }
+  if (!$("cbDecl").checked || !signed) missing.push(t.trWaivers);
+  if (missing.length) { $("err6").textContent = t.missing + missing.join(", "); return; }
   $("submitBtn").disabled = true; $("submitBtn").textContent = t.sending;
   try {
     const r = await fetch("/api/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       ...d, accuracyDeclaration: $("cbDecl").checked, privacyAck: $("cbPriv").checked, marketingConsent: $("cbMkt").checked,
-      signerName: V("signer"), signatureDataUrl: pad.toDataURL("image/png"), hp: V("hp")
+      signerName: V("signer"), signatureDataUrl: pad.toDataURL("image/png"), hp: V("hp"),
+      idempotencyKey: draft.idempotencyKey, draftRef: draft.ref || "", draftToken: draft.token || ""
     })});
     const out = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(out.error || "failed");
+    submittedRef = out.ref;
     $("confRef").textContent = out.ref;
     $("confWhen").textContent = new Date(out.submittedAt).toLocaleString(L === "es" ? "es" : "en");
+    const s = state();
+    $("confList").innerHTML = `<ul class="track">${[["trActivity",s.activity],["trDiver",s.diver],["trForms",true],["trWaivers",true]].map(([k,v]) => `<li><span>${t[k]}</span><span class="st done">${t.stDone}</span></li>`).join("")}<li><span>${t.trSafety}</span><span class="st wait">${t.stPend}</span></li><li><span>${t.trReview}</span><span class="st wait">${t.statusAwait}</span></li></ul>`;
     $("cRef").value = out.ref;
-    go(5);
+    draft = { idempotencyKey: draft.idempotencyKey }; saveLocal(); // draft consumed; keep key so a retry returns the same ref
+    go(7);
   } catch(e) {
-    $("errE").textContent = e.message && e.message !== "failed" ? e.message : t.failed;
+    await saveDraft();
+    $("err6").textContent = e.message && e.message !== "failed" ? e.message : t.failed;
     $("submitBtn").disabled = false; $("submitBtn").textContent = t.submit;
   }
 };
@@ -264,7 +407,11 @@ $("corrSend").onclick = async () => {
   $("cMsg").value = "";
 };
 
-applyLang(); go(0);
+applyLang();
+if (draft.ref) { /* same-device resume is one tap away */ $("resumeOpen").textContent += ""; }
+if (location.hash === "#resume") $("resumeOpen").click();
+if (location.hash === "#requirements") setTimeout(() => $("requirements").scrollIntoView({ behavior: "smooth" }), 300);
+go(0);
 </script>
 </body>
 </html>
