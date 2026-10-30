@@ -39,10 +39,37 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "First name, last name and a valid phone are required to save a draft" }, 422);
 
   let customer = await env.DB.prepare("SELECT * FROM customers WHERE phone=? OR (email<>'' AND email=?) ORDER BY id LIMIT 1").bind(phone, email).first();
+  let returning = false;
+  let prior = null;
   if (!customer) {
     const r = await env.DB.prepare("INSERT INTO customers (created_at,updated_at,first_name,last_name,preferred_name,phone,email) VALUES (?,?,?,?,?,?,?)")
       .bind(now, now, firstName, lastName, str(data.preferredName, 60), phone, email).run();
     customer = { id: r.meta.last_row_id };
+  } else {
+    // Soft returning-diver hints from last submitted registration (same customer only).
+    const last = await env.DB.prepare(
+      "SELECT data FROM registrations WHERE customer_id=? AND status<>'draft' ORDER BY id DESC LIMIT 1"
+    ).bind(customer.id).first();
+    if (last?.data) {
+      returning = true;
+      try {
+        const d = JSON.parse(last.data);
+        prior = {
+          preferredName: d.preferredName || "",
+          preferredLanguage: d.preferredLanguage || "",
+          cert: d.cert || "",
+          loggedDives: d.loggedDives || "",
+          lastDive: d.lastDive || "",
+          ownGear: d.ownGear || "",
+          gearSize: d.gearSize || "",
+          gearNote: d.gearNote || "",
+          emergencyName: d.emergencyName || "",
+          emergencyRelationship: d.emergencyRelationship || "",
+          emergencyPhone: d.emergencyPhone || "",
+          dob: d.dob || "",
+        };
+      } catch { prior = null; }
+    }
   }
   const token = makeToken();
   let ref = makeRef();
@@ -55,7 +82,7 @@ export async function onRequestPost({ request, env }) {
   ).bind(ref, customer.id, now, now, "registration-v1", JSON.stringify(data).slice(0, 8000), await sha256(token),
     str(data.activity, 60), str(data.plannedDate, 10), Math.min(20, Math.max(1, parseInt(data.participants, 10) || 1)), str(data.bookingRef, 40)).run();
   await audit(env, "customer", "registration.draft_created", "registration", ref);
-  return json({ ok: true, ref, token, updatedAt: new Date(now).toISOString() }, 201);
+  return json({ ok: true, ref, token, returning, prior, updatedAt: new Date(now).toISOString() }, 201);
 }
 
 export async function onRequestGet({ request, env }) {

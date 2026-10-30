@@ -1,0 +1,76 @@
+{
+  "file": "privacy.pdf",
+  "templateKey": null,
+  "pageCount": 3,
+  "mode": "overlay",
+  "fields": [],
+  "mapping": {
+    "mode": "overlay",
+    "fields": {},
+    "signatures": [],
+    "unmatched": [],
+    "placements": [
+      {
+        "page": 0,
+        "x": 80,
+        "y": 720,
+        "source": "first_name",
+        "size": 10
+      },
+      {
+        "page": 0,
+        "x": 280,
+        "y": 720,
+        "source": "last_name",
+        "size": 10
+      },
+      {
+        "page": 0,
+        "x": 80,
+        "y": 700,
+        "source": "dob",
+        "size": 10,
+        "dateFormat": "dd/mm/yyyy"
+      },
+      {
+        "page": 0,
+        "x": 80,
+        "y": 680,
+        "source": "email",
+        "size": 9
+      },
+      {
+        "page": 0,
+        "x": 80,
+        "y": 660,
+        "source": "cell_phone",
+        "size": 9
+      },
+      {
+        "page": 0,
+        "x": 80,
+        "y": 100,
+        "source": "full_name_print",
+        "size": 10
+      },
+      {
+        "page": 0,
+        "x": 80,
+        "y": 70,
+        "type": "signature",
+        "source": "signature_image",
+        "w": 140,
+        "h": 40
+      },
+      {
+        "page": 0,
+        "x": 280,
+        "y": 70,
+        "source": "signature_date",
+        "size": 9,
+        "dateFormat": "dd/mm/yy"
+      }
+    ]
+  },
+  "next": "Rename to match SSI names in forms-source/README.md"
+}

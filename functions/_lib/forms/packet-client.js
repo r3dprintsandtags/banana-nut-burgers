@@ -1,0 +1,962 @@
+/** Browser script for /f/:token. Injected as text; wizard helpers are function declarations. */
+export function packetClientScript({ token, renderSource, wizardSource }) {
+  return `
+const TOKEN=${JSON.stringify(token)};
+const renderDocumentHtml = ${renderSource};
+${wizardSource}
+let L=(navigator.language||"en").startsWith("es")?"es":"en";
+try{const saved=localStorage.getItem("bnb_lang");if(saved==="en"||saved==="es")L=saved}catch(e){}
+let theme="light";
+try{
+  const savedTheme=localStorage.getItem("bnb_theme");
+  if(savedTheme==="light"||savedTheme==="dark") theme=savedTheme;
+  else if(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches) theme="dark";
+}catch(e){}
+let payload=null, answers={}, flow=null, stepId="about", docIndex=0, returnTo="", doneOut=null, pendingFocus="", medicalAnchor="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function applyTheme(){ document.documentElement.setAttribute("data-theme", theme); if($("themeBtn")) $("themeBtn").textContent=theme==="dark"?"Light":"Dark"; }
+function lab(f){return typeof f.label==="string"?f.label:(f.label&&(f.label[L]||f.label.en))||f.key}
+function syncLangBtn(){ if($("langBtn")) $("langBtn").textContent=L==="en"?"ES":"EN"; document.documentElement.lang=L; }
+function sigKey(){ return "bnb_sigs_"+TOKEN; }
+function loadSigs(){
+  try{
+    const extra=JSON.parse(sessionStorage.getItem(sigKey())||"{}");
+    answers.__signatures=Object.assign({}, extra, answers.__signatures||{});
+  }catch(e){}
+}
+function saveSigs(){ try{ sessionStorage.setItem(sigKey(), JSON.stringify(answers.__signatures||{})); }catch(e){} }
+function scheduleSave(){
+  clearTimeout(scheduleSave._t);
+  const seen=answers.__ui&&answers.__ui.medicalSeen===true;
+  answers.__ui={ step: stepId, docIndex };
+  if(seen) answers.__ui.medicalSeen=true;
+  scheduleSave._t=setTimeout(async()=>{
+    try{
+      const r=await fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save",answers,step:stepId})});
+      if($("saved")) $("saved").textContent=r.ok?(L==="es"?"Guardado":"Saved"):(L==="es"?"No se guardó":"Not saved");
+      if(!r.ok) showRetry(L==="es"?"No se guardó. Tus datos siguen en esta página.":"Not saved. Your answers are still on this page.");
+    }catch(e){
+      if($("saved")) $("saved").textContent=L==="es"?"Sin conexión":"Offline";
+      showRetry(L==="es"?"Sin conexión. Tus datos siguen en esta página.":"Offline. Your answers are still on this page.");
+    }
+  },400);
+}
+function showRetry(message){
+  const box=$("retry");
+  if(!box) return;
+  box.classList.remove("hide");
+  box.innerHTML="";
+  const p=document.createElement("p");
+  p.textContent=message;
+  const b=document.createElement("button");
+  b.type="button"; b.className="ghost"; b.textContent=L==="es"?"Reintentar":"Retry";
+  b.onclick=()=>{ box.classList.add("hide"); scheduleSave(); };
+  box.append(p,b);
+}
+function rebuild(){ flow=buildFlow(payload&&payload.templates||[], answers); }
+function statusOf(id){
+  if(id===stepId) return "current";
+  if(id==="finish") return doneOut?"complete":"notstarted";
+  const block=earlierBlock(id, flow, answers);
+  if(block) return "locked";
+  const probs=stepProblems(id, flow, answers);
+  if(probs.length && (answers.__visited||[]).includes(id)) return "attention";
+  if(probs.length) return "notstarted";
+  if((answers.__visited||[]).includes(id) || id==="about") return probs.length?"attention":"complete";
+  return "notstarted";
+}
+function statusWord(st){
+  const en={current:"In progress",locked:"Locked",attention:"Needs attention",complete:"Complete",notstarted:"Not started"};
+  const es={current:"En curso",locked:"Bloqueado",attention:"Revisar",complete:"Listo",notstarted:"Sin empezar"};
+  return (L==="es"?es:en)[st]||st;
+}
+function paintStepper(){
+  const nav=$("stepper");
+  if(!nav||!flow) return;
+  nav.innerHTML="";
+  for(const s of flow.steps){
+    if(s.id==="finish" && !doneOut) continue;
+    const st=statusOf(s.id);
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="stepbtn "+st;
+    b.dataset.step=s.id;
+    if (s.id === stepId) b.setAttribute("aria-current", "step");
+    const nm=document.createElement("span");
+    nm.className="nm";
+    nm.textContent=stepLabel(s.id, L);
+    const ss=document.createElement("span");
+    ss.className="ss";
+    ss.textContent=statusWord(st);
+    b.append(nm, ss);
+    b.onclick=()=>onStepClick(s.id);
+    nav.appendChild(b);
+  }
+}
+function onStepClick(id){
+  if(id===stepId) return;
+  const block=earlierBlock(id, flow, answers);
+  if(block && id!=="finish"){
+    $("err").textContent=(L==="es"?"Termina primero: ":"Finish ")+stepLabel(block.stepId, L)+(L==="es"?"":" first");
+    return;
+  }
+  if(flow.steps.findIndex(s=>s.id===id) < flow.steps.findIndex(s=>s.id===stepId)) returnTo=returnTo||stepId;
+  go(id, id==="documents"?docIndex:0);
+}
+function go(id, nextDoc, opts){
+  opts=opts||{};
+  if(!flow.steps.some(s=>s.id===id)) id="about";
+  const block=earlierBlock(id, flow, answers);
+  if(block && !opts.force){
+    id=block.stepId;
+    nextDoc=0;
+  }
+  stepId=id;
+  if(id==="documents"){
+    const max=Math.max((flow.docs||[]).length-1, 0);
+    docIndex=Math.min(Math.max(Number(nextDoc)||0, 0), max);
+  }
+  answers.__visited=Array.from(new Set([...(answers.__visited||[]), stepId]));
+  const seen=answers.__ui&&answers.__ui.medicalSeen===true;
+  answers.__ui={ step: stepId, docIndex };
+  if(seen) answers.__ui.medicalSeen=true;
+  const url=location.pathname+location.search+hashFor(stepId, docIndex);
+  if(opts.replace) history.replaceState({ stepId, docIndex }, "", url);
+  else history.pushState({ stepId, docIndex }, "", url);
+  scheduleSave();
+  render();
+}
+function leaveForward(){
+  const probs=stepProblems(stepId, flow, answers);
+  if(probs.length){
+    pendingFocus=probs[0].id;
+    showMissing(probs.map(p=>({ ...p, stepId })));
+    render();
+    return;
+  }
+  if(stepId==="medical") answers.__ui=Object.assign({}, answers.__ui, { medicalSeen:true, step:"medical" });
+  if(returnTo && returnTo!==stepId && !earlierBlock(returnTo, flow, answers)){
+    const back=returnTo; returnTo="";
+    go(back, back==="documents"?docIndex:0);
+    return;
+  }
+  returnTo="";
+  const ids=flow.steps.map(s=>s.id);
+  const i=ids.indexOf(stepId);
+  const next=ids[i+1]||"review";
+  if(next==="finish"){ go("review"); return; }
+  go(next, 0);
+}
+function showMissing(items){
+  const box=$("missing");
+  if(!box) return;
+  box.classList.remove("hide");
+  box.innerHTML="";
+  const p=document.createElement("p");
+  p.textContent=(items.length===1?(L==="es"?"1 dato pendiente: ":"1 item needs attention: "):(items.length+" "+(L==="es"?"datos pendientes: ":"items need attention: ")))+items.map(i=>i.label).join(", ");
+  box.appendChild(p);
+  for(const item of items){
+    const b=document.createElement("button");
+    b.type="button"; b.className="miss";
+    b.textContent=(L==="es"?"Ir a ":"Go to ")+item.label;
+    b.onclick=()=>{ pendingFocus=item.id; returnTo=stepId; go(item.stepId||stepId, 0); };
+    box.appendChild(b);
+  }
+}
+function clearMissing(){ if($("missing")){ $("missing").classList.add("hide"); $("missing").innerHTML=""; } }
+function fieldHtml(f){
+  const v=answers[f.key]??"";
+  if(f.type==="note"){
+    const cls=f.variant==="warn"?"notice":f.variant==="heading"?"boxhead":"note";
+    return '<div class="'+cls+'">'+esc(lab(f))+'</div>';
+  }
+  if(f.type==="checkbox"){
+    const on=v===true||v==="yes"||v===1;
+    return '<label class="chk"><input type="checkbox" id="f_'+f.key+'" '+(on?"checked":"")+'> <span>'+esc(lab(f))+'</span></label>';
+  }
+  let html='<label for="f_'+f.key+'">'+esc(lab(f))+(f.required?" *":"")+'</label>';
+  if(f.type==="yes_no"){
+    const yn=v==="yes"||v==="no"?v:"";
+    html+='<div class="yesno" id="f_'+f.key+'" role="radiogroup" aria-required="'+(f.required?"true":"false")+'">';
+    html+='<label class="'+(yn==="yes"?"picked":"")+'"><input type="radio" name="'+f.key+'" value="yes" autocomplete="off"'+(yn==="yes"?' checked':'')+'> '+(L==="es"?"Sí":"Yes")+'</label>';
+    html+='<label class="'+(yn==="no"?"picked":"")+'"><input type="radio" name="'+f.key+'" value="no" autocomplete="off"'+(yn==="no"?' checked':'')+'> '+(L==="es"?"No":"No")+'</label>';
+    html+='</div>';
+    return html;
+  }
+  html+='<input id="f_'+f.key+'" value="'+esc(v)+'">';
+  return html;
+}
+function readMedical(){
+  for(const block of flow.medical||[]){
+    if(!fieldVisible(block.section.show_if, answers)) continue;
+    for(const f of block.section.fields||[]){
+      if(!fieldVisible(f.show_if, answers) || f.type==="note") continue;
+      if(f.type==="yes_no"){
+        const el=document.querySelector('input[name="'+f.key+'"]:checked');
+        answers[f.key]=el?el.value:"";
+      } else if(f.type==="checkbox"){
+        answers[f.key]=!!document.getElementById("f_"+f.key)?.checked;
+      }
+    }
+  }
+}
+function wirePad(canvas, onMark){
+  const ctx=canvas.getContext("2d");
+  let drawing=false, dirty=false;
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle="#08315c"; ctx.lineWidth=3; ctx.lineCap="round";
+  const pos=e=>{ const r=canvas.getBoundingClientRect(); return { x:(e.clientX-r.left)*canvas.width/r.width, y:(e.clientY-r.top)*canvas.height/r.height }; };
+  canvas.onpointerdown=e=>{ e.preventDefault(); drawing=true; dirty=true; try{ canvas.setPointerCapture(e.pointerId); }catch(_){} const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); };
+  canvas.onpointermove=e=>{ if(!drawing) return; e.preventDefault(); const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
+  canvas.onpointerup=()=>{ if(!drawing) return; drawing=false; if(dirty) onMark(canvas.toDataURL("image/png")); };
+  canvas.onpointercancel=()=>{ drawing=false; };
+  return { clear(){ dirty=false; ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height); } };
+}
+function heading(text){
+  const h=document.createElement("h2");
+  h.id="stepHeading";
+  h.dataset.step=stepId;
+  h.textContent=text;
+  return h;
+}
+function actions(onBack, onNext, nextLabel){
+  const row=document.createElement("div");
+  row.className="actions";
+  if(onBack){
+    const back=document.createElement("button");
+    back.type="button"; back.className="ghost"; back.textContent=L==="es"?"Atrás":"Back";
+    back.onclick=onBack;
+    row.appendChild(back);
+  }
+  const next=document.createElement("button");
+  next.type="button"; next.id="nextBtn"; next.textContent=nextLabel||(L==="es"?"Continuar":"Continue");
+  next.onclick=onNext;
+  row.appendChild(next);
+  return row;
+}
+function focusPending(){
+  if(!pendingFocus) return;
+  const el=document.getElementById("f_"+pendingFocus) || document.querySelector('[name="'+pendingFocus+'"]');
+  if(el){ el.classList.add("bad"); el.scrollIntoView({ block:"center" }); }
+  pendingFocus="";
+}
+function renderAbout(){
+  const card=document.createElement("div");
+  card.className="card";
+  card.appendChild(heading(stepLabel("about", L)));
+  const note=document.createElement("p");
+  note.className="mut";
+  note.textContent=L==="es"?"Estos datos se escriben en cada formulario.":"These details are written onto every form.";
+  card.appendChild(note);
+  const fields=[
+    ["first_name", L==="es"?"Nombre *":"First name *"],
+    ["last_name", L==="es"?"Apellido *":"Last name *"],
+    ["dob", L==="es"?"Fecha de nacimiento *":"Date of birth *"],
+    ["cell_phone", L==="es"?"Celular":"Mobile phone"],
+    ["email", "Email"],
+    ["address", L==="es"?"Dirección":"Street address"],
+    ["city", L==="es"?"Ciudad *":"City *"],
+    ["state", L==="es"?"Estado *":"State *"],
+    ["zip", "ZIP *"],
+  ];
+  for(const [key, label] of fields){
+    const labEl=document.createElement("label");
+    labEl.htmlFor="f_"+key; labEl.textContent=label;
+    const input=document.createElement("input");
+    input.id="f_"+key;
+    input.value=answers[key]||"";
+    if(key==="dob"){ input.type="date"; input.max=new Date().toISOString().slice(0,10); }
+    if(key==="email") input.type="email";
+    if(key==="cell_phone") input.type="tel";
+    card.append(labEl, input);
+  }
+  card.appendChild(actions(()=>go("about"), ()=>{
+    for(const [key] of fields) answers[key]=(document.getElementById("f_"+key).value||"").trim();
+    answers.full_name_print=((answers.first_name||"")+" "+(answers.last_name||"")).trim();
+    if(!answers.address) answers.address=[answers.city, answers.state, answers.zip].filter(Boolean).join(", ");
+    rebuild();
+    leaveForward();
+  }));
+  return card;
+}
+function renderEmergency(){
+  const card=document.createElement("div");
+  card.className="card";
+  card.appendChild(heading(stepLabel("emergency", L)));
+  const fields=[
+    ["emergency_contact_name", L==="es"?"Nombre *":"Name *"],
+    ["emergency_contact_relationship", L==="es"?"Parentesco":"Relationship"],
+    ["emergency_contact_email", "Email"],
+    ["emergency_contact_phone", L==="es"?"Teléfono *":"Phone *"],
+  ];
+  for(const [key, label] of fields){
+    const labEl=document.createElement("label");
+    labEl.htmlFor="f_"+key; labEl.textContent=label;
+    const input=document.createElement("input");
+    input.id="f_"+key; input.value=answers[key]||"";
+    if(key.endsWith("email")) input.type="email";
+    if(key.endsWith("phone")) input.type="tel";
+    card.append(labEl, input);
+  }
+  card.appendChild(actions(()=>{ const i=flow.steps.findIndex(s=>s.id==="emergency"); go(flow.steps[Math.max(i-1,0)].id); }, ()=>{
+    for(const [key] of fields) answers[key]=(document.getElementById("f_"+key).value||"").trim();
+    leaveForward();
+  }));
+  return card;
+}
+function renderGuardian(){
+  const card=document.createElement("div");
+  card.className="card";
+  card.appendChild(heading(stepLabel("guardian", L)));
+  const p=document.createElement("p");
+  p.className="mut";
+  p.textContent=L==="es"?"El participante es menor de 18. El tutor firma el consentimiento de la tienda. El anexo juvenil oficial de SSI se archiva antes del buceo.":"The participant is under 18. The guardian signs the shop consent. The official SSI Youth Addendum is filed before the dive.";
+  card.appendChild(p);
+  for(const [key, label] of [["guardian_name", L==="es"?"Nombre del tutor *":"Guardian name *"],["guardian_relationship", L==="es"?"Parentesco":"Relationship"]]){
+    const labEl=document.createElement("label"); labEl.textContent=label; labEl.htmlFor="f_"+key;
+    const input=document.createElement("input"); input.id="f_"+key; input.value=answers[key]||"";
+    card.append(labEl, input);
+  }
+  card.appendChild(actions(()=>go("emergency"), ()=>{
+    answers.guardian_name=document.getElementById("f_guardian_name").value.trim();
+    answers.guardian_relationship=document.getElementById("f_guardian_relationship").value.trim();
+    leaveForward();
+  }));
+  return card;
+}
+function visibleMedicalKeys(){
+  const keys=[];
+  for(const block of flow.medical||[]){
+    if(!fieldVisible(block.section.show_if, answers)) continue;
+    for(const f of block.section.fields||[]){
+      if(!fieldVisible(f.show_if, answers) || f.type==="note") continue;
+      keys.push(f.key);
+    }
+  }
+  return keys;
+}
+function scrubMedicalDefaults(){
+  for(const block of flow.medical||[]){
+    for(const f of block.section.fields||[]){
+      if(f.type!=="yes_no") continue;
+      if(answers[f.key]!=="yes" && answers[f.key]!=="no") delete answers[f.key];
+    }
+  }
+}
+function renderMedical(){
+  scrubMedicalDefaults();
+  const card=document.createElement("div");
+  card.className="card";
+  card.appendChild(heading(stepLabel("medical", L)));
+  const intro=document.createElement("p");
+  intro.className="mut";
+  intro.textContent=L==="es"?"Responde con tus datos de hoy. Nada viene marcado: elige Sí o No en cada pregunta. Si respondes Sí, las casillas de esa pregunta se abren aquí.":"Answer for today. Nothing is pre-selected — choose Yes or No on each question. If you answer Yes, that question's boxes open on this page.";
+  card.appendChild(intro);
+  let any=false;
+  for(const block of flow.medical||[]){
+    if(!fieldVisible(block.section.show_if, answers)) continue;
+    const title=typeof block.section.title==="string"?block.section.title:(block.section.title&&(block.section.title[L]||block.section.title.en))||block.templateName;
+    const h=document.createElement("h3"); h.textContent=title; card.appendChild(h);
+    for(const f of block.section.fields||[]){
+      if(!fieldVisible(f.show_if, answers)) continue;
+      any=true;
+      const wrap=document.createElement("div");
+      wrap.id="wrap_"+f.key;
+      wrap.innerHTML=fieldHtml(f);
+      card.appendChild(wrap);
+    }
+  }
+  if(!any){
+    const p=document.createElement("p");
+    p.textContent=L==="es"?"Este paquete no tiene preguntas médicas.":"This packet has no medical questions.";
+    card.appendChild(p);
+  }
+  const opened=medicalAnchor;
+  medicalAnchor="";
+  card.querySelectorAll('input[type="radio"]').forEach((el)=>{
+    el.addEventListener("change", ()=>{
+      const before=visibleMedicalKeys().join("|");
+      readMedical();
+      const after=visibleMedicalKeys();
+      if(before===after.join("|")) return;
+      medicalAnchor=after.find((k)=>before.split("|").indexOf(k)<0)||el.name;
+      go("medical", 0, { replace:true });
+    });
+  });
+  card.appendChild(actions(()=>{
+    readMedical();
+    const i=flow.steps.findIndex(s=>s.id==="medical");
+    go(flow.steps[Math.max(i-1,0)].id);
+  }, ()=>{
+    const before=visibleMedicalKeys().join("|");
+    readMedical();
+    const after=visibleMedicalKeys();
+    if(before!==after.join("|")){
+      medicalAnchor=after.find((k)=>before.split("|").indexOf(k)<0)||"";
+      go("medical", 0, { replace:true });
+      return;
+    }
+    leaveForward();
+  }));
+  if(opened){
+    const target=card.querySelector("#wrap_"+opened);
+    if(target) setTimeout(()=>{ target.scrollIntoView({ block:"center" }); }, 0);
+  }
+  return card;
+}
+function renderDocuments(){
+  const docs=flow.docs||[];
+  const doc=docs[docIndex]||{ key:"", name:"", legal:"", missing:true };
+  const card=document.createElement("div");
+  card.className="card";
+  card.appendChild(heading(stepLabel("documents", L)));
+  const pos=document.createElement("p");
+  pos.className="docpos";
+  pos.id="docPos";
+  pos.textContent=(L==="es"?"Documento ":"Document ")+(docIndex+1)+" "+(L==="es"?"de ":"of ")+Math.max(docs.length,1)+": "+(doc.name||"");
+  card.appendChild(pos);
+  const list=document.createElement("ol");
+  list.className="doclist";
+  docs.forEach((d, i)=>{
+    const li=document.createElement("li");
+    const b=document.createElement("button");
+    b.type="button";
+    const agreed=answers.__agreements&&answers.__agreements[d.key]&&answers.__agreements[d.key].accepted;
+    b.textContent=(agreed?"✓ ":"")+(d.name||d.key);
+    b.onclick=()=>{
+      if(i>docIndex){
+        const prev=docs[docIndex];
+        const prevSig=answers.__signatures&&(answers.__signatures[prev.key]||(!answers.__signatures._reuseOff&&answers.__signatures._reuse));
+        const ok=answers.__agreements&&answers.__agreements[prev.key]&&answers.__agreements[prev.key].accepted&&String(prevSig||"").startsWith("data:image/png");
+        if(!ok){ $("err").textContent=(L==="es"?"Termina primero: ":"Finish ")+(prev.name||"")+(L==="es"?"":" first"); return; }
+      }
+      go("documents", i, { replace:true });
+    };
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+  card.appendChild(list);
+  const usePdf=["try_scuba_reg","intro_code","fit_to_dive","privacy","rec_waiver","diver_medical"].includes(doc.key);
+  const legal=(L==="es"&&doc.legalEs)?doc.legalEs:doc.legal;
+  if(!usePdf && (doc.missing || !legal)){
+    const warn=document.createElement("p");
+    warn.className="err";
+    warn.textContent=L==="es"?"No se cargó el texto de este documento.":"This document's text did not load.";
+    const retry=document.createElement("button");
+    retry.type="button"; retry.className="ghost"; retry.textContent=L==="es"?"Reintentar":"Retry";
+    retry.onclick=()=>location.reload();
+    card.append(warn, retry);
+    return card;
+  }
+  const minor=!!flow.minor;
+  const dateText=new Intl.DateTimeFormat("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}).format(new Date());
+  const paper=document.createElement("div");
+  paper.className="doc paper";
+  paper.id="doc";
+  if(!usePdf){
+    paper.innerHTML=renderDocumentHtml(legal, answers, { minor, shopName:(payload&&payload.shopName)||"", dateText })+'<div data-doc-end="1" id="docEnd" style="height:32px"></div>';
+  } else {
+    const wait=document.createElement("p");
+    wait.className="mut";
+    wait.textContent=L==="es"?"Cargando el formulario oficial…":"Loading the official form…";
+    paper.appendChild(wait);
+  }
+  card.appendChild(paper);
+  const hint=document.createElement("p");
+  hint.className="mut"; hint.id="scrollHint";
+  hint.textContent=L==="es"?"Llega al final del documento para aceptar.":"Reach the end of the document to agree.";
+  const agreeLab=document.createElement("label");
+  agreeLab.className="chk";
+  const agree=document.createElement("input");
+  agree.type="checkbox"; agree.id="agree"; agree.disabled=true;
+  const agreeSpan=document.createElement("span");
+  agreeSpan.textContent=L==="es"?"He leído y acepto este documento":"I have read and agree to this document";
+  agreeLab.append(agree, agreeSpan);
+  const why=document.createElement("p");
+  why.className="mut"; why.id="agreeWhy";
+  why.textContent=L==="es"?"El recuadro se activa al final del texto.":"The checkbox turns on at the end of the text.";
+  const stored=answers.__signatures||{};
+  const reuseOff=stored._reuseOff===true;
+  const hasReuse=String(stored._reuse||"").startsWith("data:image/png");
+  const ownSig=String(stored[doc.key]||"").startsWith("data:image/png");
+  const showPad=reuseOff?!ownSig:!hasReuse;
+  const reuseLab=document.createElement("label");
+  reuseLab.className="chk";
+  const reuse=document.createElement("input");
+  reuse.type="checkbox"; reuse.id="reuse";
+  reuse.checked=!reuseOff;
+  const reuseSpan=document.createElement("span");
+  reuseSpan.textContent=L==="es"?"Usar esta firma":"Use this signature";
+  reuseLab.append(reuse, reuseSpan);
+  const sigLab=document.createElement("label");
+  sigLab.textContent=L==="es"?"Firma":"Signature";
+  const pad=document.createElement("canvas");
+  pad.id="pad"; pad.width=640; pad.height=160;
+  const clear=document.createElement("button");
+  clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
+  card.append(hint, agreeLab, why);
+  if(docIndex===0) card.appendChild(reuseLab);
+  if(showPad) card.append(sigLab, pad, clear);
+  else {
+    const note=document.createElement("p");
+    note.className="mut";
+    note.textContent=L==="es"?"Se usa la firma del primer documento.":"Using the signature from the first document.";
+    card.appendChild(note);
+  }
+  let gpad=null;
+  const needGuardian=minor && (docIndex===0 || !String(stored.guardian||"").startsWith("data:image/png"));
+  if(needGuardian){
+    const gl=document.createElement("label");
+    gl.textContent=L==="es"?"Firma del tutor":"Guardian signature";
+    gpad=document.createElement("canvas");
+    gpad.id="gpad"; gpad.width=640; gpad.height=140;
+    card.append(gl, gpad);
+  }
+  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||(docIndex===0&&answers.__signatures._reuse));
+  card.appendChild(actions(()=>{
+    if(docIndex>0) go("documents", docIndex-1);
+    else {
+      const i=flow.steps.findIndex(s=>s.id==="documents");
+      go(flow.steps[Math.max(i-1,0)].id);
+    }
+  }, ()=>acceptDoc(doc, agree, pad, gpad, reuse), docIndex>=docs.length-1?(L==="es"?"Ir a revisar":"Continue to review"):(L==="es"?"Siguiente documento":"Next document")));
+  const arm=()=>{
+    const overflow=paper.scrollHeight-paper.clientHeight>12;
+    const end=document.getElementById("docEnd");
+    if(!end) return;
+    const enable=()=>{
+      if(!documentCanAgree({ overflow, sentinelVisible:true }) && overflow) return;
+      agree.disabled=false;
+      hint.textContent="";
+      why.textContent=L==="es"?"Ya puedes marcar que leíste el documento.":"You can now check that you read this document.";
+    };
+    if(!overflow){ enable(); return; }
+    const watch=(root)=>{
+      const io=new IntersectionObserver((entries)=>{
+        if(entries.some(e=>e.isIntersecting && e.intersectionRatio>0)) enable();
+      }, { root, threshold:[0, 0.01, 1] });
+      io.observe(end);
+    };
+    watch(paper);
+    watch(null);
+  };
+  setTimeout(arm, 0);
+  if(usePdf){
+    fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"preview",templateKey:doc.key,answers,language:L})})
+      .then((r)=>{ if(!r.ok) throw new Error("preview"); return r.arrayBuffer(); })
+      .then((buf)=>paintPdf(paper, buf))
+      .then(()=>arm())
+      .catch(()=>{
+        paper.innerHTML="";
+        const p=document.createElement("p");
+        p.className="err";
+        p.textContent=L==="es"?"No se pudo mostrar el formulario oficial.":"The official form could not be shown.";
+        const retry=document.createElement("button");
+        retry.type="button"; retry.className="ghost";
+        retry.textContent=L==="es"?"Reintentar":"Retry";
+        retry.onclick=()=>go("documents", docIndex, { replace:true });
+        paper.append(p, retry);
+      });
+  }
+  if(showPad){
+    const draw=wirePad(pad, (url)=>{
+      const rec=recordSignature(answers.__signatures, doc.key, url);
+      if(!rec.ok){ $("err").textContent=rec.error; return; }
+      answers.__signatures=rec.map;
+      if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
+      saveSigs();
+      go("documents", docIndex, { replace:true });
+    });
+    if(saved){
+      const img=new Image();
+      img.onload=()=>{ pad.getContext("2d").drawImage(img,0,0,pad.width,pad.height); };
+      img.src=saved;
+    }
+    clear.onclick=()=>{
+      draw.clear();
+      if(answers.__signatures){
+        delete answers.__signatures[doc.key];
+        if(docIndex===0) delete answers.__signatures._reuse;
+      }
+      saveSigs();
+    };
+  }
+  if(docIndex===0){
+    reuse.addEventListener("change", ()=>{
+      answers.__signatures=answers.__signatures||{};
+      if(reuse.checked){
+        delete answers.__signatures._reuseOff;
+        if(String(answers.__signatures[doc.key]||"").startsWith("data:image/png")) answers.__signatures._reuse=answers.__signatures[doc.key];
+      } else {
+        answers.__signatures._reuseOff=true;
+        delete answers.__signatures._reuse;
+      }
+      saveSigs();
+    });
+  }
+  if(gpad){
+    wirePad(gpad, (url)=>{
+      const rec=recordSignature(answers.__signatures, "guardian", url);
+      if(!rec.ok){ $("err").textContent=rec.error; return; }
+      answers.__signatures=rec.map;
+      answers.__guardian_signed=true;
+      saveSigs();
+    });
+    const gsaved=answers.__signatures&&answers.__signatures.guardian;
+    if(gsaved){
+      const img=new Image();
+      img.onload=()=>{ gpad.getContext("2d").drawImage(img,0,0,gpad.width,gpad.height); };
+      img.src=gsaved;
+    }
+  }
+  return card;
+}
+function acceptDoc(doc, agree, pad, gpad, reuse){
+  if(agree.disabled || !agree.checked){
+    $("err").textContent=L==="es"?"Llega al final y marca que aceptas.":"Reach the end and check that you agree.";
+    return;
+  }
+  answers.__signatures=answers.__signatures||{};
+  const reuseOn=docIndex===0 ? !!(reuse&&reuse.checked) : answers.__signatures._reuseOff!==true;
+  if(reuseOn && String(answers.__signatures._reuse||"").startsWith("data:image/png;base64,")){
+    const rec=recordSignature(answers.__signatures, doc.key, answers.__signatures._reuse);
+    if(rec.ok) answers.__signatures=rec.map;
+  }
+  if(!String(answers.__signatures[doc.key]||"").startsWith("data:image/png;base64,")){
+    $("err").textContent=L==="es"?"Firma el documento.":"Sign this document.";
+    return;
+  }
+  if(docIndex===0 && reuseOn){
+    answers.__signatures._reuse=answers.__signatures[doc.key];
+    delete answers.__signatures._reuseOff;
+  }
+  if(docIndex===0 && reuse && !reuse.checked){
+    answers.__signatures._reuseOff=true;
+    delete answers.__signatures._reuse;
+  }
+  if(flow.minor && !String(answers.__signatures.guardian||"").startsWith("data:image/png;base64,")){
+    $("err").textContent=L==="es"?"El tutor debe firmar.":"Guardian signature is required.";
+    return;
+  }
+  if(flow.minor){ answers.__guardian_signed=true; answers.guardian_signature="signed"; }
+  answers.__agreements=answers.__agreements||{};
+  answers.__agreements[doc.key]={ accepted:true, at:Date.now(), text:"I have read and agree to this document" };
+  if(doc.key==="privacy") answers.guardian_privacy_consent=true;
+  answers.__consent_accepted=true;
+  saveSigs();
+  if(docIndex < (flow.docs||[]).length-1) go("documents", docIndex+1);
+  else go("review");
+}
+function renderReview(){
+  const card=document.createElement("div");
+  card.className="card";
+  card.appendChild(heading(stepLabel("review", L)));
+  const items=missingItems(flow, answers, L);
+  if(items.length){
+    const note=document.createElement("p");
+    note.className="err";
+    note.textContent=items.length+" "+(L==="es"?"datos pendientes":"items need attention");
+    card.appendChild(note);
+    showMissing(items);
+  }
+  for(const [k,v] of [["Name", answers.full_name_print],["DOB", answers.dob],["Email", answers.email],["Phone", answers.cell_phone],["City", answers.city]]){
+    const p=document.createElement("p");
+    const b=document.createElement("b"); b.textContent=k+" ";
+    p.append(b, document.createTextNode(v||"—"));
+    card.appendChild(p);
+  }
+  if(payload&&payload.turnstileSiteKey){
+    const cf=document.createElement("div");
+    cf.id="cf"; cf.className="cf-turnstile"; cf.dataset.sitekey=payload.turnstileSiteKey;
+    card.appendChild(cf);
+  }
+  const row=actions(()=>go("documents", Math.max((flow.docs||[]).length-1,0)), ()=>submitPacket(), L==="es"?"Terminar":"Finish");
+  const finishBtn=row.querySelector("#nextBtn");
+  if(items.length){
+    const why=document.createElement("p");
+    why.className="err";
+    why.id="finishWhy";
+    why.textContent=(L==="es"?"Falta: ":"Still needed: ")+items.map(i=>i.label).join(", ");
+    card.appendChild(why);
+  }
+  card.appendChild(row);
+  if(payload&&payload.turnstileSiteKey&&window.turnstile){
+    setTimeout(()=>{ try{ window.turnstile.render("#cf",{sitekey:payload.turnstileSiteKey}); }catch(e){} }, 0);
+  }
+  return card;
+}
+async function submitPacket(){
+  const items=missingItems(flow, answers, L);
+  if(items.length){ showMissing(items); $("err").textContent=(L==="es"?"Falta: ":"Still needed: ")+items.map(i=>i.label).join(", "); return; }
+  const btn=$("nextBtn");
+  if(btn){ btn.disabled=true; btn.textContent="…"; }
+  answers.__consent_accepted=true;
+  answers.full_name_print=((answers.first_name||"")+" "+(answers.last_name||"")).trim();
+  const first=(flow.docs&&flow.docs[0]&&flow.docs[0].key)||"";
+  const sig=(answers.__signatures&&(answers.__signatures[first]||answers.__signatures._reuse))||"";
+  const turnstileToken=document.querySelector("[name=cf-turnstile-response]")?.value||"";
+  let r, out;
+  try{
+    r=await fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      action:"submit", answers, signerName:answers.full_name_print, signatureDataUrl:sig, language:L, consentText:"I have read and agree to this document", turnstileToken
+    })});
+    out=await r.json().catch(()=>({}));
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Terminar":"Finish"; }
+    showRetry(L==="es"?"No se envió. Tus datos siguen aquí.":"Submit failed. Your answers are still here.");
+    return;
+  }
+  if(!r.ok){
+    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Terminar":"Finish"; }
+    const view=submitFailureView(out);
+    showRetry(view.message);
+    if(view.items.length) showMissing(view.items.map(i=>({ ...i, stepId: stepForError(i.id) })));
+    $("err").textContent=view.message;
+    return;
+  }
+  doneOut=out;
+  stepId="finish";
+  history.pushState({ stepId:"finish" }, "", location.pathname+location.search+"#finish");
+  render();
+  showDone(out);
+}
+function stepForError(key){
+  if(!key) return "review";
+  if(["first_name","last_name","dob","city","state","zip"].includes(key)) return "about";
+  if(String(key).startsWith("emergency_")) return "emergency";
+  if(String(key).startsWith("guardian")) return flow.minor?"guardian":"about";
+  if(String(key).startsWith("agree_")||String(key).startsWith("sign_")||String(key).startsWith("doc_")) return "documents";
+  if(String(key).startsWith("dm_")||String(key).startsWith("fit_")||key==="over_45") return "medical";
+  return "review";
+}
+function loadPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if(window.__bnbPdf) return window.__bnbPdf;
+  window.__bnbPdf=new Promise((resolve, reject)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload=()=>{
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      resolve(window.pdfjsLib);
+    };
+    s.onerror=()=>reject(new Error("pdf.js"));
+    document.head.appendChild(s);
+  });
+  return window.__bnbPdf;
+}
+async function paintPdf(host, bytes){
+  const pdfjs=await loadPdfJs();
+  const pdf=await pdfjs.getDocument({ data: bytes }).promise;
+  host.innerHTML="";
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const viewport=page.getViewport({ scale: 1.15 });
+    const canvas=document.createElement("canvas");
+    canvas.width=viewport.width;
+    canvas.height=viewport.height;
+    canvas.style.width="100%";
+    canvas.style.height="auto";
+    canvas.style.display="block";
+    canvas.style.margin="0 0 8px";
+    host.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+  }
+  const end=document.createElement("div");
+  end.id="docEnd";
+  end.setAttribute("data-doc-end","1");
+  end.style.height="32px";
+  host.appendChild(end);
+}
+function pdfFileName(key){
+  const clean=(s)=>String(s||"Form").replace(/[^\\p{L}\\p{N}._-]+/gu,"_").replace(/_+/g,"_").slice(0,40);
+  const day=new Date().toISOString().slice(0,10);
+  return clean(answers.last_name)+"_"+clean(answers.first_name)+"_"+clean(key)+"_"+day+".pdf";
+}
+async function downloadPdf(key){
+  const res=await fetch("/api/forms/public/"+TOKEN+"?file="+encodeURIComponent(key));
+  if(!res.ok) throw new Error("download");
+  const blob=await res.blob();
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=pdfFileName(key);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  return blob;
+}
+function showDone(out){
+  const app=$("app");
+  app.innerHTML="";
+  const card=document.createElement("div");
+  card.className="card";
+  const h=heading(L==="es"?"Listo":"Finish");
+  h.textContent=L==="es"?"Registro completo":"Registration complete";
+  card.appendChild(h);
+  const p=document.createElement("p");
+  p.append((L==="es"?"Registro #: ":"Registration #: "));
+  const b=document.createElement("b");
+  b.textContent=out.registrationNumber||"—";
+  p.appendChild(b);
+  card.appendChild(p);
+  if(out.needsPhysician||out.needsStaffReview){
+    const n=document.createElement("div");
+    n.className="notice";
+    n.textContent=out.staffReviewNotice||out.physicianNotice||(L==="es"?"El personal revisará tu cuestionario antes del buceo.":"Staff will review your questionnaire before the dive.");
+    card.appendChild(n);
+  } else {
+    const ok=document.createElement("p");
+    ok.className="ok";
+    ok.textContent=L==="es"?"Tu formulario médico está en orden.":"Your medical form is clear.";
+    card.appendChild(ok);
+  }
+  const files=out.files||[];
+  const all=files.find((f)=>f.key==="packet");
+  if(all){
+    const allBtn=document.createElement("button");
+    allBtn.type="button"; allBtn.className="ban"; allBtn.style.width="100%"; allBtn.style.marginTop="8px";
+    allBtn.textContent=L==="es"?"Descargar todo":"Download all";
+    allBtn.onclick=()=>downloadPdf("packet").catch(()=>showRetry(L==="es"?"No se pudo descargar":"Download failed"));
+    card.appendChild(allBtn);
+  }
+  for(const f of files){
+    if(f.key==="packet") continue;
+    const btn=document.createElement("button");
+    btn.type="button"; btn.className="ghost"; btn.style.width="100%"; btn.style.marginTop="8px";
+    btn.textContent=(L==="es"?"Descargar ":"Download ")+(f.key||"pdf");
+    btn.onclick=()=>downloadPdf(f.key).catch(()=>showRetry(L==="es"?"No se pudo descargar":"Download failed"));
+    card.appendChild(btn);
+    if(!f.reference){
+      const host=document.createElement("div");
+      host.className="doc paper";
+      host.style.marginTop="8px";
+      host.textContent=L==="es"?"Cargando vista previa…":"Loading preview…";
+      card.appendChild(host);
+      fetch("/api/forms/public/"+TOKEN+"?file="+encodeURIComponent(f.key))
+        .then((r)=>{ if(!r.ok) throw new Error("file"); return r.arrayBuffer(); })
+        .then((buf)=>paintPdf(host, buf))
+        .catch(()=>{ host.textContent=L==="es"?"No se pudo mostrar el PDF.":"The PDF could not be shown."; });
+    }
+  }
+  const email=document.createElement("button");
+  email.type="button"; email.className="ghost"; email.style.width="100%"; email.style.marginTop="8px";
+  email.textContent=L==="es"?"Copiar enlace seguro":"Copy a secure link";
+  const note=document.createElement("p"); note.className="mut"; note.id="emailNote";
+  email.onclick=async()=>{
+    const res=await fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"email-copy",language:L})});
+    const j=await res.json().catch(()=>({}));
+    note.textContent=j.note||"";
+    if(j.link){
+      const inp=document.createElement("input");
+      inp.readOnly=true; inp.value=j.link;
+      const copy=document.createElement("button");
+      copy.type="button"; copy.className="ghost"; copy.textContent=L==="es"?"Copiar":"Copy";
+      copy.onclick=()=>{ navigator.clipboard.writeText(j.link).then(()=>{ copy.textContent=L==="es"?"Copiado":"Copied"; }).catch(()=>{}); };
+      note.after(inp, copy);
+    }
+  };
+  const back=document.createElement("button");
+  back.type="button"; back.className="ban"; back.style.width="100%"; back.style.marginTop="8px";
+  back.textContent=L==="es"?"Volver al registro":"Back to registration";
+  back.onclick=()=>{
+    if(window.parent&&window.parent!==window) window.parent.postMessage({type:"bnb_packet_done",registrationNumber:out.registrationNumber||""}, location.origin);
+    else location.href="/register";
+  };
+  card.append(email, note, back);
+  app.appendChild(card);
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:"bnb_packet_done",registrationNumber:out.registrationNumber||"",needsPhysician:!!(out.needsPhysician||out.needsStaffReview),needsStaffReview:!!(out.needsPhysician||out.needsStaffReview),staffReviewStatus:out.staffReviewStatus||""}, location.origin);
+    }
+  }catch(e){}
+  paintStepper();
+}
+function render(){
+  syncLangBtn();
+  applyTheme();
+  paintStepper();
+  $("err").textContent="";
+  clearMissing();
+  const app=$("app");
+  app.innerHTML="";
+  let card=null;
+  if(stepId==="about") card=renderAbout();
+  else if(stepId==="emergency") card=renderEmergency();
+  else if(stepId==="guardian") card=renderGuardian();
+  else if(stepId==="medical") card=renderMedical();
+  else if(stepId==="documents") card=renderDocuments();
+  else if(stepId==="review") card=renderReview();
+  else if(stepId==="finish" && doneOut){ showDone(doneOut); return; }
+  else card=renderAbout();
+  if(card) app.appendChild(card);
+  focusPending();
+  const probs=stepProblems(stepId, flow, answers);
+  if(probs.length && stepId!=="review" && stepId!=="documents"){
+    const why=document.createElement("p");
+    why.className="mut";
+    why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
+    app.appendChild(why);
+  }
+}
+window.addEventListener("popstate", ()=>{
+  const parsed=parseHash(location.hash, flow)||{ stepId:"about", docIndex:0 };
+  const block=earlierBlock(parsed.stepId, flow, answers);
+  stepId=block?block.stepId:parsed.stepId;
+  docIndex=parsed.docIndex||0;
+  if(block) $("err").textContent=(L==="es"?"Termina primero: ":"Finish ")+stepLabel(block.stepId, L)+(L==="es"?"":" first");
+  render();
+});
+function setLang(next, opts){
+  opts=opts||{};
+  if(next!=="en" && next!=="es") return;
+  const changed=L!==next;
+  L=next;
+  try{localStorage.setItem("bnb_lang",L)}catch(e){}
+  syncLangBtn();
+  if(changed && flow && !opts.skipRender) render();
+}
+$("langBtn").onclick=()=>setLang(L==="en"?"es":"en");
+window.addEventListener("message",(ev)=>{
+  if(!ev.data||ev.data.type!=="bnb_set_lang") return;
+  setLang(ev.data.lang);
+});
+window.addEventListener("storage",(ev)=>{
+  if(ev.key!=="bnb_lang") return;
+  if(ev.newValue==="en"||ev.newValue==="es") setLang(ev.newValue);
+});
+try{
+  const q=new URLSearchParams(location.search).get("lang");
+  if(q==="en"||q==="es") setLang(q,{skipRender:true});
+}catch(e){}
+$("themeBtn").onclick=()=>{ theme=theme==="dark"?"light":"dark"; try{localStorage.setItem("bnb_theme",theme)}catch(e){} applyTheme(); };
+if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
+  let idle;
+  const bump=()=>{ clearTimeout(idle); idle=setTimeout(()=>{ try{ sessionStorage.removeItem(sigKey()); localStorage.removeItem("bnb_reg_draft"); }catch(e){} location.href="/register?kiosk=1"; }, 600000); };
+  ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev, bump, {passive:true}));
+  bump();
+}
+(async()=>{
+  applyTheme();
+  syncLangBtn();
+  $("title").textContent=L==="es"?"Cargando…":"Loading…";
+  const r=await fetch("/api/forms/public/"+TOKEN);
+  const out=await r.json().catch(()=>({}));
+  if(!r.ok){ $("title").textContent=out.error||"Error"; showRetry(out.error||(L==="es"?"No se pudo abrir":"Could not open")); return; }
+  payload=out;
+  answers=out.answers||{};
+  delete answers.__signatures;
+  loadSigs();
+  if(!answers.__visited) answers.__visited=[];
+  rebuild();
+  $("title").textContent=(out.packet&&out.packet.name)||out.shopName||"Forms";
+  const fromHash=parseHash(location.hash, flow);
+  const resume=fromHash||resumeTarget(flow, answers);
+  stepId=resume.stepId;
+  docIndex=resume.docIndex||0;
+  const block=earlierBlock(stepId, flow, answers);
+  if(block) stepId=block.stepId;
+  history.replaceState({ stepId, docIndex }, "", location.pathname+location.search+hashFor(stepId, docIndex));
+  render();
+})();
+`;
+}

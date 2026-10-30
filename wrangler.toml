@@ -1,6 +1,11 @@
 name = "banana-nut-burgers"
 pages_build_output_dir = "."
 compatibility_date = "2026-10-20"
+compatibility_flags = ["nodejs_compat"]
+
+# Cron: configure in Cloudflare Dashboard → Workers/Pages → Triggers → Cron
+# Schedule: 0 * * * *  →  GET /api/forms/cron  (set CRON_SECRET)
+# Workers Paid recommended: Free plan CPU (10ms) is too low for multi-page pdf-lib fills.
 
 # D1 database for booking requests (CRM).
 # 1) npx wrangler d1 create banana-nut-burgers-db
