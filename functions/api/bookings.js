@@ -66,6 +66,76 @@ export async function onRequestGet({ request, env }) {
   sql += " ORDER BY created_at DESC LIMIT 200";
 
   const { results } = await env.DB.prepare(sql).bind(...bind).all();
+
+  // Attach linked check-in so Bookings tab shows dive-shop essentials without hunting Registrations.
+  for (const b of results || []) {
+    let reg = await env.DB.prepare(
+      `SELECT r.id, r.ref, r.status, r.data, r.activity, r.planned_date, r.participants, r.booking_ref,
+              c.registration_number, c.first_name, c.last_name, c.phone, c.email
+       FROM registrations r JOIN customers c ON c.id = r.customer_id
+       WHERE r.booking_ref=? AND r.status<>'draft'
+       ORDER BY r.id DESC LIMIT 1`
+    ).bind(String(b.id)).first();
+    if (!reg && b.note) {
+      const m = String(b.note).match(/BNB-\d{4}-[A-Z0-9]+/i);
+      if (m) {
+        reg = await env.DB.prepare(
+          `SELECT r.id, r.ref, r.status, r.data, r.activity, r.planned_date, r.participants, r.booking_ref,
+                  c.registration_number, c.first_name, c.last_name, c.phone, c.email
+           FROM registrations r JOIN customers c ON c.id = r.customer_id
+           WHERE upper(r.ref)=? LIMIT 1`
+        ).bind(m[0].toUpperCase()).first();
+      }
+    }
+    if (!reg) { b.checkin = null; continue; }
+    let data = {};
+    try { data = JSON.parse(reg.data || "{}"); } catch { data = {}; }
+    const medFlag = data.medNeedsReview === 1 || data.medNeedsReview === true
+      || data.medHeart === "yes" || data.medLung === "yes" || data.medOther === "yes"
+      || data.packetNeedsPhysician === true || data.packetNeedsPhysician === 1;
+    b.checkin = {
+      registrationId: reg.id,
+      ref: reg.ref,
+      status: reg.status,
+      registrationNumber: reg.registration_number || "",
+      firstName: data.firstName || reg.first_name || "",
+      lastName: data.lastName || reg.last_name || "",
+      preferredName: data.preferredName || "",
+      dob: data.dob || "",
+      phone: data.phone || reg.phone || "",
+      email: data.email || reg.email || "",
+      address: data.address || "",
+      city: data.city || "",
+      state: data.state || "",
+      zip: data.zip || "",
+      preferredLanguage: data.preferredLanguage || "",
+      cert: data.cert || "",
+      loggedDives: data.loggedDives || "",
+      lastDive: data.lastDive || "",
+      ownGear: data.ownGear || "",
+      gearSize: data.gearSize || "",
+      gearNote: data.gearNote || "",
+      emergencyName: data.emergencyName || "",
+      emergencyRelationship: data.emergencyRelationship || "",
+      emergencyPhone: data.emergencyPhone || "",
+      notes: data.notes || "",
+      medHeart: data.medHeart || "",
+      medLung: data.medLung || "",
+      medOther: data.medOther || "",
+      medOtherDetail: data.medOtherDetail || "",
+      medicalFromPacket: !!(data.medicalFromPacket),
+      packetCompleted: !!(data.packetCompleted),
+      packetNeedsPhysician: !!(data.packetNeedsPhysician),
+      medFlag: !!medFlag,
+      plannedDate: data.plannedDate || reg.planned_date || b.date || "",
+      plannedTime: data.plannedTime || b.time || "",
+      activity: data.activity || reg.activity || b.service || "",
+      participants: data.participants || reg.participants || b.guests || 1,
+    };
+    // Surface time on the booking row itself for list formatting
+    if (!b.time && b.checkin.plannedTime) b.time = b.checkin.plannedTime;
+  }
+
   const statsRow = await env.DB.prepare(
     "SELECT COUNT(*) total, SUM(status='new') fresh, SUM(status='confirmed') confirmed, SUM(status='done') done FROM bookings"
   ).first();

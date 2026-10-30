@@ -2,12 +2,12 @@ import { json, isAuthed, str, audit } from "../../_shared.js";
 
 async function loadReg(env, id) {
   return env.DB.prepare(
-    `SELECT r.*, c.first_name, c.last_name, c.preferred_name, c.phone, c.email
+    `SELECT r.*, c.first_name, c.last_name, c.preferred_name, c.phone, c.email, c.registration_number
      FROM registrations r JOIN customers c ON c.id = r.customer_id WHERE r.id=?`
   ).bind(Number(id)).first();
 }
 
-// GET /api/registrations/:id (admin) — full detail incl. history, consents, signature
+// GET /api/registrations/:id (admin) — full detail incl. history, consents, signature, packet forms
 export async function onRequestGet({ request, env, params }) {
   if (!env.DB) return json({ error: "Database not configured" }, 503);
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
@@ -19,8 +19,21 @@ export async function onRequestGet({ request, env, params }) {
   const history = (await env.DB.prepare(
     `SELECT r.id, r.ref, r.status, r.created_at FROM registrations r WHERE r.customer_id=? ORDER BY r.created_at DESC`
   ).bind(reg.customer_id).all()).results;
+  let formSubmissions = [], formRequests = [];
+  try {
+    formSubmissions = (await env.DB.prepare(
+      "SELECT id, registration_number, needs_physician, valid_until, signed_at, signed_pdf_r2_keys FROM form_submissions WHERE customer_id=? OR registration_id=? ORDER BY id DESC LIMIT 20"
+    ).bind(reg.customer_id, reg.id).all()).results || [];
+    formRequests = (await env.DB.prepare(
+      "SELECT id, status, sent_at, completed_at, expires_at FROM form_requests WHERE customer_id=? OR registration_id=? ORDER BY id DESC LIMIT 20"
+    ).bind(reg.customer_id, reg.id).all()).results || [];
+  } catch (_) { /* forms tables may be missing until migration */ }
   await audit(env, "admin", "registration.viewed", "registration", reg.ref);
-  return json({ registration: reg, consents, signature, documents, history });
+  return json({
+    registration: reg,
+    customer: { id: reg.customer_id, registration_number: reg.registration_number },
+    consents, signature, documents, history, formSubmissions, formRequests,
+  });
 }
 
 // PATCH /api/registrations/:id {status?, reviewNote?} (admin) — audited review actions

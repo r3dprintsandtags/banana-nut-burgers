@@ -9,15 +9,15 @@ export async function onRequestGet({ request, env }) {
   const status = str(url.searchParams.get("status"), 30);
   const qDigits = q.replace(/\D/g, "");
 
-  let sql = `SELECT r.*, c.first_name, c.last_name, c.preferred_name, c.phone, c.email,
+  let sql = `SELECT r.*, c.first_name, c.last_name, c.preferred_name, c.phone, c.email, c.registration_number,
              EXISTS(SELECT 1 FROM signatures s WHERE s.registration_id=r.id) AS has_signature,
              EXISTS(SELECT 1 FROM consents k WHERE k.registration_id=r.id AND k.purpose='accuracy_declaration' AND k.granted=1) AS has_declaration
              FROM registrations r JOIN customers c ON c.id = r.customer_id`;
   const where = [], bind = [];
   if (["draft", "submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested", "complete"].includes(status)) { where.push("r.status=?"); bind.push(status); }
   if (q) {
-    where.push("(lower(c.first_name||' '||c.last_name) LIKE ? OR c.phone LIKE ? OR lower(r.ref) LIKE ? OR lower(c.email) LIKE ?)");
-    bind.push(`%${q.toLowerCase()}%`, `%${qDigits || q}%`, `%${q.toLowerCase()}%`, `%${q.toLowerCase()}%`);
+    where.push("(lower(c.first_name||' '||c.last_name) LIKE ? OR c.phone LIKE ? OR lower(r.ref) LIKE ? OR lower(c.email) LIKE ? OR lower(IFNULL(c.registration_number,'')) LIKE ?)");
+    bind.push(`%${q.toLowerCase()}%`, `%${qDigits || q}%`, `%${q.toLowerCase()}%`, `%${q.toLowerCase()}%`, `%${q.toLowerCase()}%`);
   }
   if (where.length) sql += " WHERE " + where.join(" AND ");
   sql += " ORDER BY r.created_at DESC LIMIT 200";

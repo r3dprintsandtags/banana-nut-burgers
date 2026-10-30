@@ -7,17 +7,29 @@
 <meta name="description" content="Complete your Banana Nut Burgers dive registration before arrival: guided check-in, forms, electronic signature, and confirmation.">
 <style>
 :root{--bg:#fff8e6;--card:#fff;--ink:#0a2533;--navy:#06161f;--mut:#5a6e78;--pri:#0a86b0;--teal:#0e7a6d;--ban:#ffc928;--line:#eadfc2;--ok:#17a35c;--red:#d64545}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}}
-:root[data-theme="dark"]{--bg:#06161f;--card:#0d2634;--ink:#eef8fc;--mut:#9bb6c2;--pri:#42c8f2;--line:#1b3a4a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:40px}
+*{box-sizing:border-box}body{margin:0;background:#06161f url(img/reef-swim.jpg) center/cover fixed no-repeat;color:#0a2533;font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:40px}
+body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,22,31,.5) 0%,rgba(6,22,31,.72) 40%,rgba(6,22,31,.9) 100%)}
+.wrap,.top{position:relative;z-index:1}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px}
 .top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0;max-width:760px;margin:0 auto}
-.top button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:99px;min-height:40px;padding:8px 14px;font-weight:700;cursor:pointer}
-.brand{display:flex;gap:10px;align-items:center}.brand b{font-size:15px;letter-spacing:.5px}
-h1{font-size:28px;margin:14px 0 4px}h2{font-size:20px;margin:0 0 8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+.top button{background:rgba(255,255,255,.88);backdrop-filter:blur(10px);color:var(--ink);border:1px solid rgba(255,255,255,.4);border-radius:99px;min-height:40px;padding:8px 14px;font-weight:700;cursor:pointer}
+.brand{display:flex;gap:10px;align-items:center;color:#f5fbff;text-shadow:0 2px 10px rgba(0,0,0,.45)}.brand b{font-size:15px;letter-spacing:.5px}
+h1{font-size:28px;margin:14px 0 4px;color:#f5fbff;text-shadow:0 2px 14px rgba(0,0,0,.5)}h2{font-size:20px;margin:0 0 8px}
+.wrap > .mut,.wrap > #stepLabel{color:#d7eef8!important;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.card{background:#fff!important;color:#0a2533!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:16px;padding:18px;margin-top:14px;box-shadow:0 16px 48px rgba(0,0,0,.22)}
+.card h2,.card h3,.card label,.card .chk,.card .ghost{color:#0a2533!important}
+.card .ghost{border-color:#c5b89a;background:#f7fafc;color:#075a78!important}
+.card .mut,.card .note{color:#5a6e78!important}
+.cal{background:#fff!important;color:#0a2533!important}
+.calnav,.tpill{background:#fff!important;color:#0a2533!important;border:1.5px solid #0a2533!important}
+.tpill.sel,.tpill[aria-pressed="true"]{background:#2563eb!important;color:#fff!important;border-color:#1d4ed8!important}
+.calhead b,.callegend,#calPick{color:#0a2533!important}
+#calPick.picked{color:#075a78!important;font-weight:700}
+.track li{background:#fff!important;color:#0a2533!important;backdrop-filter:blur(10px)}
+.decl,.doc,.formitem,.yesno label{background:#f7fafc!important;color:#0a2533!important;border-color:#c5b89a}
+.steps span{background:rgba(255,255,255,.35)}.steps span.on{background:var(--pri)}
 label{display:block;font-weight:600;margin-top:14px;font-size:15px}
-input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:48px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid #c5b89a;background:#fff!important;color:#0a2533!important;min-height:48px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.row{grid-template-columns:1fr}}
 button,.btn{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;background:var(--pri);color:#fff;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
 .ghost{background:transparent;color:var(--pri);border:1px solid var(--line)}
@@ -28,15 +40,26 @@ button,.btn{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px
 .decl{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);margin-top:10px}
 .steps{display:flex;gap:6px;margin:16px 0 4px}.steps span{flex:1;height:8px;border-radius:99px;background:var(--line)}.steps span.on{background:var(--pri)}
 .track{list-style:none;margin:10px 0;padding:0}.track li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-top:6px;background:var(--card);font-size:15px}
+.track li.go{cursor:pointer}.track li.go:hover{border-color:var(--pri);background:#eef8fc}
+.track .stepjump{width:100%;display:flex;gap:10px;align-items:center;background:#fff;color:#0a2533;border:0;padding:0;min-height:44px;font-weight:600;text-align:left}
+.track li.locked .stepjump{background:#e7eef2;color:#0a2533}
 .track .st{margin-left:auto;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
 .st.done{color:var(--ok)}.st.todo{color:var(--red)}.st.wait{color:var(--mut)}
+.misslink{color:var(--pri);font-weight:700;text-decoration:underline;cursor:pointer;background:none;border:0;padding:0;font:inherit}
 canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radius:12px;background:#fff;touch-action:none}
 .ref{font-size:26px;font-weight:800;letter-spacing:1px;color:var(--pri)}
+.confIds{display:grid;gap:10px;margin:12px 0}.confIds .idbox{border:1px solid var(--line);border-radius:14px;padding:12px;background:#f7fafc;text-align:center}
+.confIds .idlab{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mut)}.confIds .idval{font-size:22px;font-weight:800;color:var(--pri);letter-spacing:1px;word-break:break-all}
+.confQr{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0}.confQr img{width:180px;height:180px;border-radius:12px;background:#fff;border:1px solid var(--line)}
+.confActs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.confActs a,.confActs button{flex:1;min-width:140px}
 .kv{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;font-size:15px}.kv b{color:var(--mut);font-weight:600}
 .doc{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);font-size:14px;white-space:pre-wrap;max-height:300px;overflow:auto}
 .formitem{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--bg)}
 .pill{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--ban);color:#0a2533}
 .pill.opt{background:var(--line);color:var(--ink)}
+.stepnav{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;align-items:center}
+.stepnav .ban,.stepnav .toNext{flex:1;min-width:140px;background:var(--ban)!important;color:#0a2533!important}
+.cal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:6px}.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.calhead b{font-size:18px;letter-spacing:2px;text-transform:uppercase}.calnav{width:44px;min-height:44px;padding:0;border-radius:10px;background:var(--card);color:var(--ink);border:1.5px solid var(--ink);font-size:22px;line-height:1}.calnav:disabled{opacity:.3;cursor:default}.caldow,.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.caldow span{text-align:center;font-size:11px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;padding:4px 0}.calday{min-height:44px;padding:6px 0;border-radius:9px;font-weight:600;background:#cdeccd;color:#14532d;border:1px solid #9ed69e}.calday.low{background:#fdf0b8;color:#713f12;border-color:#ecd97a}.calday.off{background:#f6cfcf;color:#7f1d1d;border-color:#edaeae;opacity:.8;cursor:not-allowed}.calday.sel{background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 2px 0 #1e3a8a}.calblank{min-height:44px}.callegend{font-size:13px;margin:10px 0 0}.times{display:flex;flex-wrap:wrap;gap:8px}.tpill{min-height:48px;padding:10px 18px;border-radius:99px;background:var(--card);color:var(--ink);border:1.5px solid var(--ink)}.tpill.sel{background:#2563eb;color:#fff;border-color:#1d4ed8}.tpill.off{opacity:.45;text-decoration:line-through}.yesno{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}.yesno label{margin-top:0;display:flex;gap:8px;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer;font-weight:600}.yesno input{width:20px;min-height:20px;height:20px;margin:0}
 </style>
 </head>
 <body>
@@ -50,7 +73,6 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
 <div class="wrap">
   <h1>🤿 <span data-i="h1"></span></h1>
   <p class="mut" data-i="sub"></p>
-  <div class="steps" id="steps"><span></span><span></span><span></span><span></span><span></span><span></span></div>
   <p class="mut" id="stepLabel"></p>
   <ul class="track" id="tracker"></ul>
 
@@ -60,7 +82,7 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
     <p data-i="aP1"></p><p data-i="aP2"></p>
     <div id="requirements"><b data-i="reqH"></b><p class="mut" data-i="reqP"></p></div>
     <p class="mut"><span data-i="priv"></span></p>
-    <p class="mut"><span data-i="help"></span> <a href="https://wa.me/50498763374" target="_blank" rel="noopener">WhatsApp +504 9876-3374</a> · <a href="mailto:banananutburgers@gmail.com">banananutburgers@gmail.com</a></p>
+    <p class="mut"><span data-i="help"></span> <a href="https://wa.me/50498763374">WhatsApp +504 9876-3374</a> · <a href="mailto:banananutburgers@gmail.com">banananutburgers@gmail.com</a></p>
     <p><button type="button" id="startBtn" class="ban" style="width:100%;font-size:18px" data-i="start"></button></p>
     <p><button type="button" class="ghost" id="resumeOpen" data-i="resumeOpen"></button>
        <button type="button" class="ghost" id="corrBtn" data-i="corrOpen"></button></p>
@@ -77,13 +99,25 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
   <section class="card hide" data-step="1">
     <h2 data-i="tH"></h2>
     <label for="act" data-i="activity"></label><select id="act"><option value="" id="actPh"></option></select>
-    <div class="row">
-      <div><label for="pdate" data-i="pdate"></label><input id="pdate" type="date"></div>
-      <div><label for="parts" data-i="parts"></label><input id="parts" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
+    <label for="parts" data-i="parts"></label><input id="parts" type="number" min="1" max="20" value="1" inputmode="numeric">
+    <label data-i="pdate"></label>
+    <div class="cal" id="cal">
+      <div class="calhead">
+        <button type="button" class="calnav" id="calPrev" aria-label="Previous month">‹</button>
+        <b id="calTitle"></b>
+        <button type="button" class="calnav" id="calNext" aria-label="Next month">›</button>
+      </div>
+      <div class="caldow"><span data-i="sun"></span><span data-i="mon"></span><span data-i="tue"></span><span data-i="wed"></span><span data-i="thu"></span><span data-i="fri"></span><span data-i="sat"></span></div>
+      <div class="calgrid" id="calGrid"></div>
+      <p class="callegend" data-i="calLegend"></p>
+      <p class="mut" id="calPick"></p>
+      <label data-i="availTimes"></label>
+      <div class="times" id="timeSlots"></div>
     </div>
+    <input type="hidden" id="pdate">
     <label for="bref" data-i="bref"></label><input id="bref" autocomplete="off">
     <p class="err" id="err1" aria-live="polite"></p>
-    <p><button type="button" class="ghost nav" data-to="0" data-i="back"></button> <button type="button" class="toNext" data-from="1" data-i="next"></button></p>
+    <p class="stepnav"><button type="button" class="ghost nav" data-to="0" data-i="back"></button> <button type="button" class="ban toNext" id="toStep2" data-from="1" data-i="next">Continue</button></p>
   </section>
 
   <!-- 2 diver info -->
@@ -99,6 +133,28 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
       <div><label for="em" data-i="email"></label><input id="em" type="email" autocomplete="email"></div>
     </div>
     <label for="plang" data-i="plang"></label><select id="plang"><option value="en">English</option><option value="es">Español</option></select>
+    <label for="dob" data-i="dob"></label><input id="dob" type="date" autocomplete="bday" max="">
+    <label for="addr" data-i="addr"></label><input id="addr" autocomplete="street-address">
+    <div class="row">
+      <div><label for="city" data-i="city"></label><input id="city" autocomplete="address-level2"></div>
+      <div><label for="state" data-i="state"></label><input id="state" autocomplete="address-level1"></div>
+    </div>
+    <label for="zip" data-i="zip"></label><input id="zip" autocomplete="postal-code">
+    <label data-i="ownGear"></label>
+    <div class="yesno">
+      <label><input type="radio" name="ownGear" id="gearYes" value="yes"><span data-i="yes"></span></label>
+      <label><input type="radio" name="ownGear" id="gearNo" value="no"><span data-i="no"></span></label>
+    </div>
+    <div id="gearSizeWrap" class="hide">
+      <label for="gearSize" data-i="gearSize"></label>
+      <select id="gearSize">
+        <option value="" data-i="sel"></option>
+        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option>
+        <option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
+      </select>
+      <label for="gearNote" data-i="gearNote"></label>
+      <input id="gearNote" autocomplete="off" data-p="gearNotePh">
+    </div>
     <div class="row">
       <div><label for="cert" data-i="cert"></label><select id="cert">
         <option value="" data-i="sel"></option><option value="None">None</option><option value="Open Water">Open Water</option>
@@ -106,7 +162,7 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
       <div><label for="logged" data-i="logged"></label><input id="logged" type="number" min="0" inputmode="numeric"></div>
     </div>
     <div class="row">
-      <div><label for="lastdive" data-i="lastdive"></label><input id="lastdive" type="date"></div>
+      <div><label for="lastdive" data-i="lastdive"></label><input id="lastdive" type="date" max=""></div>
       <div><label for="en" data-i="emgName"></label><input id="en" autocomplete="off"></div>
     </div>
     <div class="row">
@@ -119,25 +175,42 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
     <p><button type="button" class="ghost nav" data-to="1" data-i="back"></button> <button type="button" id="saveNext2" data-i="saveNext"></button></p>
   </section>
 
-  <!-- 3 required forms -->
+  <!-- 3 required forms (SSI packet) -->
   <section class="card hide" data-step="3">
     <h2 data-i="fH2"></h2>
     <p class="mut" data-i="fSub"></p>
     <div id="formList"></div>
-    <p><button type="button" class="ghost nav" data-to="2" data-i="back"></button> <button type="button" class="toNext" data-from="3" data-i="next"></button></p>
+    <div id="packetBox" class="hide" style="margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
+      <p><b id="packetName"></b></p>
+      <p class="mut" id="packetReg"></p>
+      <p id="packetStatus" class="mut"></p>
+      <div id="packetFrameWrap" class="hide"><iframe id="packetFrame" title="Registration forms" style="width:100%;min-height:78vh;border:0;border-radius:12px;background:#fff"></iframe></div>
+      <p><button type="button" class="ghost" id="packetCheck" style="width:100%" data-i="packetCheck"></button></p>
+      <p class="mut" data-i="packetHint"></p>
+    </div>
+    <p class="err" id="err3" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="2" data-i="back"></button> <button type="button" id="toWaivers" data-i="next"></button></p>
   </section>
 
-  <!-- 4 waivers & signature -->
+  <!-- 4 final shop signature (SSI packet already covered waivers/medical) -->
   <section class="card hide" data-step="4">
     <h2 data-i="dH"></h2>
     <p class="mut" data-i="dSub"></p>
+    <div id="packetDoneBanner" class="decl hide">
+      <b data-i="packetSignNote"></b>
+      <p class="mut" data-i="packetSignSkip"></p>
+    </div>
     <div class="doc" id="docPreview"></div>
     <div class="decl"><b id="declTitle"></b><p id="declText"></p>
       <label class="chk"><input type="checkbox" id="cbDecl"><span id="declCheck"></span></label></div>
-    <div class="decl"><p id="privText"></p>
+    <div class="decl" id="privBlock"><p id="privText"></p>
       <label class="chk"><input type="checkbox" id="cbPriv"><span data-i="privCheck"></span></label></div>
     <div class="decl"><p id="mktText"></p>
       <label class="chk"><input type="checkbox" id="cbMkt"><span data-i="mktCheck"></span></label></div>
+    <div id="signMedAcks" class="decl hide">
+      <label class="chk"><input type="checkbox" id="cbPregnantSign"><span data-i="medPregnant"></span></label>
+      <label class="chk"><input type="checkbox" id="cbMedTruthSign"><span data-i="medTruth"></span></label>
+    </div>
     <label for="signer" data-i="signer"></label><input id="signer" autocomplete="name">
     <label data-i="draw"></label>
     <canvas class="sigpad" id="pad" width="640" height="180"></canvas>
@@ -146,11 +219,18 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
     <p><button type="button" class="ghost nav" data-to="3" data-i="back"></button> <button type="button" id="toSafety" data-i="next"></button></p>
   </section>
 
-  <!-- 5 safety & medical -->
+  <!-- 5 removed: SSI medical lives only in the packet (no duplicate shop questions) -->
   <section class="card hide" data-step="5">
     <h2 data-i="sH"></h2>
-    <div class="decl"><b data-i="sPend"></b><p data-i="sP"></p></div>
-    <p><button type="button" class="ghost nav" data-to="4" data-i="back"></button> <button type="button" class="toNext" data-from="5" data-i="next"></button></p>
+    <div class="decl">
+      <b data-i="medPacketDone"></b>
+      <p class="mut" data-i="medPacketSkip"></p>
+      <p class="mut" id="medPacketFlag" style="display:none" data-i="medFlag"></p>
+      <label class="chk"><input type="checkbox" id="cbPregnant" checked><span data-i="medPregnant"></span></label>
+      <label class="chk"><input type="checkbox" id="cbMedTruth" checked><span data-i="medTruth"></span></label>
+    </div>
+    <p class="err" id="err5" aria-live="polite"></p>
+    <p><button type="button" class="ghost nav" data-to="4" data-i="back"></button> <button type="button" id="toReview" data-i="next"></button></p>
   </section>
 
   <!-- 6 review & submit -->
@@ -158,7 +238,7 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
     <h2 data-i="eH"></h2>
     <div class="kv" id="review"></div>
     <p class="err" id="err6" aria-live="polite"></p>
-    <p><button type="button" class="ghost nav" data-to="2" data-i="edit"></button></p>
+    <p class="mut" data-i="editHint"></p>
     <p><button type="button" id="submitBtn" class="ban" style="width:100%" data-i="submit"></button></p>
   </section>
 
@@ -166,8 +246,23 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
   <section class="card hide" data-step="7">
     <h2>✅ <span data-i="doneH"></span></h2>
     <p><span class="pill" data-i="statusAwait"></span></p>
-    <p data-i="fRef"></p><p class="ref" id="confRef"></p>
+    <p data-i="fRef"></p>
+    <div class="confIds">
+      <div class="idbox"><div class="idlab" data-i="confBooking"></div><div class="idval" id="confBooking">—</div></div>
+      <div class="idbox"><div class="idlab" data-i="confRegNum"></div><div class="idval" id="confRegNum">—</div></div>
+      <div class="idbox"><div class="idlab" data-i="confRefLab"></div><div class="idval ref" id="confRef" style="font-size:18px">—</div></div>
+    </div>
     <p class="mut" id="confWhen"></p>
+    <div class="confQr">
+      <img id="confQr" alt="Check-in QR" width="180" height="180">
+      <p class="mut" data-i="confQrHint"></p>
+    </div>
+    <div class="confActs">
+      <a class="btn ban" id="confCal" href="#" download="bnb-dive.ics" data-i="confCal"></a>
+      <a class="btn" id="confWa" href="#" data-i="confShare"></a>
+      <button type="button" class="ghost" id="confCopy" data-i="confCopy"></button>
+    </div>
+    <p class="okmsg hide" id="confCopied" data-i="confCopied"></p>
     <div id="confList"></div>
     <p data-i="fNext"></p>
     <p><a class="btn" href="./" data-i="fBack"></a></p>
@@ -196,44 +291,180 @@ const DECL = {
       priv:"Reconozco que Banana Nut Burger guardará mi información de registro y documentos firmados de forma privada para gestionar mi registro de cliente y reservas, y que puedo solicitar correcciones contactando al negocio.",
       mkt:"Acepto recibir ofertas y novedades ocasionales de Banana Nut Burger por WhatsApp o correo. (Opcional)"}
 };
-const ACTS = ["Scuba","Dives & courses","Island tours","Snorkel","Beach & bar","Hike & explore"];
+const ACTS = ["Scuba","Dives & courses","Snorkel"];
 const T = {
-  en:{h1:"Digital dive check-in",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Welcome to your digital dive check-in",aP1:"Complete your registration before arrival to help make your check-in faster. No account needed.",aP2:"You'll answer a few guided steps, read and sign your forms electronically, and get a registration reference to show our staff when you arrive.",reqH:"What you may need",reqP:"Your certification card details (if certified), emergency contact, and a phone or email we can reach you on. Signed forms are stored privately; only authorized staff can view them.",priv:"Privacy: we only collect what this registration needs. Never share your resume code — it opens your saved draft.",help:"Need help? Contact us:",start:"Start Registration",resumeOpen:"Resume Registration",corrOpen:"Correct an existing registration",corrRef:"Registration reference *",resumeCode:"Resume code *",resumeBtn:"Resume my draft",resumeNote:"Your resume code was shown when your draft was saved (and is kept on this device). Without it, a draft cannot be opened — contact us for help.",tH:"Step 1 of 6 · Trip and activity",activity:"Activity / dive type *",pdate:"Planned date",parts:"Number of participants",bref:"Booking reference (if you have one)",bH:"Step 2 of 6 · Diver information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgRel:"Emergency contact relationship",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",saveNext:"Save & continue",fH2:"Step 3 of 6 · Required registration forms",fSub:"These forms apply to your activity. Required forms must be completed before you can dive with us.",dH:"Step 4 of 6 · Waivers & acknowledgments",dSub:"Read the document, accept each item separately, then sign. Nothing is pre-checked.",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",sH:"Step 5 of 6 · Safety & medical information",sPend:"No approved medical form has been added yet",sP:"For your safety, our staff will complete any required medical screening with you. Nothing here counts as medical clearance, and submitting this registration does not clear you to dive — that decision is always made by qualified staff.",eH:"Step 6 of 6 · Review & submit",edit:"Edit information",submit:"Sign and Submit Registration",doneH:"Registration submitted",statusAwait:"Submitted · Awaiting Review",fRef:"Your registration reference — show this to staff when you arrive:",fNext:"Next: our staff will review your registration. If anything is missing we'll contact you. To correct something, use the correction form on this page or message us on WhatsApp.",fBack:"Back to the digital card",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needAct:"Please choose your activity.",needName:"First name, last name and a valid phone are required.",needDecl:"Accept the accuracy declaration and privacy acknowledgement, type your name, and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed (connection?). Your draft is saved — try again, or contact us on WhatsApp.",saved:"Draft saved ✓ Reference",req:"Required",opt:"Optional",ver:"Version",stepOf:"Step",of:"of",trActivity:"Activity Details",trDiver:"Diver Information",trForms:"Registration Forms",trWaivers:"Waivers & Acknowledgments",trSafety:"Safety Information",trReview:"Final Review",stDone:"Complete",stTodo:"Action Required",stWait:"Not Started",stPend:"Staff will complete with you",resumeBad:"Draft not found. Check the reference and resume code."},
-  es:{h1:"Check-in digital de buceo",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Bienvenido a tu check-in digital de buceo",aP1:"Completa tu registro antes de llegar para un check-in más rápido. Sin crear cuenta.",aP2:"Responderás unos pasos guiados, leerás y firmarás tus formularios electrónicamente, y recibirás una referencia para mostrar al personal al llegar.",reqH:"Lo que puedes necesitar",reqP:"Datos de tu certificación (si estás certificado), un contacto de emergencia y un teléfono o correo donde contactarte. Los formularios firmados se guardan de forma privada; solo el personal autorizado puede verlos.",priv:"Privacidad: solo recopilamos lo necesario para este registro. Nunca compartas tu código de continuación: abre tu borrador guardado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Iniciar registro",resumeOpen:"Continuar registro",corrOpen:"Corregir un registro existente",corrRef:"Referencia de registro *",resumeCode:"Código de continuación *",resumeBtn:"Continuar mi borrador",resumeNote:"Tu código se mostró al guardar el borrador (y queda en este dispositivo). Sin él, el borrador no puede abrirse: contáctanos para ayuda.",tH:"Paso 1 de 6 · Viaje y actividad",activity:"Actividad / tipo de buceo *",pdate:"Fecha planificada",parts:"Número de participantes",bref:"Referencia de reserva (si tienes)",bH:"Paso 2 de 6 · Información del buzo",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgRel:"Relación del contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",saveNext:"Guardar y continuar",fH2:"Paso 3 de 6 · Formularios de registro requeridos",fSub:"Estos formularios aplican a tu actividad. Los requeridos deben completarse antes de bucear con nosotros.",dH:"Paso 4 de 6 · Exenciones y reconocimientos",dSub:"Lee el documento, acepta cada punto por separado y firma. Nada viene marcado.",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",sH:"Paso 5 de 6 · Seguridad e información médica",sPend:"Aún no se ha añadido un formulario médico aprobado",sP:"Por tu seguridad, nuestro personal completará contigo cualquier evaluación médica requerida. Nada aquí cuenta como autorización médica, y enviar este registro no te autoriza a bucear: esa decisión siempre la toma el personal calificado.",eH:"Paso 6 de 6 · Revisar y enviar",edit:"Editar información",submit:"Firmar y enviar registro",doneH:"Registro enviado",statusAwait:"Enviado · En espera de revisión",fRef:"Tu referencia de registro — muéstrala al personal al llegar:",fNext:"Siguiente: nuestro personal revisará tu registro. Si falta algo, te contactaremos. Para corregir algo, usa el formulario de corrección en esta página o escríbenos por WhatsApp.",fBack:"Volver a la tarjeta digital",corrH:"Solicitar una corrección",corrSub:"Ingresa tu referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needAct:"Elige tu actividad.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad, escribe tu nombre y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló (¿conexión?). Tu borrador está guardado: inténtalo de nuevo o contáctanos por WhatsApp.",saved:"Borrador guardado ✓ Referencia",req:"Requerido",opt:"Opcional",ver:"Versión",stepOf:"Paso",of:"de",trActivity:"Detalles de la actividad",trDiver:"Información del buzo",trForms:"Formularios de registro",trWaivers:"Exenciones y reconocimientos",trSafety:"Información de seguridad",trReview:"Revisión final",stDone:"Completo",stTodo:"Acción requerida",stWait:"Sin empezar",stPend:"El personal lo completa contigo",resumeBad:"Borrador no encontrado. Revisa la referencia y el código."}
+  en:{h1:"Digital dive check-in",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Book your dive and check in",aP1:"One flow: pick activity and time, complete forms and medical screening, then sign. That books your appointment and registers you with the shop.",aP2:"You get a registration reference for staff, and your date/time appears in our Bookings inbox. No account needed — save and finish anytime.",reqH:"What you may need",reqP:"Your certification card details (if certified), emergency contact, and a phone or email we can reach you on. Signed forms are stored privately; only authorized staff can view them.",priv:"Privacy: we only collect what this registration needs. Never share your resume code — it opens your saved draft.",help:"Need help? Contact us:",start:"Book & check in",resumeOpen:"Resume check-in",corrOpen:"Correct an existing registration",corrRef:"Registration reference *",resumeCode:"Resume code *",resumeBtn:"Resume my draft",resumeNote:"Your resume code was shown when your draft was saved (and is kept on this device). Without it, a draft cannot be opened — contact us for help.",tH:"Book your activity",activity:"Activity / dive type *",pdate:"Preferred date & time",parts:"Number of participants",bref:"Booking reference (if you have one)",sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat",calLegend:"Green: available · Yellow: almost full · Red: unavailable",pickTime:"Pick an open time",availTimes:"Available times",noTimes:"No times left this day — pick another date.",needDate:"Please pick a date and time.",bH:"Diver information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",ownGear:"Do you have your own gear? *",yes:"Yes",no:"No",gearSize:"What size do you need? *",gearNote:"Size notes (boots, BCD, etc.)",gearNotePh:"e.g. boots 9, BCD medium",needGear:"Please tell us if you have your own gear.",needGearSize:"Please choose the size you need.",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgRel:"Emergency contact relationship",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",saveNext:"Save & continue",fH2:"Required registration forms",fSub:"These SSI forms apply to your activity. Complete the packet on your phone (shared details are asked once). Your registration number is saved on your customer profile for the shop CRM.",packetHint:"Complete and sign the packet, then return here and continue. Your registration number stays on your profile for staff search.",packetOpen:"Open packet forms →",dH:"Waivers & acknowledgments",dSub:"Read the document, accept each item separately, then sign. Nothing is pre-checked.",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",sH:"Safety & medical information",sPend:"Medical screening",sP:"Answer every medical question. This is a screening for shop staff — it is not dive clearance. Any YES may require a physician review before you dive.",eH:"Review & submit",edit:"Edit information",editHint:"Something missing? Tap a step in the checklist above to go back and finish it.",submit:"Sign and Submit Registration",doneH:"Registration submitted",statusAwait:"Submitted · Awaiting Review",fRef:"Your registration reference — show this to staff when you arrive:",fNext:"Next: our staff will review your registration. If anything is missing we'll contact you. To correct something, use the correction form on this page or message us on WhatsApp.",fBack:"Back to the digital card",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needAct:"Please choose your activity.",needName:"First name, last name and a valid phone are required.",needDecl:"Accept the accuracy declaration and privacy acknowledgement, type your name, and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed (connection?). Your draft is saved — try again, or contact us on WhatsApp.",saved:"Draft saved ✓ Reference",req:"Required",opt:"Optional",ver:"Version",stepOf:"Step",of:"of",trActivity:"Activity Details",trDiver:"Diver Information",trForms:"Registration Forms",trWaivers:"Waivers & Acknowledgments",trSafety:"Medical Information",trReview:"Final Review",stDone:"Complete",stTodo:"Action Required",stWait:"Not Started",stPend:"Pending",packetCheck:"I finished the packet — check status",needPacket:"Open and complete the required form packet before continuing. Then tap check status.",packetDone:"Packet completed. You can continue.",packetPending:"Packet not finished yet. Open the link, complete and sign every form, then check status again.",packetNone:"Open the packet link to start your forms.",packetWait:"Waiting for packet… this updates when you finish signing.",dob:"Date of birth *",needDob:"Date of birth is required.",addr:"Street address",city:"City *",state:"State / Province *",zip:"ZIP / Postal *",packetSignNote:"SSI packet complete",packetSignSkip:"Waivers and medical from your forms are done. Confirm accuracy, sign once for the shop, then review and submit.",needAddr:"City, state, and ZIP are required",dSubPacket:"SSI forms are done — sign for the shop to finish check-in.",medHeart:"Heart or circulation problems? *",medLung:"Lung or breathing problems? *",medOther:"Any other medical condition that may affect diving? *",medOtherDetail:"Describe it *",medOtherPh:"Brief details for staff",medPregnant:"I understand: do not dive if pregnant. *",medTruth:"I confirm these medical answers are true and complete. *",medFlag:"Based on your answers, staff may require a physician review before you dive.",medPacketDone:"SSI medical packet already completed",medPacketSkip:"You already answered the dive medical in the packet. Confirm the acknowledgements below — no need to repeat Yes/No here.",medStaffNote:"Anything else staff should know? (optional)",medStaffNotePh:"Optional note for the shop",needMed:"Complete date of birth and both acknowledgements.",needMedDetail:"Describe the medical condition.",returning:"Welcome back — we filled what we could from your last visit.",confBooking:"Booking #",confRegNum:"Registration #",confRefLab:"Reference",confQrHint:"Show this QR or your numbers at the shop / boat.",confCal:"Add to calendar",confShare:"Share on WhatsApp",confCopy:"Copy IDs",confCopied:"Copied ✓",slotFull:"Full",slotLeft:"left",packetTry:"Try Scuba packet",packetRec:"Recreational packet",regNumLabel:"Registration #",packetFail:"Could not start packet forms",resumeBad:"Draft not found. Check the reference and resume code.",actLabels:{"Scuba":"Scuba","Dives & courses":"Dives & courses","Snorkel":"Snorkel"}},
+  es:{h1:"Check-in digital de buceo",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Reserva tu buceo y haz el check-in",aP1:"Un solo flujo: elige actividad y hora, completa formularios y screening médico, y firma. Así reservas tu cita y te registras en la tienda.",aP2:"Recibes una referencia para el personal, y tu fecha/hora aparece en Reservas. Sin crear cuenta: guarda y termina cuando quieras.",reqH:"Lo que puedes necesitar",reqP:"Datos de tu certificación (si estás certificado), un contacto de emergencia y un teléfono o correo donde contactarte. Los formularios firmados se guardan de forma privada; solo el personal autorizado puede verlos.",priv:"Privacidad: solo recopilamos lo necesario para este registro. Nunca compartas tu código de continuación: abre tu borrador guardado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Reservar y registrarse",resumeOpen:"Continuar check-in",corrOpen:"Corregir un registro existente",corrRef:"Referencia de registro *",resumeCode:"Código de continuación *",resumeBtn:"Continuar mi borrador",resumeNote:"Tu código se mostró al guardar el borrador (y queda en este dispositivo). Sin él, el borrador no puede abrirse: contáctanos para ayuda.",tH:"Reserva tu actividad",activity:"Actividad / tipo de buceo *",pdate:"Fecha y hora preferidas",parts:"Número de participantes",bref:"Referencia de reserva (si tienes)",sun:"Dom",mon:"Lun",tue:"Mar",wed:"Mié",thu:"Jue",fri:"Vie",sat:"Sáb",calLegend:"Verde: disponible · Amarillo: casi lleno · Rojo: no disponible",pickTime:"Elige un horario abierto",availTimes:"Horarios disponibles",noTimes:"No quedan horarios este día — elige otra fecha.",needDate:"Elige una fecha y un horario.",bH:"Información del buzo",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",ownGear:"¿Traes tu propio equipo? *",yes:"Sí",no:"No",gearSize:"¿Qué talla necesitas? *",gearNote:"Notas de talla (botas, BCD, etc.)",gearNotePh:"ej. botas 9, BCD mediano",needGear:"Indica si traes tu propio equipo.",needGearSize:"Elige la talla que necesitas.",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgRel:"Relación del contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",saveNext:"Guardar y continuar",fH2:"Formularios de registro requeridos",fSub:"Estos formularios SSI aplican a tu actividad. Completa el paquete en el teléfono (los datos compartidos se piden una vez). Tu número de registro queda en tu perfil del CRM.",packetHint:"Completa y firma el paquete, vuelve aquí y continúa. Tu número de registro queda en tu perfil para búsqueda del personal.",packetOpen:"Abrir formularios del paquete →",dH:"Exenciones y reconocimientos",dSub:"Lee el documento, acepta cada punto por separado y firma. Nada viene marcado.",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",sH:"Seguridad e información médica",sPend:"Evaluación médica",sP:"Responde todas las preguntas médicas. Esto es un filtro para el personal — no es autorización para bucear. Cualquier SÍ puede requerir revisión médica antes de bucear.",eH:"Revisar y enviar",edit:"Editar información",editHint:"¿Falta algo? Toca un paso en la lista de arriba para volver y completarlo.",submit:"Firmar y enviar registro",doneH:"Registro enviado",statusAwait:"Enviado · En espera de revisión",fRef:"Tu referencia de registro — muéstrala al personal al llegar:",fNext:"Siguiente: nuestro personal revisará tu registro. Si falta algo, te contactaremos. Para corregir algo, usa el formulario de corrección en esta página o escríbenos por WhatsApp.",fBack:"Volver a la tarjeta digital",corrH:"Solicitar una corrección",corrSub:"Ingresa tu referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needAct:"Elige tu actividad.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad, escribe tu nombre y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló (¿conexión?). Tu borrador está guardado: inténtalo de nuevo o contáctanos por WhatsApp.",saved:"Borrador guardado ✓ Referencia",req:"Requerido",opt:"Opcional",ver:"Versión",stepOf:"Paso",of:"de",trActivity:"Detalles de la actividad",trDiver:"Información del buzo",trForms:"Formularios de registro",trWaivers:"Exenciones y reconocimientos",trSafety:"Información médica",trReview:"Revisión final",stDone:"Completo",stTodo:"Acción requerida",stWait:"Sin empezar",stPend:"Pendiente",packetCheck:"Ya terminé el paquete — verificar estado",needPacket:"Abre y completa el paquete de formularios antes de continuar. Luego toca verificar estado.",packetDone:"Paquete completado. Puedes continuar.",packetPending:"El paquete aún no está terminado. Abre el enlace, completa y firma cada formulario, y vuelve a verificar.",packetNone:"Abre el enlace del paquete para empezar tus formularios.",packetWait:"Esperando el paquete… se actualiza cuando termines de firmar.",dob:"Fecha de nacimiento *",needDob:"La fecha de nacimiento es requerida.",addr:"Dirección",city:"Ciudad *",state:"Estado / Provincia *",zip:"ZIP / Código postal *",packetSignNote:"Paquete SSI completo",packetSignSkip:"Exenciones y médico del paquete listos. Confirma exactitud, firma una vez para la tienda, revisa y envía.",needAddr:"Ciudad, estado y ZIP son requeridos",dSubPacket:"Formularios SSI listos — firma para la tienda y termina el check-in.",medHeart:"¿Problemas del corazón o circulación? *",medLung:"¿Problemas pulmonares o respiratorios? *",medOther:"¿Otra condición médica que pueda afectar el buceo? *",medOtherDetail:"Descríbela *",medOtherPh:"Detalles breves para el personal",medPregnant:"Entiendo: no bucear si está embarazada. *",medTruth:"Confirmo que estas respuestas médicas son verdaderas y completas. *",medFlag:"Según tus respuestas, el personal puede exigir revisión médica antes de bucear.",medPacketDone:"Paquete médico SSI ya completado",medPacketSkip:"Ya respondiste el médico de buceo en el paquete. Confirma los reconocimientos abajo — no hace falta repetir Sí/No aquí.",medStaffNote:"¿Algo más que deba saber el personal? (opcional)",medStaffNotePh:"Nota opcional para la tienda",needMed:"Completa fecha de nacimiento y ambos reconocimientos.",needMedDetail:"Describe la condición médica.",returning:"Bienvenido de nuevo — rellenamos lo que pudimos de tu última visita.",confBooking:"Reserva #",confRegNum:"Registro #",confRefLab:"Referencia",confQrHint:"Muestra este QR o tus números en la tienda / bote.",confCal:"Añadir al calendario",confShare:"Compartir por WhatsApp",confCopy:"Copiar IDs",confCopied:"Copiado ✓",slotFull:"Lleno",slotLeft:"libres",packetTry:"Paquete Try Scuba",packetRec:"Paquete recreativo",regNumLabel:"Registro #",packetFail:"No se pudieron iniciar los formularios",resumeBad:"Borrador no encontrado. Revisa la referencia y el código.",actLabels:{"Scuba":"Scuba / Try Scuba","Dives & courses":"Buceos y cursos","Snorkel":"Snorkel"}}
 };
 let L = (navigator.language||"en").startsWith("es") ? "es" : "en";
-let step = 0, signed = false, forms = [], submittedRef = "";
+try { const saved = localStorage.getItem("bnb_lang"); if (saved === "en" || saved === "es") L = saved; } catch(e) {}
+let step = 0, signed = false, forms = [], submittedRef = "", packetCompleted = false, packetMeta = null;
+let packetNeedsPhysician = false, medicalFromPacket = false, packetPollTimer = null;
+let availCache = {}, availSlotCap = 8;
+let lastConfirm = null;
 let draft = {};
 try { draft = JSON.parse(localStorage.getItem("bnb_reg_draft") || "{}"); } catch(e) { draft = {}; }
+if (draft.packetCompleted) packetCompleted = true;
 if (!draft.idempotencyKey) { draft.idempotencyKey = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()); saveLocal(); }
 function saveLocal(){ try { localStorage.setItem("bnb_reg_draft", JSON.stringify(draft)); } catch(e) {} }
 const $ = i => document.getElementById(i);
 const V = i => $(i).value.trim();
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const todayIso = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+function clampPastDates(){
+  const max = todayIso();
+  ["dob","lastdive"].forEach(id => { const el = $(id); if (el) { el.max = max; if (el.value && el.value > max) el.value = ""; } });
+}
+clampPastDates();
+const radioVal = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ""; };
+function setRadio(name, val) {
+  document.querySelectorAll(`input[name="${name}"]`).forEach(el => { el.checked = el.value === val; });
+}
 
+function ownGearVal(){ return $("gearYes").checked ? "yes" : ($("gearNo").checked ? "no" : ""); }
+function syncGearUI(){
+  const need = ownGearVal() === "no";
+  $("gearSizeWrap").classList.toggle("hide", !need);
+  if (!need) { $("gearSize").value = ""; $("gearNote").value = ""; }
+}
+function syncPacketSignUI(){
+  const fromPkt = !!packetCompleted;
+  if ($("packetDoneBanner")) $("packetDoneBanner").classList.toggle("hide", !fromPkt);
+  if ($("privBlock")) $("privBlock").classList.toggle("hide", fromPkt);
+  if ($("signMedAcks")) $("signMedAcks").classList.toggle("hide", !(fromPkt && medicalFromPacket));
+  if ($("docPreview")) $("docPreview").classList.toggle("hide", fromPkt);
+  const sub = document.querySelector('[data-step="4"] [data-i="dSub"]');
+  if (sub) sub.textContent = fromPkt && T[L].dSubPacket ? T[L].dSubPacket : (T[L].dSub || sub.textContent);
+  if (fromPkt) {
+    $("cbPriv").checked = true;
+    $("cbDecl").checked = true;
+    if ($("cbPregnantSign") && $("cbPregnant").checked) $("cbPregnantSign").checked = true;
+    if ($("cbMedTruthSign") && $("cbMedTruth").checked) $("cbMedTruthSign").checked = true;
+    const h2 = document.querySelector('[data-step="4"] h2');
+    if (h2) h2.textContent = L === "es" ? "Firma para reservar" : "Sign to book this dive";
+  }
+}
+function syncMedUI(){
+  if ($("medPacketFlag")) $("medPacketFlag").style.display = packetNeedsPhysician ? "block" : "none";
+  if ($("cbPregnant") && !$("cbPregnant").checked) $("cbPregnant").checked = true;
+  if ($("cbMedTruth") && !$("cbMedTruth").checked) $("cbMedTruth").checked = true;
+}
 function collect(){
-  return { activity: V("act"), plannedDate: V("pdate"), participants: V("parts"), bookingRef: V("bref"),
+  return { activity: V("act"), plannedDate: selDate || V("pdate") || draft.plannedDate || "", plannedTime: selTime || draft.plannedTime || "", participants: V("parts"), bookingRef: V("bref"),
     firstName: V("fn"), lastName: V("ln"), preferredName: V("pn"), phone: V("ph"), email: V("em"), preferredLanguage: V("plang"),
-    cert: V("cert"), loggedDives: V("logged"), lastDive: V("lastdive"), emergencyName: V("en"), emergencyRelationship: V("erel"), emergencyPhone: V("ep"), notes: V("notes") };
+    ownGear: ownGearVal(), gearSize: V("gearSize"), gearNote: V("gearNote"),
+    cert: V("cert"), loggedDives: V("logged"), lastDive: V("lastdive"), emergencyName: V("en"), emergencyRelationship: V("erel"), emergencyPhone: V("ep"), notes: V("notes"),
+    dob: V("dob"), address: V("addr"), city: V("city"), state: V("state"), zip: V("zip"),
+    medPregnantAck: $("cbPregnant").checked || ($("cbPregnantSign") && $("cbPregnantSign").checked),
+    medTruthAck: $("cbMedTruth").checked || ($("cbMedTruthSign") && $("cbMedTruthSign").checked),
+    packetCompleted: !!packetCompleted, medicalFromPacket: !!(packetCompleted && medicalFromPacket),
+    packetNeedsPhysician: !!packetNeedsPhysician,
+    staffReviewStatus: packetNeedsPhysician ? "PENDING_STAFF_REVIEW" : (packetCompleted ? "CLEARED" : "") };
+}
+function medicalDone(d){
+  return !!(d.dob && d.medPregnantAck && d.medTruthAck && packetCompleted && medicalFromPacket);
 }
 function fill(d){
-  const map = { act:"activity", pdate:"plannedDate", parts:"participants", bref:"bookingRef", fn:"firstName", ln:"lastName", pn:"preferredName", ph:"phone", em:"email", plang:"preferredLanguage", cert:"cert", logged:"loggedDives", lastdive:"lastDive", en:"emergencyName", erel:"emergencyRelationship", ep:"emergencyPhone", notes:"notes" };
-  Object.entries(map).forEach(([id, k]) => { if (d[k] !== undefined && d[k] !== "") $(id).value = d[k]; });
+  const map = { act:"activity", parts:"participants", bref:"bookingRef", fn:"firstName", ln:"lastName", pn:"preferredName", ph:"phone", em:"email", plang:"preferredLanguage", gearSize:"gearSize", gearNote:"gearNote", cert:"cert", logged:"loggedDives", lastdive:"lastDive", en:"emergencyName", erel:"emergencyRelationship", ep:"emergencyPhone", notes:"notes", dob:"dob", addr:"address", city:"city", state:"state", zip:"zip" };
+  Object.entries(map).forEach(([id, k]) => { if (d[k] !== undefined && d[k] !== "" && $(id)) $(id).value = d[k]; });
+  if (d.ownGear === "yes") { $("gearYes").checked = true; $("gearNo").checked = false; }
+  else if (d.ownGear === "no") { $("gearNo").checked = true; $("gearYes").checked = false; }
+  syncGearUI();
+  if (ownGearVal() === "no") {
+    if (d.gearSize) $("gearSize").value = d.gearSize;
+    if (d.gearNote) $("gearNote").value = d.gearNote;
+  }
+  if ($("cbPregnant")) $("cbPregnant").checked = d.medPregnantAck !== false;
+  if ($("cbMedTruth")) $("cbMedTruth").checked = d.medTruthAck !== false;
+  syncMedUI();
+  if (d.packetCompleted) { packetCompleted = true; draft.packetCompleted = true; }
+  if (d.medicalFromPacket) medicalFromPacket = true;
+  if (d.packetNeedsPhysician) packetNeedsPhysician = true;
+  if (d.plannedDate) { selDate = d.plannedDate; $("pdate").value = d.plannedDate; const dt = new Date(d.plannedDate + "T12:00:00"); if (!isNaN(dt)) { calCur = new Date(dt.getFullYear(), dt.getMonth(), 1); } }
+  if (d.plannedTime) selTime = d.plannedTime;
+  renderCal();
 }
 function state(){
   const d = collect();
-  const formsDone = $("cbDecl").checked && $("cbPriv").checked && signed && !!V("signer");
+  const waiversDone = $("cbDecl").checked && $("cbPriv").checked && signed && !!V("signer");
   return {
     activity: !!d.activity, diver: !!(d.firstName && d.lastName && d.phone.replace(/\D/g,"").length >= 8),
-    forms: formsDone, waivers: formsDone, safety: false, review: !!submittedRef
+    forms: !!packetCompleted, waivers: waiversDone, safety: medicalDone(d), review: !!submittedRef
   };
 }
 function tracker(){
   const t = T[L], s = state();
-  const item = (label, val, pend) => `<li><span>${label}</span><span class="st ${pend ? "wait" : val ? "done" : (step > 0 ? "todo" : "wait")}">${pend ? t.stPend : val ? t.stDone : (step > 0 ? t.stTodo : t.stWait)}</span></li>`;
-  $("tracker").innerHTML = item(t.trActivity, s.activity) + item(t.trDiver, s.diver) + item(t.trForms, s.forms)
-    + item(t.trWaivers, s.waivers) + item(t.trSafety, false, true) + item(t.trReview, s.review);
-  $("stepLabel").textContent = step >= 1 && step <= 6 ? `${t.stepOf} ${step} ${t.of} 6` : "";
+    const rows = [
+    { step: 1, label: t.trActivity, done: s.activity },
+    { step: 2, label: t.trDiver, done: s.diver },
+    { step: 3, label: t.trForms, done: s.forms },
+    { step: 6, label: t.trReview, done: s.review },
+  ];
+  const frameOpen = $("packetFrameWrap") && !$("packetFrameWrap").classList.contains("hide");
+  $("tracker").classList.toggle("hide", !!frameOpen);
+  const checks = [
+    [2, s.activity, t.trActivity],
+    [3, s.diver, t.trDiver],
+    [4, s.forms, t.trForms],
+    [6, s.forms, t.trForms],
+  ];
+  const gapBefore = (target) => {
+    for (const [need, ok, label] of checks) if (target >= need && !ok) return label;
+    return "";
+  };
+  $("tracker").innerHTML = rows.map(r => {
+    const st = r.done ? "done" : (r.step === step ? "todo" : "wait");
+    const locked = !!gapBefore(r.step);
+    return `<li class="go${locked ? " locked" : ""}" data-go="${r.step}"><button type="button" class="stepjump"${r.step === step ? ' aria-current="step"' : ""}><span>${r.label}</span><span class="st ${st}">${r.done ? t.stDone : (r.step === step ? t.stTodo : t.stWait)}</span></button></li>`;
+  }).join("");
+  $("tracker").querySelectorAll("[data-go]").forEach(li => {
+    const jump = () => {
+      const gap = gapBefore(Number(li.dataset.go));
+      if (gap) {
+        $("stepLabel").classList.remove("hide");
+        $("stepLabel").textContent = (L === "es" ? "Termina primero: " : "Finish ") + gap + (L === "es" ? "" : " first");
+        return;
+      }
+      $("stepLabel").textContent = "";
+      go(Number(li.dataset.go));
+    };
+    const btn = li.querySelector("button");
+    btn.onclick = jump;
+    btn.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jump(); } };
+  });
+  if (frameOpen) $("stepLabel").classList.add("hide");
+  const pageTitle = document.querySelector(".wrap > h1");
+  const pageSub = document.querySelector(".wrap > p.mut");
+  if (pageTitle) pageTitle.classList.toggle("hide", !!frameOpen);
+  if (pageSub) pageSub.classList.toggle("hide", !!frameOpen);
+  const sec = document.querySelector('[data-step="3"]');
+  if (sec) {
+    const h2 = sec.querySelector("h2");
+    const sub = sec.querySelector("[data-i='fSub']");
+    if (h2) h2.classList.toggle("hide", !!frameOpen);
+    if (sub) sub.classList.toggle("hide", !!frameOpen);
+    if ($("formList")) $("formList").classList.toggle("hide", !!frameOpen);
+    if ($("packetStatus")) $("packetStatus").classList.toggle("hide", !!frameOpen);
+    if ($("packetCheck")) $("packetCheck").parentElement.classList.toggle("hide", !!frameOpen);
+    const hint = sec.querySelector("[data-i='packetHint']");
+    if (hint) hint.classList.toggle("hide", !!frameOpen);
+    const nav = $("toWaivers") && $("toWaivers").parentElement;
+    if (nav) nav.classList.toggle("hide", !!frameOpen);
+  }
+}
+function paintPacketUI(){
+  const t = T[L];
+  if (!$("packetBox") || $("packetBox").classList.contains("hide")) return;
+  if (packetMeta) {
+    const name = packetMeta.packetKey === "try_scuba" ? t.packetTry : t.packetRec;
+    $("packetName").textContent = name + (packetMeta.registrationNumber ? ` · ${packetMeta.registrationNumber}` : "");
+    $("packetReg").textContent = packetMeta.registrationNumber ? `${t.regNumLabel}: ${packetMeta.registrationNumber}` : "";
+  }
+  if ($("packetStatus")) {
+    $("packetStatus").textContent = packetCompleted ? t.packetDone : (packetMeta?.status === "none" || !packetMeta ? t.packetNone : t.packetPending);
+  }
+  if ($("packetLink") && !$("packetLink").classList.contains("hide")) $("packetLink").textContent = t.packetOpen || "Open packet forms →";
+  if ($("packetCheck")) $("packetCheck").textContent = t.packetCheck;
 }
 function applyLang(){
   const t = T[L], d = DECL[L];
@@ -243,30 +474,87 @@ function applyLang(){
   $("declTitle").textContent = d.title; $("declText").textContent = d.text; $("declCheck").textContent = d.check;
   $("privText").textContent = d.priv; $("mktText").textContent = d.mkt;
   $("actPh").textContent = t.sel;
-  if ($("act").options.length <= 1) ACTS.forEach(a => { const o = document.createElement("option"); o.textContent = a; $("act").append(o); });
-  $("pdate").min = new Date().toISOString().slice(0, 10);
-  renderForms(); buildDoc(); tracker();
+  {
+    const keep = $("act").value;
+    while ($("act").options.length > 1) $("act").remove(1);
+    ACTS.forEach(a => {
+      const o = document.createElement("option");
+      o.value = a;
+      o.textContent = (t.actLabels && t.actLabels[a]) || a;
+      $("act").append(o);
+    });
+    if (keep) $("act").value = keep;
+  }
+  if ($("toStep2") && t.next) $("toStep2").textContent = t.next;
+  document.querySelectorAll("[data-p]").forEach(e => { if (t[e.dataset.p]) e.placeholder = t[e.dataset.p]; });
+  ["err1","err2","err3","err4","err5","err6","resumeErr","corrErr"].forEach(id => { if ($(id)) $(id).textContent = ""; });
+  if ($("submitBtn") && !$("submitBtn").disabled) $("submitBtn").textContent = t.submit;
+  if ($("corrSend")) $("corrSend").textContent = t.corrSend;
+  renderCal(); renderForms(); buildDoc(); paintPacketUI(); syncMedUI(); tracker();
+  if (step === 6) buildReview();
+  if (step === 7 && lastConfirm) paintConfirm(lastConfirm, lastConfirm);
 }
-$("langBtn").onclick = () => { L = L === "en" ? "es" : "en"; applyLang(); };
+function notifyPacketLang(){
+  try {
+    const frame = $("packetFrame");
+    if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: "bnb_set_lang", lang: L }, location.origin);
+  } catch (e) {}
+}
+$("langBtn").onclick = () => {
+  L = L === "en" ? "es" : "en";
+  try { localStorage.setItem("bnb_lang", L); } catch (e) {}
+  applyLang();
+  notifyPacketLang();
+};
+window.addEventListener("storage", (ev) => {
+  if (ev.key !== "bnb_lang") return;
+  if (ev.newValue !== "en" && ev.newValue !== "es") return;
+  if (ev.newValue === L) return;
+  L = ev.newValue;
+  applyLang();
+  notifyPacketLang();
+});
 
 function go(n){
   step = n;
   document.querySelectorAll("[data-step]").forEach(s => s.classList.toggle("hide", Number(s.dataset.step) !== n));
-  document.querySelectorAll("#steps span").forEach((s, i) => s.classList.toggle("on", i < Math.min(Math.max(n - 1, 0), 5)));
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (n === 3) loadForms();
-  if (n === 4) { buildDoc(); sizePad(); }
+  if (n === 4) { syncPacketSignUI(); buildDoc(); sizePad(); }
+  if (n === 3 && !packetCompleted) startPacketPoll();
+  if (n !== 3) stopPacketPoll();
+  if (n === 5) syncMedUI();
   if (n === 6) buildReview();
   tracker();
 }
-document.querySelectorAll(".nav").forEach(b => b.onclick = () => go(Number(b.dataset.to)));
+document.querySelectorAll(".nav").forEach(b => {
+  b.onclick = (e) => {
+    e.preventDefault();
+    const to = Number(b.dataset.to);
+    if (!Number.isNaN(to)) go(to);
+  };
+});
+// Event delegation so Back keeps working after language re-paint
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("button.nav[data-to]");
+  if (!b) return;
+  e.preventDefault();
+  const to = Number(b.dataset.to);
+  if (!Number.isNaN(to)) go(to);
+});
 $("startBtn").onclick = () => go(1);
 $("corrBtn").onclick = () => { $("corrCard").classList.toggle("hide"); $("corrCard").scrollIntoView({ behavior: "smooth" }); };
 $("resumeOpen").onclick = () => { $("resumePanel").classList.toggle("hide"); if (draft.ref) $("rRef").value = draft.ref; if (draft.token) $("rTok").value = draft.token; };
 
 document.querySelectorAll(".toNext").forEach(b => b.onclick = async () => {
   const from = Number(b.dataset.from);
-  if (from === 1 && !V("act")) { $("err1").textContent = T[L].needAct; return; }
+  if (from === 1) {
+    const act = V("act") || ($("act").selectedOptions[0] && $("act").selectedOptions[0].value) || "";
+    if (!act || !ACTS.includes(act)) { $("err1").textContent = T[L].needAct; return; }
+    $("act").value = act;
+    if (!selDate || !selTime) { $("err1").textContent = T[L].needDate; $("cal").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    draft.activity = act; draft.plannedDate = selDate; draft.plannedTime = selTime; saveLocal();
+  }
   $("err1").textContent = "";
   await saveDraft();
   go(from + 1);
@@ -274,21 +562,39 @@ document.querySelectorAll(".toNext").forEach(b => b.onclick = async () => {
 $("saveNext2").onclick = async () => {
   const d = collect();
   if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) { $("err2").textContent = T[L].needName; return; }
+  if (!d.dob) { $("err2").textContent = T[L].needDob; return; }
+  if (d.dob > todayIso()) { $("err2").textContent = L === "es" ? "La fecha de nacimiento no puede ser futura" : "Date of birth cannot be in the future"; return; }
+  if (!d.city || !d.state || !d.zip) { $("err2").textContent = T[L].needAddr || "City, state, and ZIP are required"; return; }
+  if (!d.ownGear) { $("err2").textContent = T[L].needGear; return; }
+  if (d.ownGear === "no" && !d.gearSize) { $("err2").textContent = T[L].needGearSize; return; }
   $("err2").textContent = "";
   await saveDraft(true);
   go(3);
 };
+$("gearYes").onchange = syncGearUI;
+$("gearNo").onchange = syncGearUI;
+if ($("cbPregnant")) $("cbPregnant").addEventListener("change", tracker);
+if ($("cbMedTruth")) $("cbMedTruth").addEventListener("change", tracker);
+$("dob").addEventListener("change", tracker);
 
 async function saveDraft(show){
   const d = collect();
   if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) return;
   try {
-    const body = draft.ref && draft.token ? { ref: draft.ref, token: draft.token, data: d } : { data: d };
+    const creating = !(draft.ref && draft.token);
+    const body = creating ? { data: d } : { ref: draft.ref, token: draft.token, data: d };
     const r = await fetch("/api/register/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const out = await r.json().catch(() => ({}));
     if (r.ok && out.ref) {
       draft.ref = out.ref; if (out.token) draft.token = out.token; saveLocal();
-      if (show) $("draftMsg").textContent = `${T[L].saved}: ${out.ref} · ${T[L].resumeCode.replace(" *","")}: ${draft.token}`;
+      if (creating && out.prior) {
+        const cur = collect();
+        const merge = {};
+        Object.entries(out.prior).forEach(([k, v]) => { if (v && !cur[k]) merge[k] = v; });
+        if (Object.keys(merge).length) fill({ ...cur, ...merge });
+        if (out.returning) $("draftMsg").textContent = T[L].returning;
+      }
+      if (show) $("draftMsg").textContent = (out.returning ? T[L].returning + " · " : "") + `${T[L].saved}: ${out.ref} · ${T[L].resumeCode.replace(" *","")}: ${draft.token}`;
     }
   } catch(e) { /* offline: data stays on this device and in the form */ }
 }
@@ -313,7 +619,129 @@ async function loadForms(){
     forms = out.forms && out.forms.length ? out.forms : [{ name_en:"Customer Registration", name_es:"Registro de clientes", desc_en:"Your contact and diver information, accuracy declaration, and electronic signature.", desc_es:"Tu información de contacto y de buzo, declaración de exactitud y firma electrónica.", required:1, version:"registration-v1" }];
   } catch(e) { forms = [{ name_en:"Customer Registration", name_es:"Registro de clientes", desc_en:"", desc_es:"", required:1, version:"registration-v1" }]; }
   renderForms();
+  await openPacketLink();
+  await checkPacketStatus(false);
 }
+async function openPacketLink(){
+  $("err3").textContent = "";
+  $("packetBox").classList.add("hide");
+  const d = collect();
+  if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) {
+    $("err3").textContent = T[L].needName;
+    go(2); return;
+  }
+  if (!d.dob) {
+    $("err3").textContent = T[L].needDob;
+    go(2); return;
+  }
+  await saveDraft(false); // push latest name/DOB/phone into draft before prefill
+  if (!draft.ref || !draft.token) {
+    $("err3").textContent = T[L].needName;
+    go(2); return;
+  }
+  try {
+    const r = await fetch("/api/register/packet", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ref: draft.ref, token: draft.token, activity: V("act") }) });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      $("err3").textContent = out.error || "Forms unavailable";
+      if (/name|dob|birth/i.test(out.error || "")) go(2);
+      return;
+    }
+    draft.registrationNumber = out.registrationNumber; saveLocal();
+    packetMeta = { packetKey: out.packetKey, registrationNumber: out.registrationNumber, status: out.status || "sent", formLink: out.formLink || null };
+    if (out.alreadyCompleted || out.status === "completed") {
+      packetCompleted = true; medicalFromPacket = true; draft.packetCompleted = true; saveLocal();
+      packetMeta.status = "completed";
+      if ($("packetFrameWrap")) $("packetFrameWrap").classList.add("hide");
+      stopPacketPoll();
+      await checkPacketStatus(false);
+    } else if (out.formLink) {
+      const frame = $("packetFrame");
+      const wrap = $("packetFrameWrap");
+      if (frame && wrap) {
+        const kiosk = /(?:\\?|&)kiosk=1(?:&|$)/.test(location.search) ? (out.formLink.includes("?") ? "&kiosk=1" : "?kiosk=1") : "";
+        const langQ = (out.formLink.includes("?") ? "&" : "?") + "lang=" + encodeURIComponent(L);
+        const nextSrc = out.formLink + langQ + kiosk;
+        if (!frame.src || frame.src.indexOf(out.formLink) !== 0) frame.src = nextSrc;
+        else notifyPacketLang();
+        wrap.classList.remove("hide");
+      }
+      packetMeta.status = "sent";
+      startPacketPoll();
+      if ($("packetStatus")) $("packetStatus").textContent = T[L].packetWait;
+    }
+    $("packetBox").classList.remove("hide");
+    paintPacketUI();
+    tracker(); renderForms();
+  } catch (e) { $("err3").textContent = T[L].packetFail || "Could not start packet forms"; }
+}
+function stopPacketPoll(){ if (packetPollTimer) { clearInterval(packetPollTimer); packetPollTimer = null; } }
+function startPacketPoll(){
+  stopPacketPoll();
+  if (packetCompleted || !draft.ref) return;
+  packetPollTimer = setInterval(() => { if (document.visibilityState === "visible") checkPacketStatus(false); }, 3000);
+}
+async function checkPacketStatus(showErr){
+  if (!draft.ref || !draft.token) {
+    if (showErr) $("err3").textContent = T[L].needName;
+    return false;
+  }
+  try {
+    const r = await fetch(`/api/register/packet?ref=${encodeURIComponent(draft.ref)}&token=${encodeURIComponent(draft.token)}`);
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) { if (showErr) $("err3").textContent = out.error || T[L].needPacket; return false; }
+    const wasDone = packetCompleted;
+    packetCompleted = !!out.completed;
+    medicalFromPacket = !!out.medicalFromPacket || packetCompleted;
+    packetNeedsPhysician = !!out.needsPhysician;
+    draft.packetCompleted = packetCompleted; saveLocal();
+    packetMeta = { ...(packetMeta || {}), status: out.status || (packetCompleted ? "completed" : "none"), registrationNumber: packetMeta?.registrationNumber || draft.registrationNumber };
+    if (packetCompleted && $("packetLink")) $("packetLink").classList.add("hide");
+    if (packetCompleted) stopPacketPoll();
+    else startPacketPoll();
+    paintPacketUI();
+    syncMedUI();
+    if (showErr && !packetCompleted) $("err3").textContent = T[L].needPacket;
+    else if (packetCompleted) {
+      $("err3").textContent = "";
+      if (!wasDone && $("packetStatus")) $("packetStatus").textContent = T[L].packetDone;
+    }
+    tracker(); renderForms();
+    return packetCompleted;
+  } catch (e) {
+    if (showErr) $("err3").textContent = T[L].needPacket;
+    return false;
+  }
+}
+$("packetCheck").onclick = () => checkPacketStatus(true);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && step === 3 && !packetCompleted) checkPacketStatus(false); });
+window.addEventListener("focus", () => { if (step === 3 && !packetCompleted) checkPacketStatus(false); });
+window.addEventListener("message", async (ev) => {
+  if (ev.origin !== location.origin) return;
+  if (ev.data && ev.data.type === "bnb_packet_done") {
+    packetNeedsPhysician = !!(ev.data.needsPhysician || ev.data.needsStaffReview);
+    packetCompleted = true;
+    medicalFromPacket = true;
+    draft.packetCompleted = true;
+    saveLocal();
+    paintPacketUI();
+    syncMedUI();
+    syncPacketSignUI();
+    tracker();
+    await checkPacketStatus(false);
+    syncPacketSignUI();
+    go(signed && V("signer") ? 6 : 4);
+  }
+});
+$("toWaivers").onclick = async () => {
+  const ok = await checkPacketStatus(true);
+  if (!ok) return;
+  $("err3").textContent = "";
+  await saveDraft();
+  syncPacketSignUI();
+  go(4); // final shop sign — SSI questions already answered in packet
+};
 function renderForms(){
   const t = T[L], s = state();
   if (!$("formList")) return;
@@ -325,24 +753,40 @@ function renderForms(){
 }
 
 function buildDoc(){
-  const d = collect(), dec = DECL[L];
+  const d = collect(), dec = DECL[L], t = T[L];
+  const when = [d.plannedDate, d.plannedTime].filter(Boolean).join(" ") || "-";
+  const yn = v => v === "yes" ? t.yes : (v === "no" ? t.no : "-");
+  const gearLine = d.ownGear === "yes" ? `${t.ownGear}: ${t.yes}` : (d.ownGear === "no" ? `${t.ownGear}: ${t.no} · ${t.gearSize}: ${d.gearSize || "-"}${d.gearNote ? " (" + d.gearNote + ")" : ""}` : `${t.ownGear}: -`);
   $("docPreview").textContent =
-`BANANA NUT BURGERS DIVE SHOP — CUSTOMER REGISTRATION (registration-v1)
-${d.activity || "-"} · ${d.plannedDate || "-"} · ${d.participants || 1}
+`BANANA NUT BURGERS DIVE SHOP — ${t.h1.toUpperCase()} (registration-v1)
+${d.activity || "-"} · ${when} · ${d.participants || 1}
 
 ${d.firstName} ${d.lastName}${d.preferredName ? " (" + d.preferredName + ")" : ""}
-Phone: ${d.phone}  Email: ${d.email || "-"}
-Certification: ${d.cert || "-"}  Logged dives: ${d.loggedDives || "-"}  Last dive: ${d.lastDive || "-"}
-Emergency: ${d.emergencyName || "-"}${d.emergencyRelationship ? " (" + d.emergencyRelationship + ")" : ""} ${d.emergencyPhone || ""}
+${t.phone}: ${d.phone}  ${t.email}: ${d.email || "-"}
+${gearLine}
+${t.cert}: ${d.cert || "-"}  ${t.logged}: ${d.loggedDives || "-"}  ${t.lastdive}: ${d.lastDive || "-"}
+${t.emgName}: ${d.emergencyName || "-"}${d.emergencyRelationship ? " (" + d.emergencyRelationship + ")" : ""} ${d.emergencyPhone || ""}
 
 ${dec.title.toUpperCase()}
 ${dec.text}
 
-Privacy: ${$("cbPriv").checked ? "acknowledged" : "—"} · Marketing: ${$("cbMkt").checked ? "agreed" : "not granted"}`;
+${t.trWaivers}: ${$("cbPriv").checked ? t.stDone : "—"} · ${t.mktCheck}: ${$("cbMkt").checked ? t.yes : t.no}`;
 }
 function buildReview(){
   const d = collect(), t = T[L];
-  const rows = [[t.activity, d.activity],[t.pdate, d.plannedDate],[t.first + " / " + t.last, (d.firstName + " " + d.lastName).trim()],[t.phone, d.phone],[t.email, d.email],[t.cert, d.cert],[t.emgName, d.emergencyName]];
+  const when = [d.plannedDate, d.plannedTime].filter(Boolean).join(" ");
+  const gear = d.ownGear === "yes" ? t.yes : (d.ownGear === "no" ? `${t.no}${d.gearSize ? " · " + d.gearSize : ""}${d.gearNote ? " (" + d.gearNote + ")" : ""}` : "");
+  const yn = v => v === "yes" ? t.yes : (v === "no" ? t.no : "");
+  const rows = [
+    [t.activity, d.activity],[t.pdate, when],[t.first + " / " + t.last, (d.firstName + " " + d.lastName).trim()],
+    [t.phone, d.phone],[t.email, d.email],
+    [t.addr || "Address", [d.address, d.city, d.state, d.zip].filter(Boolean).join(", ")],
+    [t.ownGear, gear],[t.cert, d.cert],[t.emgName, d.emergencyName],
+    [t.trForms, packetCompleted ? t.stDone : t.stTodo],[t.dob, d.dob],
+  ];
+  rows.push([t.trSafety, packetCompleted
+    ? (t.medPacketDone + (packetNeedsPhysician ? " · ⚠️ " + (t.medFlag || "Staff review") : ""))
+    : t.stTodo]);
   $("review").innerHTML = rows.filter(r => r[1]).map(r => `<b>${esc(r[0])}</b><span>${esc(r[1])}</span>`).join("");
   tracker();
 }
@@ -364,38 +808,146 @@ $("clearPad").onclick = () => { signed = false; ctx.fillStyle = "#fff"; ctx.fill
 ["cbDecl","cbPriv","cbMkt"].forEach(id => $(id).addEventListener("change", () => { buildDoc(); tracker(); }));
 $("signer").addEventListener("input", tracker);
 
-$("toSafety").onclick = () => {
+$("toSafety").onclick = async () => {
+  if (!packetCompleted) { $("err4").textContent = T[L].needPacket; go(3); return; }
+  $("cbPriv").checked = true;
+  if ($("cbPregnantSign") && $("cbPregnant")) $("cbPregnant").checked = $("cbPregnantSign").checked;
+  if ($("cbMedTruthSign") && $("cbMedTruth")) $("cbMedTruth").checked = $("cbMedTruthSign").checked;
   if (!$("cbDecl").checked || !$("cbPriv").checked || !V("signer") || !signed) { $("err4").textContent = T[L].needDecl; return; }
-  $("err4").textContent = ""; saveDraft(); go(5);
+  if (!$("cbPregnant").checked || !$("cbMedTruth").checked) {
+    $("err4").textContent = T[L].needMed || "Confirm medical acknowledgements";
+    return;
+  }
+  $("err4").textContent = "";
+  await saveDraft();
+  buildReview();
+  go(6); // SSI medical is only in the packet — never re-ask on step 5
+};
+$("toReview").onclick = async () => {
+  syncMedUI();
+  const d = collect();
+  if (!d.dob) { $("err5").textContent = T[L].needDob; return; }
+  if (!medicalDone(d)) {
+    $("err5").textContent = T[L].needPacket || T[L].needMed;
+    return;
+  }
+  $("err5").textContent = "";
+  await saveDraft();
+  go(6);
+};
+
+function paintConfirm(out, trip){
+  const t = T[L];
+  lastConfirm = { ...out, ...trip };
+  submittedRef = out.ref;
+  $("confBooking").textContent = out.bookingId ? String(out.bookingId) : "—";
+  $("confRegNum").textContent = out.registrationNumber || "—";
+  $("confRef").textContent = out.ref || "—";
+  const whenBits = [trip.plannedDate, trip.plannedTime].filter(Boolean).join(" · ");
+  $("confWhen").textContent = (out.submittedAt ? new Date(out.submittedAt).toLocaleString(L === "es" ? "es" : "en") : "")
+    + (whenBits ? ` · ${whenBits}` : "")
+    + (trip.activity ? ` · ${trip.activity}` : "");
+  const qrPayload = [
+    "BANANA NUT BURGER",
+    out.bookingId ? `BOOKING:${out.bookingId}` : "",
+    out.registrationNumber ? `REG:${out.registrationNumber}` : "",
+    out.ref ? `REF:${out.ref}` : "",
+    whenBits,
+    trip.activity || ""
+  ].filter(Boolean).join("|");
+  $("confQr").src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(qrPayload);
+  $("confQr").alt = qrPayload;
+  // ICS calendar
+  const ics = buildIcs(trip, out);
+  $("confCal").href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  $("confCal").download = `bnb-${out.bookingId || out.ref || "dive"}.ics`;
+  const share = (L === "es"
+    ? `Banana Nut Burger — mi check-in\nReserva #${out.bookingId || "—"}\nRegistro ${out.registrationNumber || "—"}\nRef ${out.ref}\n${whenBits} ${trip.activity || ""}`
+    : `Banana Nut Burger — my check-in\nBooking #${out.bookingId || "—"}\nRegistration ${out.registrationNumber || "—"}\nRef ${out.ref}\n${whenBits} ${trip.activity || ""}`);
+  $("confWa").href = "https://wa.me/?text=" + encodeURIComponent(share);
+  $("confList").innerHTML = `<ul class="track">${[["trActivity",true],["trDiver",true],["trForms",true],["trWaivers",true],["trSafety",true]].map(([k]) => `<li><span>${t[k]}</span><span class="st done">${t.stDone}</span></li>`).join("")}<li><span>${t.trReview}</span><span class="st wait">${t.statusAwait}</span></li></ul>`;
+  $("cRef").value = out.ref || "";
+  try { localStorage.setItem("bnb_reg_number", out.registrationNumber || ""); localStorage.setItem("bnb_last_confirm", JSON.stringify(lastConfirm)); } catch (e) {}
+}
+function buildIcs(trip, out){
+  const title = `BNB Dive · ${trip.activity || "Dive"}`;
+  const desc = `Booking #${out.bookingId || ""} · Reg ${out.registrationNumber || ""} · Ref ${out.ref || ""}`.replace(/\n/g, "\\n");
+  let dtStart = "", dtEnd = "";
+  try {
+    const map = { "8:00 AM":[8,0], "10:00 AM":[10,0], "1:00 PM":[13,0], "4:00 PM":[16,0], "5:00 PM":[17,0] };
+    const hm = map[trip.plannedTime] || [9, 0];
+    const [y, m, d] = (trip.plannedDate || "").split("-").map(Number);
+    if (y) {
+      const pad = n => String(n).padStart(2, "0");
+      dtStart = `${y}${pad(m)}${pad(d)}T${pad(hm[0])}${pad(hm[1])}00`;
+      const endH = hm[0] + 3;
+      dtEnd = `${y}${pad(m)}${pad(d)}T${pad(endH)}${pad(hm[1])}00`;
+    }
+  } catch (e) {}
+  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Banana Nut Burger//Check-in//EN",
+    "BEGIN:VEVENT",
+    `UID:${out.ref || out.bookingId || now}@banananutburger`,
+    `DTSTAMP:${now}`,
+    dtStart ? `DTSTART:${dtStart}` : "",
+    dtEnd ? `DTEND:${dtEnd}` : "",
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${desc}`,
+    "LOCATION:Banana Nut Burgers Dive Shop, West End, Roatan",
+    "END:VEVENT", "END:VCALENDAR"
+  ].filter(Boolean).join("\r\n");
+}
+$("confCopy").onclick = async () => {
+  if (!lastConfirm) return;
+  const text = `Booking #${lastConfirm.bookingId || "—"} · Reg ${lastConfirm.registrationNumber || "—"} · Ref ${lastConfirm.ref || ""}`;
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  $("confCopied").classList.remove("hide");
+  setTimeout(() => $("confCopied").classList.add("hide"), 2000);
 };
 
 $("submitBtn").onclick = async () => {
+  syncMedUI();
   const t = T[L], d = collect(), missing = [];
-  if (!d.activity) missing.push(t.activity);
-  if (!d.firstName || !d.lastName) missing.push(t.first);
-  if (!$("cbDecl").checked || !signed) missing.push(t.trWaivers);
-  if (missing.length) { $("err6").textContent = t.missing + missing.join(", "); return; }
+  if (!d.activity || !d.plannedDate || !d.plannedTime) missing.push({ label: t.trActivity, step: 1 });
+  if (!d.firstName || !d.lastName || !d.dob) missing.push({ label: t.trDiver, step: 2 });
+  if (!packetCompleted) missing.push({ label: t.trForms, step: 3 });
+  if (!$("cbDecl").checked || !signed) missing.push({ label: t.trWaivers, step: 4 });
+  if (!medicalDone(d)) missing.push({ label: t.trSafety, step: 5 });
+  if (missing.length) {
+    $("err6").innerHTML = t.missing + missing.map(m =>
+      `<button type="button" class="misslink" data-go="${m.step}">${esc(m.label)}</button>`
+    ).join(", ");
+    $("err6").querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(Number(b.dataset.go)));
+    go(missing[0].step);
+    return;
+  }
   $("submitBtn").disabled = true; $("submitBtn").textContent = t.sending;
   try {
     const r = await fetch("/api/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       ...d, accuracyDeclaration: $("cbDecl").checked, privacyAck: $("cbPriv").checked, marketingConsent: $("cbMkt").checked,
       signerName: V("signer"), signatureDataUrl: pad.toDataURL("image/png"), hp: V("hp"),
+      medicalFromPacket: !!(packetCompleted && medicalFromPacket),
+      packetNeedsPhysician: !!packetNeedsPhysician,
       idempotencyKey: draft.idempotencyKey, draftRef: draft.ref || "", draftToken: draft.token || ""
     })});
     const out = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(out.error || "failed");
-    submittedRef = out.ref;
-    $("confRef").textContent = out.ref;
-    $("confWhen").textContent = new Date(out.submittedAt).toLocaleString(L === "es" ? "es" : "en");
-    const s = state();
-    $("confList").innerHTML = `<ul class="track">${[["trActivity",s.activity],["trDiver",s.diver],["trForms",true],["trWaivers",true]].map(([k,v]) => `<li><span>${t[k]}</span><span class="st done">${t.stDone}</span></li>`).join("")}<li><span>${t.trSafety}</span><span class="st wait">${t.stPend}</span></li><li><span>${t.trReview}</span><span class="st wait">${t.statusAwait}</span></li></ul>`;
-    $("cRef").value = out.ref;
-    draft = { idempotencyKey: draft.idempotencyKey }; saveLocal(); // draft consumed; keep key so a retry returns the same ref
+    if (!r.ok) throw new Error(out.error || out.detail || "failed");
+    paintConfirm(out, { activity: d.activity, plannedDate: d.plannedDate, plannedTime: d.plannedTime });
+    draft = { idempotencyKey: draft.idempotencyKey }; saveLocal();
     go(7);
   } catch(e) {
     await saveDraft();
-    $("err6").textContent = e.message && e.message !== "failed" ? e.message : t.failed;
+    const msg = e.message && e.message !== "failed" ? e.message : t.failed;
+    const low = String(msg).toLowerCase();
+    let fixStep = 6;
+    if (/name|dob|birth|nombre|nacimiento/.test(low)) fixStep = 2;
+    else if (/form|packet|turnstile|consent|signature|firma/.test(low)) fixStep = /signature|firma|declar/.test(low) ? 4 : 3;
+    else if (/medic|pregnant|safety/.test(low)) fixStep = 5;
+    $("err6").innerHTML = `${esc(msg)} · <button type="button" class="misslink" data-go="${fixStep}">${L==="es"?"Corregir":"Fix"}</button>`;
+    $("err6").querySelector("[data-go]").onclick = () => go(fixStep);
     $("submitBtn").disabled = false; $("submitBtn").textContent = t.submit;
+    if (fixStep !== 6) go(fixStep);
   }
 };
 
@@ -407,15 +959,138 @@ $("corrSend").onclick = async () => {
   $("cMsg").value = "";
 };
 
+const TIMES = [[8,"8:00 AM"],[10,"10:00 AM"],[13,"1:00 PM"],[16,"4:00 PM"],[17,"5:00 PM"]];
+let calCur = new Date(); calCur.setDate(1); let selDate = "", selTime = "";
+const isoD = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const monthKey = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+async function loadAvail(month){
+  if (availCache[month]?._loaded) return availCache[month];
+  try {
+    const r = await fetch("/api/availability?month=" + encodeURIComponent(month));
+    const out = await r.json().catch(() => ({}));
+    if (r.ok) {
+      availSlotCap = out.slotCap || 8;
+      availCache[month] = { days: out.days || {}, slots: out.slots || {}, dayCap: out.dayCap || availSlotCap * 5, _loaded: true };
+      return availCache[month];
+    }
+  } catch (e) {}
+  availCache[month] = { days: {}, slots: {}, dayCap: availSlotCap * 5, _loaded: true };
+  return availCache[month];
+}
+function slotTaken(date, timeLabel){
+  const m = availCache[date.slice(0, 7)];
+  if (!m) return 0;
+  return m.slots[`${date}|${timeLabel}`] || 0;
+}
+function calState(d){
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  if (x < t) return "off";
+  const iso = isoD(d);
+  const m = availCache[iso.slice(0, 7)];
+  if (!m) return "open";
+  const dayN = m.days[iso] || 0;
+  const openSlots = TIMES.filter(tm => slotTaken(iso, tm[1]) < availSlotCap).length;
+  if (openSlots === 0 || dayN >= (m.dayCap || availSlotCap * 5)) return "off";
+  if (openSlots <= 2 || dayN >= availSlotCap * 3) return "low";
+  return "open";
+}
+function renderTimes(){
+  const t = T[L], box = $("timeSlots"); box.innerHTML = "";
+  if (!selDate) { $("calPick").textContent = ""; $("calPick").classList.remove("picked"); return; }
+  let list = TIMES.slice();
+  if (selDate === isoD(new Date())) { const h = new Date().getHours(); list = list.filter(x => x[0] > h); }
+  list = list.map(x => {
+    const taken = slotTaken(selDate, x[1]);
+    const left = Math.max(0, availSlotCap - taken);
+    return { hour: x[0], label: x[1], left, full: left <= 0 };
+  }).filter(x => !x.full || x.label === selTime);
+  if (!list.length) { $("calPick").textContent = t.noTimes; $("calPick").classList.remove("picked"); return; }
+  if (selTime && !list.some(x => x.label === selTime && !x.full)) selTime = "";
+  $("calPick").textContent = selTime ? (selDate + " · " + selTime) : t.pickTime;
+  $("calPick").classList.toggle("picked", !!selTime);
+  list.forEach(x => {
+    const b = document.createElement("button"); b.type = "button";
+    const on = selTime === x.label;
+    b.className = "tpill" + (on ? " sel" : "") + (x.full ? " off" : "");
+    b.disabled = x.full;
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.textContent = x.full ? `${x.label} · ${t.slotFull}` : `${x.label} · ${x.left} ${t.slotLeft}`;
+    b.addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation();
+      if (x.full) return;
+      selTime = x.label;
+      if ($("pdate")) $("pdate").value = selDate;
+      draft.plannedDate = selDate; draft.plannedTime = selTime; saveLocal();
+      renderTimes();
+    });
+    box.append(b);
+  });
+}
+async function renderCal(){
+  const y = calCur.getFullYear(), m = calCur.getMonth(), now = new Date();
+  $("calTitle").textContent = calCur.toLocaleDateString(L === "es" ? "es" : "en", { month: "long", year: "numeric" });
+  $("calPrev").disabled = (y === now.getFullYear() && m === now.getMonth());
+  const mx = new Date(now.getFullYear(), now.getMonth() + 6, 1);
+  $("calNext").disabled = (y === mx.getFullYear() && m === mx.getMonth());
+  await loadAvail(monthKey(calCur));
+  const grid = $("calGrid"); grid.innerHTML = "";
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < first; i++) { const s = document.createElement("span"); s.className = "calblank"; grid.append(s); }
+  for (let d = 1; d <= days; d++) {
+    const dt = new Date(y, m, d), st = calState(dt), b = document.createElement("button");
+    b.type = "button"; b.textContent = d; b.className = "calday " + st + (selDate === isoD(dt) ? " sel" : "");
+    b.disabled = st === "off"; b.setAttribute("aria-label", isoD(dt));
+    b.onclick = () => { selDate = isoD(dt); selTime = ""; $("pdate").value = selDate; renderCal(); };
+    grid.append(b);
+  }
+  renderTimes();
+}
+$("calPrev").onclick = () => { calCur = new Date(calCur.getFullYear(), calCur.getMonth() - 1, 1); renderCal(); };
+$("calNext").onclick = () => { calCur = new Date(calCur.getFullYear(), calCur.getMonth() + 1, 1); renderCal(); };
+
 applyLang();
-try { // coming from a card booking? carry the details over — no re-typing
+if (draft.plannedDate) { selDate = draft.plannedDate; $("pdate").value = draft.plannedDate; }
+if (draft.plannedTime) selTime = draft.plannedTime;
+try {
   const pre = JSON.parse(localStorage.getItem("bnb_reg_prefill") || "null");
   if (pre) { fill(pre); localStorage.removeItem("bnb_reg_prefill"); tracker(); }
 } catch(e) {}
+window.addEventListener("message", (e) => {
+  if (e.origin !== location.origin) return;
+  if (!e.data || e.data.type !== "bnb_packet_done") return;
+  checkPacketStatus(false);
+});
+const kioskMode = /(?:^|[?&])kiosk=1(?:&|$)/.test(location.search);
+if (kioskMode) {
+  const warn = document.createElement("p");
+  warn.id = "kioskWarn"; warn.className = "err hide";
+  warn.textContent = "Still there? This tablet will clear for the next customer soon.";
+  document.body.prepend(warn);
+  let idleWarn, idleReset;
+  const arm = () => {
+    clearTimeout(idleWarn); clearTimeout(idleReset);
+    warn.classList.add("hide");
+    idleWarn = setTimeout(() => warn.classList.remove("hide"), 8 * 60 * 1000);
+    idleReset = setTimeout(() => {
+      try { localStorage.removeItem("bnb_reg_draft"); localStorage.removeItem("bnb_reg_number"); } catch (e) {}
+      location.href = "/register.html?kiosk=1";
+    }, 10 * 60 * 1000);
+  };
+  ["pointerdown", "keydown"].forEach((ev) => document.addEventListener(ev, arm));
+  arm();
+}
+const params = new URLSearchParams(location.search);
+const actQ = params.get("activity");
+if (actQ && ACTS.includes(actQ)) { $("act").value = actQ; }
 if (draft.ref) { /* same-device resume is one tap away */ $("resumeOpen").textContent += ""; }
 if (location.hash === "#resume") $("resumeOpen").click();
 if (location.hash === "#requirements") setTimeout(() => $("requirements").scrollIntoView({ behavior: "smooth" }), 300);
-go(0);
+if (params.get("start") === "1" || actQ) {
+  go(1);
+} else {
+  go(0);
+}
 </script>
 </body>
 </html>

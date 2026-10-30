@@ -1,6 +1,14 @@
 .wrangler/
 node_modules/
 .dev.vars*
-.env*
+.env
+.env.local
 .DS_Store
 *.zip
+forms-source/_inspect/
+forms-source/*.pdf
+forms-source/*.en.txt
+forms-source/*.es.txt
+# SSI packet originals (keep local)
+forms-source/SSI-*.pdf
+forms-output-samples/
