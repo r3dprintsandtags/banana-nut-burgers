@@ -504,6 +504,7 @@ function render(){
       <div class="acts">${wa}${mail}${next}
       <button class="ghost" data-act="toggle" data-id="${b.id}">${openId === b.id ? t.hide : t.details}</button>
       ${reviewBtn}
+      ${openId === b.id || reviewId === b.id ? `<button data-act="close" data-id="${b.id}">${t.saveClose}</button>` : ""}
       <button class="danger" data-act="del" data-id="${b.id}">${t.del}</button></div>
       ${openId === b.id ? `<div class="det">${details(b)}</div>` : ""}
       ${reviewId === b.id ? `<div class="det" id="bkReview-${b.id}">${bookingReview && bookingReview._bookingId === b.id ? "" : `<p class="mut">${t.loading}</p>`}</div>` : ""}
@@ -535,6 +536,7 @@ async function act(action, id){
     }
     return;
   }
+  if (action === "close") { openId = null; reviewId = null; bookingReview = null; render(); return; }
   if (action === "del") { if (!confirm(T[L].delSure)) return; await api("/api/bookings/" + id, { method: "DELETE" }); load(); return; }
   const saved = action === "confirmed" ? "done" : action;
   await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ status: saved }) });

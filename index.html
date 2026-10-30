@@ -93,7 +93,7 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <path d="M12 98q16-8 24 0t24 0t24 0t24 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
 <span class="tag" data-i="pill">WEST END · ROATÁN</span>
 <h1 data-h="h1"></h1><p data-i="sub"></p>
-<div class="cta"><a class="btn wa" id="wa" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn ban" href="register.html?start=1">📅 <span data-i="bookNow"></span></a><a class="btn glass" href="tel:+50498763374">📞</a></div>
+<div class="cta"><a class="btn wa" id="wa" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn glass" href="tel:+50498763374">📞</a></div>
 </div></header>
 
 <main class="wrap">
@@ -153,7 +153,7 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <div class="bar"><a class="btn wa" id="wa2" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn" href="tel:+50498763374">📞</a><a class="btn ban" href="register.html?start=1">📅</a></div>
 <div id="lb"><img alt=""></div>
 <div id="sheet"><div class="card">
-<h2 id="sheetTitle" style="margin-top:0"></h2>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="sheetTitle" style="margin:0"></h2><button type="button" id="sheetLang" style="background:rgba(0,0,0,.45);min-height:38px;padding:6px 12px;font-size:14px;color:#fff;border:0;border-radius:99px"></button></div>
 <div class="sheetbody" id="sheetBody"></div>
 <p id="sheetForm" class="hide"></p>
 <p class="okmsg hide" id="sheetOk"></p>
@@ -200,7 +200,7 @@ function render(){
   const u="https://wa.me/"+PH+"?text="+encodeURIComponent(L==="es"?"Hola Banana Nut Burgers, quiero información de buceo.":"Hi Banana Nut Burgers, I'd like info about diving.");
   $("wa").href=u;$("wa2").href=u;
 }
-$("lang").onclick=()=>{L=L==="en"?"es":"en";try{localStorage.setItem("bnb_lang",L)}catch(e){}render();paintPromos();if($("sheet").style.display==="flex"){$("sheetClose").textContent=T[L].close;}};
+$("lang").onclick=()=>{L=L==="en"?"es":"en";try{localStorage.setItem("bnb_lang",L)}catch(e){}render();paintPromos();if($("sheet").style.display==="flex")paintSheet();};
 window.addEventListener("storage",(ev)=>{
   if(ev.key!=="bnb_lang") return;
   if(ev.newValue!=="en"&&ev.newValue!=="es") return;
@@ -251,7 +251,25 @@ async function loadPromos(){
   paintPromos();
 }
 
+let sheetKind = "";
+function paintSheet(){
+  const t = T[L];
+  $("sheetLang").textContent = L === "en" ? "ES" : "EN";
+  $("sheetClose").textContent = t.close;
+  if (sheetKind === "shop") { $("sheetTitle").textContent = t.shopTitle; $("sheetBody").textContent = t.shopBody; }
+  else if (sheetKind === "req") { $("sheetTitle").textContent = t.reqTitle; $("sheetBody").textContent = t.reqBody; }
+  else if (sheetKind === "cancel") {
+    const keep = { n: $("crNum").value, p: $("crPhone").value, f: $("crName").value, d: $("crDate").value, k: (document.querySelector('input[name="crKind"]:checked') || {}).value };
+    $("sheetTitle").textContent = t.cancelBtn;
+    $("sheetForm").innerHTML = cancelForm();
+    bindCancel();
+    $("crNum").value = keep.n; $("crPhone").value = keep.p; $("crName").value = keep.f; $("crDate").value = keep.d;
+    if (keep.k) { const r = document.querySelector('input[name="crKind"][value="' + keep.k + '"]'); if (r) { r.checked = true; $("crDateWrap").classList.toggle("hide", keep.k !== "reschedule"); } }
+    if (!$("sheetOk").classList.contains("hide")) $("sheetOk").textContent = t.cancelOk;
+  }
+}
 function openSheet(title, body, formHtml){
+  $("sheetLang").textContent = L === "en" ? "ES" : "EN";
   $("sheetTitle").textContent = title;
   $("sheetBody").textContent = body || "";
   $("sheetBody").style.display = body ? "block" : "none";
@@ -262,11 +280,12 @@ function openSheet(title, body, formHtml){
   $("sheet").style.display = "flex";
   $("sheetClose").textContent = T[L].close;
 }
-function closeSheet(){ $("sheet").style.display = "none"; $("sheetForm").innerHTML = ""; }
+function closeSheet(){ $("sheet").style.display = "none"; $("sheetForm").innerHTML = ""; sheetKind = ""; }
+$("sheetLang").onclick = () => $("lang").click();
 $("sheetClose").onclick = closeSheet;
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
-$("openShopInfo").onclick = () => openSheet(T[L].shopTitle, T[L].shopBody, "");
-$("openReq").onclick = () => openSheet(T[L].reqTitle, T[L].reqBody, "");
+$("openShopInfo").onclick = () => { sheetKind = "shop"; openSheet(T[L].shopTitle, T[L].shopBody, ""); };
+$("openReq").onclick = () => { sheetKind = "req"; openSheet(T[L].reqTitle, T[L].reqBody, ""); };
 $("contactBtn").onclick = () => { $("contactMenu").classList.toggle("hide"); };
 document.addEventListener("click", (e) => {
   if (!$("contactMenu") || $("contactMenu").classList.contains("hide")) return;
@@ -286,8 +305,7 @@ function cancelForm(){
 <div id="crDateWrap" class="hide"><label>${t.newDate}</label><input id="crDate" type="date"></div>
 <p><button type="button" id="crSend">${t.cancelSend}</button></p>`;
 }
-$("openCancel").onclick = () => {
-  openSheet(T[L].cancelBtn, "", cancelForm());
+function bindCancel(){
   const sync = () => {
     const kind = (document.querySelector('input[name="crKind"]:checked') || {}).value;
     $("crDateWrap").classList.toggle("hide", kind !== "reschedule");
@@ -314,7 +332,8 @@ $("openCancel").onclick = () => {
       $("crSend").disabled = false;
     }
   };
-};
+}
+$("openCancel").onclick = () => { sheetKind = "cancel"; openSheet(T[L].cancelBtn, "", cancelForm()); bindCancel(); };
 
 render();
 loadPromos();
