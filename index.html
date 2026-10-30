@@ -51,7 +51,7 @@ input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;bo
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.scr{overflow-x:auto}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}.bar .btn{flex:1;padding:10px 6px;white-space:nowrap;font-size:15px}
 #lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9;display:none;align-items:center;justify-content:center}#lb img{max-width:96%;max-height:90%;border-radius:12px}
-#sheet{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:none;align-items:center;justify-content:center;padding:16px}#sheet .card{max-width:640px;width:100%;max-height:86vh;overflow:auto;margin:0}#sheet .sheetbody{white-space:pre-wrap}#contactMenu{position:absolute;z-index:8;margin-top:8px;min-width:240px;padding:10px}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:none;align-items:center;justify-content:center;padding:16px}#sheet .card{max-width:640px;width:100%;max-height:86vh;overflow:hidden;margin:0;display:flex;flex-direction:column}#sheet .sheetScroll{overflow-y:scroll;flex:1;min-height:0;-webkit-overflow-scrolling:touch;padding-right:4px}#sheet .sheetbody{white-space:pre-wrap}#checkin{position:relative;z-index:5;overflow:visible}#checkin .card{overflow:visible}#contactMenu{position:absolute;left:0;top:calc(100% + 6px);z-index:40;margin:0;min-width:240px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 28px rgba(0,0,0,.28)}#contactMenu.hide{display:none}
 .sec{border-top:1px solid var(--line);margin-top:16px;padding-top:4px}.sec h3{margin:10px 0 0;font-size:17px}.share{display:flex;gap:8px}.share input{flex:1}.chk{display:flex;gap:10px;align-items:center;font-weight:600;margin-top:14px}.chk input{width:22px;min-height:22px;height:22px}.lk{color:var(--pri);font-weight:700}.ghostb{background:transparent;color:var(--pri);border:1px solid var(--line)}.hide{display:none}.cal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:6px}.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.calhead b{font-size:18px;letter-spacing:2px;text-transform:uppercase}.calnav{width:44px;min-height:44px;padding:0;border-radius:10px;background:var(--card);color:var(--ink);border:1.5px solid var(--ink);font-size:22px;line-height:1}.calnav:disabled{opacity:.3;cursor:default}.caldow,.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.caldow span{text-align:center;font-size:11px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;padding:4px 0}.calday{min-height:44px;padding:6px 0;border-radius:9px;font-weight:600;background:#cdeccd;color:#14532d;border:1px solid #9ed69e}.calday.low{background:#fdf0b8;color:#713f12;border-color:#ecd97a}.calday.off{background:#f6cfcf;color:#7f1d1d;border-color:#edaeae;opacity:.8;cursor:not-allowed}.calday.sel{background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 2px 0 #1e3a8a}.calblank{min-height:44px}.callegend{font-size:13px;margin:10px 0 0}.times{display:flex;flex-wrap:wrap;gap:8px}.tpill{min-height:48px;padding:10px 18px;border-radius:99px;background:var(--card);color:var(--ink);border:1.5px solid var(--ink)}.tpill.sel{background:#2563eb;color:#fff;border-color:#1d4ed8}.cruise summary{display:flex;gap:8px;align-items:center;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}.cruise summary::-webkit-details-marker{display:none}.cruise .carw{font-size:12px;color:var(--pri);transition:transform .2s}.cruise details[open ] .carw{transform:rotate(90deg)}.cruise .cbody{padding-top:6px}footer{text-align:center;color:var(--mut);font-size:14px;padding:20px 0}footer a{color:var(--pri)}
 
 body{background:#06161f url(img/deep-blue.jpg) center/cover fixed no-repeat}
@@ -110,13 +110,7 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <h2 style="margin-top:0">🤿 <span data-i="ciH"></span></h2>
 <p data-i="ciP"></p>
 <p><a class="btn ban" style="width:100%;font-size:18px" href="register.html?start=1">▶ <span data-i="ciStart"></span></a></p>
-<p class="note" data-i="ciPriv"></p>
-</div></section>
-
-<section><h2 data-i="expH"></h2><p class="sub" data-i="expS"></p><div class="snap" id="svc"></div></section>
-
-<section id="checkinTools"><div class="card">
-<div style="display:flex;gap:8px;flex-wrap:wrap">
+<div id="checkinTools" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px">
 <a class="btn ghostb" href="register.html#resume"><span data-i="ciResume"></span></a>
 <button type="button" class="btn ghostb" id="openShopInfo"><span data-i="ciInfo"></span></button>
 <div style="position:relative">
@@ -129,7 +123,10 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <button type="button" class="btn ghostb" id="openReq"><span data-i="ciReq"></span></button>
 <button type="button" class="btn ghostb" id="openCancel"><span data-i="cancelBtn"></span></button>
 </div>
+<p class="note" data-i="ciPriv"></p>
 </div></section>
+
+<section><h2 data-i="expH"></h2><p class="sub" data-i="expS"></p><div class="snap" id="svc"></div></section>
 
 <section><div class="band"><div><b>400+</b><span data-i="s1"></span></div><div><b>70+</b><span data-i="s2"></span></div><div><b>4–6</b><span data-i="s3"></span></div></div></section>
 
@@ -153,12 +150,14 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <div class="bar"><a class="btn wa" id="wa2" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn" href="tel:+50498763374">📞</a><a class="btn ban" href="register.html?start=1">📅</a></div>
 <div id="lb"><img alt=""></div>
 <div id="sheet"><div class="card">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="sheetTitle" style="margin:0"></h2><button type="button" id="sheetLang" style="background:rgba(0,0,0,.45);min-height:38px;padding:6px 12px;font-size:14px;color:#fff;border:0;border-radius:99px"></button></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex:none"><h2 id="sheetTitle" style="margin:0"></h2><button type="button" id="sheetLang" style="background:rgba(0,0,0,.45);min-height:38px;padding:6px 12px;font-size:14px;color:#fff;border:0;border-radius:99px"></button></div>
+<div class="sheetScroll">
 <div class="sheetbody" id="sheetBody"></div>
 <p id="sheetForm" class="hide"></p>
 <p class="okmsg hide" id="sheetOk"></p>
 <p class="err" id="sheetErr"></p>
-<p><button type="button" id="sheetClose" data-i="close"></button></p>
+</div>
+<p style="flex:none;margin-bottom:0"><button type="button" id="sheetClose" data-i="close"></button></p>
 </div></div>
 
 
