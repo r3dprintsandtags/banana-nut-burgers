@@ -1,4 +1,4 @@
-import { json, isAuthed, str, audit } from "../../_shared.js";
+import { json, isAuthed, str, audit, ensureSchema } from "../../_shared.js";
 
 async function loadReg(env, id) {
   return env.DB.prepare(
@@ -27,16 +27,38 @@ export async function onRequestGet({ request, env, params }) {
 export async function onRequestPatch({ request, env, params }) {
   if (!env.DB) return json({ error: "Database not configured" }, 503);
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
+  await ensureSchema(env);
   const reg = await loadReg(env, params.id);
   if (!reg) return json({ error: "Not found" }, 404);
   let b;
   try { b = await request.json(); } catch { return json({ error: "Bad request" }, 400); }
   const status = str(b.status, 30), note = str(b.reviewNote, 1000);
-  if (status && !["submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested", "complete"].includes(status))
-    return json({ error: "Invalid status" }, 422);
-  await env.DB.prepare("UPDATE registrations SET status=?, review_note=?, updated_at=? WHERE id=?")
-    .bind(status || reg.status, note || reg.review_note, Date.now(), reg.id).run();
+  const allowed = ["submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested", "complete", "draft"];
+  if (status && !allowed.includes(status)) return json({ error: "Invalid status" }, 422);
+  const next = status || reg.status;
+  const archived = next === "approved" ? 1 : 0;
+  await env.DB.prepare("UPDATE registrations SET status=?, review_note=?, updated_at=?, archived=? WHERE id=?")
+    .bind(next, note || reg.review_note, Date.now(), archived, reg.id).run();
+  if (next === "approved") {
+    let data = {};
+    try { data = JSON.parse(reg.data || "{}"); } catch (e) {}
+    const marker = `Registration ${reg.ref}`;
+    const existing = await env.DB.prepare("SELECT id FROM bookings WHERE note LIKE ?").bind(`%${reg.ref}%`).first();
+    if (!existing) {
+      const name = [data.firstName || reg.first_name || "", data.lastName || reg.last_name || ""].join(" ").trim();
+      await env.DB.prepare(
+        `INSERT INTO bookings (created_at,status,name,first_name,last_name,contact,email,guests,date,time,service,divers,note,ip_hash)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      ).bind(
+        Date.now(), "new", name, data.firstName || reg.first_name || "", data.lastName || reg.last_name || "",
+        data.phone || reg.phone || "", data.email || reg.email || "",
+        Math.min(20, Math.max(1, parseInt(data.participants || reg.participants, 10) || 1)),
+        data.plannedDate || reg.planned_date || "", str(data.plannedTime, 20),
+        data.activity || reg.activity || "", "[]", marker, ""
+      ).run();
+    }
+  }
   await audit(env, "admin", "registration.review", "registration", reg.ref,
-    `status:${reg.status}->${status || reg.status}${note ? " note:" + note : ""}`);
-  return json({ ok: true });
+    `status:${reg.status}->${next}${note ? " note:" + note : ""}`);
+  return json({ ok: true, status: next, archived: !!archived });
 }

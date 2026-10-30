@@ -83,6 +83,30 @@ export function checklist(reg, { hasSignature = false, hasDeclaration = false } 
   };
 }
 
+let schemaReady = false;
+export async function ensureSchema(env) {
+  if (!env.DB || schemaReady) return;
+  const info = await env.DB.prepare("PRAGMA table_info(registrations)").all();
+  const names = new Set((info.results || []).map((c) => c.name));
+  if (!names.has("archived")) {
+    await env.DB.prepare("ALTER TABLE registrations ADD COLUMN archived INTEGER NOT NULL DEFAULT 0").run();
+  }
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS schedule_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      reservation_number TEXT NOT NULL DEFAULT '',
+      phone TEXT NOT NULL DEFAULT '',
+      full_name TEXT NOT NULL DEFAULT '',
+      kind TEXT NOT NULL DEFAULT 'cancel',
+      preferred_date TEXT NOT NULL DEFAULT '',
+      registration_id INTEGER
+    )`
+  ).run();
+  schemaReady = true;
+}
+
 export function makeRef() {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const bytes = new Uint8Array(6);

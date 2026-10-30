@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Form PDF mapper · Banana Nut Burgers</title>
+<style>
+:root{--bg:#06161f;--card:#fff;--ink:#0a2533;--pri:#0a86b0;--ban:#ffc928;--line:#c5b89a;--mut:#5a6e78;--red:#d64545}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,sans-serif;color:#0a2533;background:#06161f url(img/deep-blue.jpg) center/cover fixed;min-height:100vh}
+body:before{content:"";position:fixed;inset:0;background:rgba(6,22,31,.75);z-index:0}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:16px}
+h1{color:#f5fbff;margin:0 0 8px;font-size:22px}
+.wrap > div > div > .mut,.page-mut{color:#c5dce8!important;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.card{background:#fff!important;color:#0a2533!important;backdrop-filter:blur(12px);border-radius:14px;padding:14px;margin-top:12px;border:1px solid rgba(255,255,255,.35)}
+.card label,.card h2,.card b{color:#0a2533!important}
+.card .mut{color:#5a6e78!important;text-shadow:none!important}
+.row{display:grid;grid-template-columns:280px 1fr;gap:14px}@media(max-width:860px){.row{grid-template-columns:1fr}}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:var(--pri);color:#fff;font-weight:700;min-height:42px}
+.ghost{background:#f7fafc;color:#075a78;border:1px solid #c5b89a}
+.ban{background:var(--ban);color:#0a2533}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #c5b89a;margin-top:4px;background:#fff!important;color:#0a2533!important}
+label{display:block;font-weight:600;margin-top:10px;font-size:13px;color:#0a2533}
+.list button{display:block;width:100%;text-align:left;margin-top:6px;background:#f3f7fa;color:var(--ink);border:1px solid var(--line)}
+.list button.on{outline:2px solid var(--pri);background:#e8f6fc}
+#stageWrap{position:relative;overflow:auto;max-height:75vh;background:#1a1a1a;border-radius:12px}
+#stage{position:relative;display:inline-block}
+#stage canvas{display:block;max-width:100%}
+.pin{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--ban);border:2px solid #fff;box-shadow:0 0 0 1px #000;cursor:grab;z-index:2}
+.pin.sel{background:#ef4444}
+.err{color:var(--red);font-weight:600}.ok{color:#17a35c;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{min-height:34px;padding:6px 10px;font-size:12px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.chips button.on{background:var(--ban)}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+    <div><h1>PDF field mapper</h1><p class="mut page-mut">Click the PDF to place shared fields. Drag pins. Save mapping · preview sample fill.</p></div>
+    <div><a class="ghost" href="admin.html" style="display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;text-decoration:none;border:1px solid #eadfc2;color:#42c8f2;font-weight:700">← CRM</a></div>
+  </div>
+
+  <div class="card" id="loginCard">
+    <label>Admin password</label>
+    <input id="pw" type="password">
+    <p style="margin-top:10px"><button id="loginBtn" class="ban">Log in</button></p>
+    <p class="err" id="loginErr"></p>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="card">
+      <label>Upload SSI PDF → auto-map</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:140px"><label>Template key</label><input id="upKey" placeholder="intro_code"></div>
+        <div style="flex:2;min-width:180px"><label>PDF file</label><input id="upFile" type="file" accept="application/pdf"></div>
+        <button id="upBtn">Upload & automap</button>
+      </div>
+      <label>Consent EN (paste from PDF — do not rewrite)</label>
+      <textarea id="consentEn" rows="3" placeholder="Paste SSI legal text here…"></textarea>
+      <label>Consent ES (optional)</label>
+      <textarea id="consentEs" rows="2"></textarea>
+      <p class="mut" id="upMsg"></p>
+    </div>
+
+    <div class="row">
+      <div class="card list">
+        <b>Templates</b>
+        <div id="tplList"></div>
+        <label>Page</label>
+        <select id="pageSel"></select>
+        <label>Place field</label>
+        <div class="chips" id="fieldChips"></div>
+        <label>Instructor name (shop default)</label>
+        <input id="instructor" placeholder="Leave blank — set per booking later">
+        <p style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="saveMap" class="ban">Save mapping</button>
+          <button id="previewBtn" class="ghost">Preview PDF</button>
+          <button id="automapBtn" class="ghost">Re-run automap</button>
+        </p>
+        <p class="mut" id="mapMsg"></p>
+        <pre id="mapJson" style="font-size:11px;max-height:180px;overflow:auto;background:#f6f8fa;padding:8px;border-radius:8px"></pre>
+      </div>
+      <div class="card">
+        <div id="stageWrap"><div id="stage"></div></div>
+        <p class="mut">Tip: select a field chip, then click the page. Drag the yellow pin. Coordinates are PDF points (origin bottom-left).</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const SHARED = ["first_name","last_name","full_name_print","dob","email","cell_phone","address","emergency_contact_name","emergency_contact_relationship","emergency_contact_phone","training_center_name","training_center_address","registration_number","signature_date","signature_image"];
+const $ = id => document.getElementById(id);
+const hide = el => el.classList.add("hide");
+const show = el => el.classList.remove("hide");
+
+let templates = [], current = null, mapping = { mode: "overlay", placements: [], fields: {}, signatures: [] };
+let pdfDoc = null, pageNum = 1, scale = 1.2, activeField = "full_name_print";
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { credentials: "same-origin", ...opts, headers: { ...(opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}), ...opts.headers } });
+  return r;
+}
+
+$("loginBtn").onclick = async () => {
+  const r = await api("/api/login", { method: "POST", body: JSON.stringify({ password: $("pw").value }) });
+  if (!r.ok) { $("loginErr").textContent = "Wrong password"; return; }
+  hide($("loginCard")); show($("app"));
+  await loadTemplates();
+  renderChips();
+};
+
+async function loadTemplates() {
+  const r = await api("/api/forms/templates");
+  const out = await r.json();
+  templates = out.templates || [];
+  $("tplList").innerHTML = templates.map(t =>
+    `<button type="button" data-id="${t.id}" class="${current?.id===t.id?"on":""}">${t.name || t.key}<br><span class="mut">${t.key} · ${t.pdf_mode} · ${t.pdf_r2_key ? "PDF✓" : "no PDF"}</span></button>`
+  ).join("") || "<p class='mut'>No templates — run migration 0005</p>";
+  $("tplList").querySelectorAll("button").forEach(b => b.onclick = () => selectTpl(Number(b.dataset.id)));
+}
+
+function renderChips() {
+  $("fieldChips").innerHTML = SHARED.map(k =>
+    `<button type="button" data-k="${k}" class="${activeField===k?"on":""}">${k}</button>`
+  ).join("");
+  $("fieldChips").querySelectorAll("button").forEach(b => b.onclick = () => {
+    activeField = b.dataset.k;
+    renderChips();
+  });
+}
+
+async function selectTpl(id) {
+  current = templates.find(t => t.id === id);
+  if (!current) return;
+  await loadTemplates();
+  mapping = { mode: current.pdf_mode || "overlay", placements: [], fields: {}, signatures: [] };
+  syncJson();
+  await loadPdfFromPreview(id);
+}
+
+async function loadPdfFromPreview(id) {
+  $("stage").innerHTML = "<p class='mut' style='padding:20px;color:#fff'>Loading PDF…</p>";
+  const mapR = await api("/api/forms/templates/" + id + "/mapping");
+  if (mapR.ok) {
+    const d = await mapR.json();
+    mapping = d.mapping || mapping;
+    if (d.consent?.en) $("consentEn").value = d.consent.en;
+    if (d.consent?.es) $("consentEs").value = d.consent.es;
+    syncJson();
+  }
+  const r = await api("/api/forms/templates/" + id + "/pdf");
+  if (!r.ok) { $("stage").innerHTML = "<p class='err'>No PDF yet — upload one first</p>"; return; }
+  const buf = await r.arrayBuffer();
+  pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+  $("pageSel").innerHTML = Array.from({ length: pdfDoc.numPages }, (_, i) => `<option value="${i+1}">Page ${i+1}</option>`).join("");
+  pageNum = 1;
+  await renderPage();
+}
+
+$("pageSel").onchange = async () => { pageNum = Number($("pageSel").value); await renderPage(); };
+
+async function renderPage() {
+  const page = await pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  canvas.width = viewport.width; canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+  const stage = $("stage");
+  stage.innerHTML = "";
+  stage.appendChild(canvas);
+  stage.style.width = viewport.width + "px";
+  stage.style.height = viewport.height + "px";
+
+  // pins for this page (PDF coords: origin bottom-left)
+  const placements = (mapping.placements || []).filter(p => (p.page || 0) === pageNum - 1);
+  placements.forEach((p, idx) => {
+    const pin = document.createElement("div");
+    pin.className = "pin";
+    pin.title = p.source || p.type;
+    const xCss = p.x * scale;
+    const yCss = viewport.height - p.y * scale;
+    pin.style.left = xCss + "px";
+    pin.style.top = yCss + "px";
+    makeDrag(pin, p, viewport);
+    stage.appendChild(pin);
+  });
+
+  canvas.onclick = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const xCss = e.clientX - rect.left;
+    const yCss = e.clientY - rect.top;
+    const x = xCss / scale;
+    const y = (viewport.height - yCss) / scale;
+    const place = activeField === "signature_image"
+      ? { page: pageNum - 1, x, y, type: "signature", source: "signature_image", w: 140, h: 40 }
+      : { page: pageNum - 1, x, y, source: activeField, size: 10, ...(activeField.includes("date") || activeField === "dob" ? { dateFormat: "dd/mm/yyyy" } : {}) };
+    mapping.placements = mapping.placements || [];
+    mapping.mode = "overlay";
+    mapping.placements.push(place);
+    syncJson();
+    renderPage();
+  };
+}
+
+function makeDrag(pin, place, viewport) {
+  let ox, oy;
+  pin.onpointerdown = (e) => {
+    pin.setPointerCapture(e.pointerId);
+    ox = e.clientX; oy = e.clientY;
+    const startX = place.x, startY = place.y;
+    pin.onpointermove = (ev) => {
+      const dx = (ev.clientX - ox) / scale;
+      const dy = (ev.clientY - oy) / scale;
+      place.x = startX + dx;
+      place.y = startY - dy;
+      pin.style.left = (place.x * scale) + "px";
+      pin.style.top = (viewport.height - place.y * scale) + "px";
+      syncJson();
+    };
+    pin.onpointerup = () => { pin.onpointermove = null; };
+  };
+  pin.ondblclick = () => {
+    mapping.placements = mapping.placements.filter(p => p !== place);
+    syncJson(); renderPage();
+  };
+}
+
+function syncJson() {
+  $("mapJson").textContent = JSON.stringify(mapping, null, 2);
+}
+
+$("saveMap").onclick = async () => {
+  if (!current) return;
+  const r = await api("/api/forms/templates", { method: "POST", body: JSON.stringify({ key: current.key, mapping, pdf_mode: "overlay", consent_en: $("consentEn").value || undefined, consent_es: $("consentEs").value || undefined }) });
+  $("mapMsg").textContent = r.ok ? "Saved ✓" : "Save failed";
+  $("mapMsg").className = r.ok ? "ok" : "err";
+  if ($("instructor").value.trim()) {
+    await api("/api/forms/settings", { method: "POST", body: JSON.stringify({ instructor_name: $("instructor").value.trim() }) }).catch(() => {});
+  }
+};
+
+$("previewBtn").onclick = () => {
+  if (!current) return;
+  window.open("/api/forms/templates/" + current.id + "/preview", "_blank");
+};
+
+$("automapBtn").onclick = async () => {
+  if (!current) return;
+  const r = await api("/api/forms/templates", { method: "POST", body: JSON.stringify({ key: current.key, action: "automap" }) });
+  const out = await r.json();
+  if (!r.ok) { $("mapMsg").textContent = out.error || "Automap failed"; $("mapMsg").className = "err"; return; }
+  mapping = out.mapping;
+  syncJson();
+  $("mapMsg").textContent = `Automap: ${out.mapping.mode}, unmatched ${(out.mapping.unmatched||[]).length}`;
+  $("mapMsg").className = "ok";
+  await renderPage();
+};
+
+$("upBtn").onclick = async () => {
+  const key = $("upKey").value.trim();
+  const file = $("upFile").files[0];
+  if (!key || !file) { $("upMsg").textContent = "Key + PDF required"; return; }
+  const fd = new FormData();
+  fd.set("key", key); fd.set("file", file);
+  if ($("consentEn").value) fd.set("consent_en", $("consentEn").value);
+  if ($("consentEs").value) fd.set("consent_es", $("consentEs").value);
+  const r = await api("/api/forms/templates/upload", { method: "POST", body: fd });
+  const out = await r.json();
+  $("upMsg").textContent = r.ok ? `Uploaded ${key} · ${out.mapping?.mode} · ${out.pageCount} pages` : (out.error || "Failed");
+  $("upMsg").className = r.ok ? "ok" : "err";
+  await loadTemplates();
+};
+</script>
+</body>
+</html>

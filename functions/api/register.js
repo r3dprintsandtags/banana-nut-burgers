@@ -88,7 +88,18 @@ export async function onRequestPost({ request, env }) {
   }
   const trip = { activity: str(b.activity, 60), plannedDate: str(b.plannedDate, 10),
     participants: Math.min(20, Math.max(1, parseInt(b.participants, 10) || 1)), bookingRef: str(b.bookingRef, 40) };
-  const fullData = { ...customerIn, ...data, ...trip, preferredLanguage: str(b.preferredLanguage, 10), emergencyRelationship: str(b.emergencyRelationship, 40) };
+  const participants = trip.participants;
+  const diverNames = Array.isArray(b.diverNames) ? b.diverNames.map((n) => str(n, 80)).filter(Boolean).slice(0, participants) : [];
+  const fullData = {
+    ...customerIn, ...data, ...trip,
+    preferredLanguage: str(b.preferredLanguage, 10),
+    emergencyRelationship: str(b.emergencyRelationship, 40),
+    hasMinors: b.hasMinors === true,
+    minorCount: b.hasMinors === true ? Math.min(participants, Math.max(0, parseInt(b.minorCount, 10) || 0)) : 0,
+    courseInterest: str(b.courseInterest, 8) === "yes" ? "yes" : (str(b.courseInterest, 8) === "no" ? "no" : ""),
+    diverNames,
+    formSetCount: Math.max(diverNames.length, 1),
+  };
 
   let regId;
   if (draftReg) {
@@ -114,6 +125,17 @@ export async function onRequestPost({ request, env }) {
   await env.DOCS.put(sigKey, sigBytes, { httpMetadata: { contentType: "image/png" } });
   await env.DB.prepare("INSERT INTO signatures (registration_id,created_at,signer_name,r2_key,document_sha256,ip_hash,user_agent) VALUES (?,?,?,?,?,?,?)")
     .bind(regId, now, signerName, sigKey, docHash, ipHash, str(request.headers.get("User-Agent"), 200)).run();
+  if (Array.isArray(b.diverSignatures)) {
+    for (let i = 0; i < b.diverSignatures.length && i < 19; i++) {
+      const extra = String(b.diverSignatures[i] || "");
+      if (!extra.startsWith("data:image/png;base64,") || extra.length > 300_000) continue;
+      const extraKey = `registrations/${ref}/signature-${i + 2}.png`;
+      const bytes = Uint8Array.from(atob(extra.split(",")[1]), (c) => c.charCodeAt(0));
+      await env.DOCS.put(extraKey, bytes, { httpMetadata: { contentType: "image/png" } });
+      await env.DB.prepare("INSERT INTO signatures (registration_id,created_at,signer_name,r2_key,document_sha256,ip_hash,user_agent) VALUES (?,?,?,?,?,?,?)")
+        .bind(regId, now, diverNames[i + 1] || signerName, extraKey, docHash, ipHash, str(request.headers.get("User-Agent"), 200)).run();
+    }
+  }
 
   const html = buildDocument({ ref, customer: customerIn, data, consents, signerName, signedAtISO: new Date(now).toISOString(), docHash, signatureDataUrl: sig });
   await env.DOCS.put(docKey, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
