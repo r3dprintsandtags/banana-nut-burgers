@@ -93,6 +93,8 @@ export function fromRegistrationData(data = {}) {
     emergency_contact_relationship: data.emergencyRelationship || data.emergency_contact_relationship || "",
     emergency_contact_phone: data.emergencyPhone || data.emergency_contact_phone || "",
     registration_number: data.registration_number || data.registrationNumber || "",
+    guardian_name: data.guardian_name || data.guardianName || "",
+    guardian_relationship: data.guardian_relationship || data.guardianRelationship || "",
   };
 }
 

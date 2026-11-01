@@ -268,15 +268,28 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
     }
   }
 
-  const ins = await env.DB.prepare(
-    `INSERT INTO form_submissions (request_id,customer_id,registration_id,answers_encrypted,signature_r2_key,signed_pdf_r2_keys,
-      signer_name,signed_at,ip_hash,user_agent,consent_text,language,guardian_json_encrypted,pdf_sha256,registration_number,valid_until,needs_physician,created_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(
-    reqRow.id, reqRow.customer_id, reqRow.registration_id, encAnswers, sigKey, JSON.stringify(pdfKeys),
-    signerName, now, ipHash, ua, String(consentText || "").slice(0, 2000), language || "en", encGuardian, lastSha,
-    regNumber, validUntil, needsPhysician ? 1 : 0, now
-  ).run();
+  let ins;
+  try {
+    ins = await env.DB.prepare(
+      `INSERT INTO form_submissions (request_id,customer_id,registration_id,participant_id,answers_encrypted,signature_r2_key,signed_pdf_r2_keys,
+        signer_name,signed_at,ip_hash,user_agent,consent_text,language,guardian_json_encrypted,pdf_sha256,registration_number,valid_until,needs_physician,created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).bind(
+      reqRow.id, reqRow.customer_id, reqRow.registration_id, reqRow.participant_id || null, encAnswers, sigKey, JSON.stringify(pdfKeys),
+      signerName, now, ipHash, ua, String(consentText || "").slice(0, 2000), language || "en", encGuardian, lastSha,
+      regNumber, validUntil, needsPhysician ? 1 : 0, now
+    ).run();
+  } catch (_) {
+    ins = await env.DB.prepare(
+      `INSERT INTO form_submissions (request_id,customer_id,registration_id,answers_encrypted,signature_r2_key,signed_pdf_r2_keys,
+        signer_name,signed_at,ip_hash,user_agent,consent_text,language,guardian_json_encrypted,pdf_sha256,registration_number,valid_until,needs_physician,created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).bind(
+      reqRow.id, reqRow.customer_id, reqRow.registration_id, encAnswers, sigKey, JSON.stringify(pdfKeys),
+      signerName, now, ipHash, ua, String(consentText || "").slice(0, 2000), language || "en", encGuardian, lastSha,
+      regNumber, validUntil, needsPhysician ? 1 : 0, now
+    ).run();
+  }
   const submissionId = ins.meta.last_row_id;
 
   // Rewrite R2 keys with real submission id (copy is expensive; store final path prefix in keys already used — update JSON only if needed)
@@ -327,9 +340,9 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
         try { data = JSON.parse(reg.data || "{}"); } catch { data = {}; }
         data.packetCompleted = true;
         data.medicalFromPacket = true;
-        data.packetNeedsPhysician = !!needsPhysician;
-        data.medNeedsReview = needsPhysician ? 1 : 0;
-        data.staffReviewStatus = needsPhysician ? "PENDING_STAFF_REVIEW" : "CLEARED";
+        data.packetNeedsPhysician = !!needsPhysician || !!data.packetNeedsPhysician;
+        data.medNeedsReview = data.packetNeedsPhysician ? 1 : 0;
+        data.staffReviewStatus = data.packetNeedsPhysician ? "PENDING_STAFF_REVIEW" : "CLEARED";
         await env.DB.prepare("UPDATE registrations SET data=?, updated_at=? WHERE id=?")
           .bind(JSON.stringify(data), Date.now(), reg.id).run();
         if (needsPhysician) {
@@ -339,6 +352,14 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
         }
       }
     } catch (_) { /* non-fatal */ }
+  }
+
+  // Sync party participant status (youth addendum / medical review gates)
+  if (reqRow.participant_id) {
+    try {
+      const { syncParticipantAfterSubmit } = await import("./party.js");
+      await syncParticipantAfterSubmit(env, reqRow.participant_id, { needsPhysician });
+    } catch (_) { /* non-fatal until migration applied */ }
   }
 
   return {
@@ -356,7 +377,7 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
   };
 }
 
-export async function createRequestForRegistration(env, { customerId, registrationId, packetKey, prefill, expiresDays = 7 }) {
+export async function createRequestForRegistration(env, { customerId, registrationId, participantId = null, packetKey, prefill, expiresDays = 7 }) {
   const packet = await env.DB.prepare("SELECT * FROM form_packets WHERE key=? AND status='active'").bind(packetKey).first();
   if (!packet) throw new Error("packet not found: " + packetKey);
   const tokenBytes = new Uint8Array(32);
@@ -369,12 +390,22 @@ export async function createRequestForRegistration(env, { customerId, registrati
     const t = await env.DB.prepare("SELECT id, version FROM form_templates WHERE id=?").bind(id).first();
     if (t) versions[t.id] = t.version;
   }
-  const r = await env.DB.prepare(
-    `INSERT INTO form_requests (customer_id,registration_id,packet_id,template_versions,token_hash,status,prefill_json,expires_at,sent_via,sent_at,created_at)
-     VALUES (?,?,?,?,?,'sent',?,?, 'registration',?,?)`
-  ).bind(customerId, registrationId || null, packet.id, JSON.stringify(versions), tokenHash,
-    JSON.stringify(prefill || {}), now + expiresDays * 86400000, now, now).run();
-  await formAudit(env, { requestId: r.meta.last_row_id, event: "created", actor: "system", details: packetKey });
+  let r;
+  try {
+    r = await env.DB.prepare(
+      `INSERT INTO form_requests (customer_id,registration_id,participant_id,packet_id,template_versions,token_hash,status,prefill_json,expires_at,sent_via,sent_at,created_at)
+       VALUES (?,?,?,?,?,?,'sent',?,?, 'registration',?,?)`
+    ).bind(customerId, registrationId || null, participantId || null, packet.id, JSON.stringify(versions), tokenHash,
+      JSON.stringify(prefill || {}), now + expiresDays * 86400000, now, now).run();
+  } catch (_) {
+    // older DBs without participant_id column
+    r = await env.DB.prepare(
+      `INSERT INTO form_requests (customer_id,registration_id,packet_id,template_versions,token_hash,status,prefill_json,expires_at,sent_via,sent_at,created_at)
+       VALUES (?,?,?,?,?,'sent',?,?, 'registration',?,?)`
+    ).bind(customerId, registrationId || null, packet.id, JSON.stringify(versions), tokenHash,
+      JSON.stringify(prefill || {}), now + expiresDays * 86400000, now, now).run();
+  }
+  await formAudit(env, { requestId: r.meta.last_row_id, event: "created", actor: "system", details: packetKey + (participantId ? `;participant=${participantId}` : "") });
   return { requestId: r.meta.last_row_id, token, packet };
 }
 

@@ -12,7 +12,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-ap
 button,.btn{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 16px;background:var(--pri);color:#fff;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
 .top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;justify-content:flex-end;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}
 .top button{background:rgba(0,0,0,.45);backdrop-filter:blur(6px);min-height:38px;padding:6px 12px;font-size:14px;color:#fff;border:0;border-radius:99px;cursor:pointer}
-.promo-bar{position:relative;z-index:3;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--ban);color:#2a1b00;padding:10px 16px;font-weight:800}
+.promo-bar{position:relative;z-index:3;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--ban);color:#2a1b00;padding:10px 112px 10px 16px;font-weight:800}
 .promo-bar .badge{background:#0a2533;color:var(--ban);font-size:11px;letter-spacing:.06em;padding:4px 10px;border-radius:8px;text-transform:uppercase}
 .promo-bar .msg{flex:1;min-width:180px;text-align:center;font-size:clamp(14px,3.4vw,18px);letter-spacing:.02em;text-transform:uppercase}
 .promo-bar a{background:#0a2533;color:var(--ban);border-radius:999px;padding:8px 16px;text-decoration:none;font-weight:800;white-space:nowrap}
@@ -51,6 +51,7 @@ input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;bo
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.scr{overflow-x:auto}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}.bar .btn{flex:1;padding:10px 6px;white-space:nowrap;font-size:15px}
 #lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9;display:none;align-items:center;justify-content:center}#lb img{max-width:96%;max-height:90%;border-radius:12px}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:none;align-items:center;justify-content:center;padding:16px}#sheet .card{max-width:640px;width:100%;max-height:86vh;overflow:hidden;margin:0;display:flex;flex-direction:column}#sheet .sheetScroll{overflow-y:scroll;flex:1;min-height:0;-webkit-overflow-scrolling:touch;padding-right:4px}#sheet .sheetbody{white-space:pre-wrap}#checkin{position:relative;z-index:5;overflow:visible}#checkin .card{overflow:visible}#contactMenu{position:absolute;left:0;top:calc(100% + 6px);z-index:40;margin:0;min-width:240px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 28px rgba(0,0,0,.28)}#contactMenu.hide{display:none}
 .sec{border-top:1px solid var(--line);margin-top:16px;padding-top:4px}.sec h3{margin:10px 0 0;font-size:17px}.share{display:flex;gap:8px}.share input{flex:1}.chk{display:flex;gap:10px;align-items:center;font-weight:600;margin-top:14px}.chk input{width:22px;min-height:22px;height:22px}.lk{color:var(--pri);font-weight:700}.ghostb{background:transparent;color:var(--pri);border:1px solid var(--line)}.hide{display:none}.cal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:6px}.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.calhead b{font-size:18px;letter-spacing:2px;text-transform:uppercase}.calnav{width:44px;min-height:44px;padding:0;border-radius:10px;background:var(--card);color:var(--ink);border:1.5px solid var(--ink);font-size:22px;line-height:1}.calnav:disabled{opacity:.3;cursor:default}.caldow,.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.caldow span{text-align:center;font-size:11px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;padding:4px 0}.calday{min-height:44px;padding:6px 0;border-radius:9px;font-weight:600;background:#cdeccd;color:#14532d;border:1px solid #9ed69e}.calday.low{background:#fdf0b8;color:#713f12;border-color:#ecd97a}.calday.off{background:#f6cfcf;color:#7f1d1d;border-color:#edaeae;opacity:.8;cursor:not-allowed}.calday.sel{background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 2px 0 #1e3a8a}.calblank{min-height:44px}.callegend{font-size:13px;margin:10px 0 0}.times{display:flex;flex-wrap:wrap;gap:8px}.tpill{min-height:48px;padding:10px 18px;border-radius:99px;background:var(--card);color:var(--ink);border:1.5px solid var(--ink)}.tpill.sel{background:#2563eb;color:#fff;border-color:#1d4ed8}.cruise summary{display:flex;gap:8px;align-items:center;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}.cruise summary::-webkit-details-marker{display:none}.cruise .carw{font-size:12px;color:var(--pri);transition:transform .2s}.cruise details[open ] .carw{transform:rotate(90deg)}.cruise .cbody{padding-top:6px}footer{text-align:center;color:var(--mut);font-size:14px;padding:20px 0}footer a{color:var(--pri)}
 
 body{background:#06161f url(img/deep-blue.jpg) center/cover fixed no-repeat}
@@ -92,7 +93,7 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <path d="M12 98q16-8 24 0t24 0t24 0t24 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
 <span class="tag" data-i="pill">WEST END · ROATÁN</span>
 <h1 data-h="h1"></h1><p data-i="sub"></p>
-<div class="cta"><a class="btn wa" id="wa" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn ban" href="register.html?start=1">📅 <span data-i="bookNow"></span></a><a class="btn glass" href="tel:+50498763374">📞</a></div>
+<div class="cta"><a class="btn wa" id="wa" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn glass" href="tel:+50498763374">📞</a></div>
 </div></header>
 
 <main class="wrap">
@@ -109,11 +110,18 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <h2 style="margin-top:0">🤿 <span data-i="ciH"></span></h2>
 <p data-i="ciP"></p>
 <p><a class="btn ban" style="width:100%;font-size:18px" href="register.html?start=1">▶ <span data-i="ciStart"></span></a></p>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
+<div id="checkinTools" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px">
 <a class="btn ghostb" href="register.html#resume"><span data-i="ciResume"></span></a>
-<a class="btn ghostb" href="#find"><span data-i="ciInfo"></span></a>
-<a class="btn ghostb" target="_blank" rel="noopener" href="https://wa.me/50498763374"><span data-i="ciContact"></span></a>
-<a class="btn ghostb" href="register.html#requirements"><span data-i="ciReq"></span></a>
+<button type="button" class="btn ghostb" id="openShopInfo"><span data-i="ciInfo"></span></button>
+<div style="position:relative">
+<button type="button" class="btn ghostb" id="contactBtn"><span data-i="ciContact"></span></button>
+<div id="contactMenu" class="card hide">
+<a class="btn" id="contactMail" href="mailto:banananutburgers@gmail.com"><span data-i="sendEmail"></span></a>
+<a class="btn" id="contactWa" target="_blank" rel="noopener" href="https://wa.me/50498763374"><span data-i="sendWa"></span></a>
+</div>
+</div>
+<button type="button" class="btn ghostb" id="openReq"><span data-i="ciReq"></span></button>
+<button type="button" class="btn ghostb" id="openCancel"><span data-i="cancelBtn"></span></button>
 </div>
 <p class="note" data-i="ciPriv"></p>
 </div></section>
@@ -141,13 +149,24 @@ input,select,textarea{background:#fff!important;color:#0a2533!important;border-c
 <footer><a href="mailto:banananutburgers@gmail.com">banananutburgers@gmail.com</a> · <a href="https://www.instagram.com/banananutburgers/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/banananutburgers/" target="_blank" rel="noopener">Facebook</a><br>© Banana Nutburgers · +504 9876-3374</footer>
 <div class="bar"><a class="btn wa" id="wa2" target="_blank" rel="noopener">💬 WhatsApp</a><a class="btn" href="tel:+50498763374">📞</a><a class="btn ban" href="register.html?start=1">📅</a></div>
 <div id="lb"><img alt=""></div>
+<div id="sheet"><div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex:none"><h2 id="sheetTitle" style="margin:0"></h2><button type="button" id="sheetLang" style="background:rgba(0,0,0,.45);min-height:38px;padding:6px 12px;font-size:14px;color:#fff;border:0;border-radius:99px"></button></div>
+<div class="sheetScroll">
+<div class="sheetbody" id="sheetBody"></div>
+<p id="sheetForm" class="hide"></p>
+<p class="okmsg hide" id="sheetOk"></p>
+<p class="err" id="sheetErr"></p>
+</div>
+<p style="flex:none;margin-bottom:0"><button type="button" id="sheetClose" data-i="close"></button></p>
+</div></div>
+
 
 <script>
 const IMG={gear:"img/backroll.jpg",crew:"img/shop-flag.jpg",boat:"img/dive-boat.png",snork:"img/reef-swim.jpg"};
 const ACTS=["Scuba","Dives & courses","Snorkel"];
 const T={
-en:{h1:"Dive. Laugh. <b>Repeat.</b>",sub:"Small-group diving, island tours and sunset bonfires at Tita's Pink Seahorse Bar on West End.",bookNow:"Book & check in",svcScuba:"Scuba",svcCourses:"Dives & courses",svcSnorkel:"Snorkel",svcScubaP:"Never dived? Start here.",svcCoursesP:"Certification up to Divemaster.",svcSnorkelP:"Reefs with a guide.",ciH:"Book your dive and check in — one flow",ciP:"Pick your activity and time, complete your forms and medical screening, and sign. One submit books your spot and registers you with the shop. No account needed.",ciStart:"Book & check in",ciResume:"Resume check-in",ciInfo:"View Dive Shop Information",ciContact:"Contact the Dive Shop",ciReq:"View Registration Requirements",ciPriv:"Privacy: your information and signed documents are stored privately and only visible to authorized Banana Nut Burger staff.",expH:"Pick your adventure",expS:"Tap one to book and check in.",s1:"fish species",s2:"coral species",s3:"per group",galH:"Roatán, up close",galS:"Real moments from our dives and tours.",bookH:"Book & check in",bookS:"Activity, date, forms, and signature — all in one go. We confirm by WhatsApp or email.",bookOne:"Your booking and registration happen together. Choose an adventure above or start below — you will pick a date and time, fill diver details, complete required forms, and sign once.",bookOneNote:"When you finish, your appointment shows in our Bookings inbox and your paperwork in Registrations.",findH:"Find us",findD:"West End, Roatán. At Tita's Pink Seahorse Bar, steps from the beach.",dir:"Get directions",pill:"WEST END · ROATÁN",svc:[["gear","Scuba","Never dived? Start here."],["crew","Dives & courses","Certification up to Divemaster."],["snork","Snorkel","Reefs with a guide."]]},
-es:{h1:"Bucea. Ríe. <b>Repite.</b>",sub:"Buceo en grupos pequeños, tours por la isla y fogatas al atardecer en Tita's Pink Seahorse Bar, West End.",bookNow:"Reservar y registrarse",ciH:"Reserva y check-in — todo junto",ciP:"Elige actividad y horario, completa formularios y screening médico, y firma. Un solo envío reserva tu lugar y te registra en la tienda. Sin crear cuenta.",ciStart:"Reservar y registrarse",ciResume:"Continuar check-in",ciInfo:"Ver información de la tienda",ciContact:"Contactar la tienda",ciReq:"Ver requisitos de registro",ciPriv:"Privacidad: tu información y documentos firmados se guardan de forma privada y solo los ve el personal autorizado de Banana Nut Burger.",expH:"Elige tu aventura",expS:"Toca una para reservar y registrarte.",s1:"especies de peces",s2:"especies de coral",s3:"por grupo",galH:"Roatán de cerca",galS:"Momentos reales de nuestros buceos y tours.",bookH:"Reservar y registrarse",bookS:"Actividad, fecha, formularios y firma — todo en un solo flujo. Confirmamos por WhatsApp o correo.",bookOne:"Tu reserva y registro van juntos. Elige una aventura arriba o empieza abajo: fecha y hora, datos del buzo, formularios y una firma.",bookOneNote:"Al terminar, tu cita aparece en Reservas y tu papeleo en Registros.",findH:"Encuéntranos",findD:"West End, Roatán. En Tita's Pink Seahorse Bar, a pasos de la playa.",dir:"Cómo llegar",pill:"WEST END · ROATÁN",svc:[["gear","Scuba","¿Nunca has buceado? Empieza aquí."],["crew","Buceos y cursos","Certificación hasta Divemaster."],["snork","Snorkel","Arrecifes con guía."]]}
+en:{h1:"Dive. Laugh. <b>Repeat.</b>",sub:"Small-group diving, island tours and sunset bonfires at Tita's Pink Seahorse Bar on West End.",bookNow:"Book & check in",svcScuba:"Scuba",svcCourses:"Dives & courses",svcSnorkel:"Snorkel",svcScubaP:"Never dived? Start here.",svcCoursesP:"Certification up to Divemaster.",svcSnorkelP:"Reefs with a guide.",ciH:"Book my Dive",ciP:"Pick your activity and time, complete your forms and medical screening, and sign. One submit books your spot and registers you with the shop. No account needed.",ciStart:"Book my Dive",ciResume:"Finish or Update My Registration",ciInfo:"Dive Shop Information",ciContact:"Contact the Dive Shop",ciReq:"Registration Requirements",ciPriv:"Privacy: your information and signed documents are stored privately and only visible to authorized Banana Nut Burger staff.",expH:"Pick your adventure",expS:"Tap one to book and check in.",s1:"fish species",s2:"coral species",s3:"per group",galH:"Roatán, up close",galS:"Real moments from our dives and tours.",bookH:"Book & check in",bookS:"Activity, date, forms, and signature — all in one go. We confirm by WhatsApp or email.",bookOne:"Your booking and registration happen together. Choose an adventure above or start below — you will pick a date and time, fill diver details, complete required forms, and sign once.",bookOneNote:"When you finish, your appointment shows in our Bookings inbox and your paperwork in Registrations.",findH:"Find us",findD:"West End, Roatán. At Tita's Pink Seahorse Bar, steps from the beach.",dir:"Get directions",pill:"WEST END · ROATÁN",svc:[["gear","Scuba","Never dived? Start here."],["crew","Dives & courses","Certification up to Divemaster."],["snork","Snorkel","Reefs with a guide."]],close:"Close",sendEmail:"Send Email",sendWa:"Send a message on WhatsApp",cancelBtn:"Cancel or Reschedule",resNum:"Reservation Number",phoneNum:"Phone Number",fullName:"Full Name",choice:"What do you want to do?",cancelOpt:"Cancel",reschedOpt:"Reschedule",newDate:"Preferred new date",cancelSend:"Send request",cancelOk:"We received your request. The dive shop will follow up with you.",cancelNeed:"Please complete every required field.",shopTitle:"Who Are These Crazy Banana Nut Burgers?",shopBody:"We're the dive shop you'll end up telling your friends about for years.\n\nBanana Nut Burgers sits right on the sand between West End and West Bay, and our shop is attached to a beach bar that looks like a postcard. Hammocks, cold drinks, warm water, and a crowd that actually wants to hang out. It's far enough from the busy strip that you can breathe, and close enough that the party is a short walk away. Spend your surface interval in the sun. Come back after sunset and dance by the fire. Either way, you'll feel like one of us by day two.\n\nAnd the diving? It starts at our front door. The legendary Blue Channel is right in front of the shop, and honestly, it's our backyard. We know it the way you know your own street.\n\nWhen you want to go farther, we take you where most people never get to. Day trips to Utila, Guanaja, Cayos Cochinos, and the Pigeon Keys. Quiet reefs. Untouched walls. Abandoned keys with no other boats in sight.\n\nMost dive shops send you out and bring you back. We make you part of the crew.\n\nCome dive Roatan the way it's meant to be done.",reqTitle:"Registration Requirements",reqBody:"Certified divers\n- Bring your certification card (PADI, SSI, NAUI or equivalent) or digital proof. We cannot take you out without it.\n- Open Water certification or higher is required.\n- If it has been more than 12 months since your last dive, tell us. We may recommend a refresher.\n\nNew to diving\n- No certification needed for Discover Scuba. You will get a safety briefing and hands-on training before you go to the reef.\n- You must be in reasonable physical health and complete a medical questionnaire.\n\nAge requirements\n- Minimum age for Discover Scuba and Junior Open Water is 12.\n- Divers ages 12 to 14 dive within junior depth limits.\n- Divers ages 15 to 17 are limited to 70 feet unless certified for deeper.\n- Anyone under 18 must have a parent or guardian sign the waiver and release forms."},
+es:{h1:"Bucea. Ríe. <b>Repite.</b>",sub:"Buceo en grupos pequeños, tours por la isla y fogatas al atardecer en Tita's Pink Seahorse Bar, West End.",bookNow:"Reservar y registrarse",ciH:"Reservar Mi Buceo",ciP:"Elige actividad y horario, completa formularios y screening médico, y firma. Un solo envío reserva tu lugar y te registra en la tienda. Sin crear cuenta.",ciStart:"Reservar Mi Buceo",ciResume:"Terminar o Actualizar Mi Registro",ciInfo:"Informacion del Centro de Buceo",ciContact:"Contactar la tienda",ciReq:"Requisitos de Registro",ciPriv:"Privacidad: tu información y documentos firmados se guardan de forma privada y solo los ve el personal autorizado de Banana Nut Burger.",expH:"Elige tu aventura",expS:"Toca una para reservar y registrarte.",s1:"especies de peces",s2:"especies de coral",s3:"por grupo",galH:"Roatán de cerca",galS:"Momentos reales de nuestros buceos y tours.",bookH:"Reservar y registrarse",bookS:"Actividad, fecha, formularios y firma — todo en un solo flujo. Confirmamos por WhatsApp o correo.",bookOne:"Tu reserva y registro van juntos. Elige una aventura arriba o empieza abajo: fecha y hora, datos del buzo, formularios y una firma.",bookOneNote:"Al terminar, tu cita aparece en Reservas y tu papeleo en Registros.",findH:"Encuéntranos",findD:"West End, Roatán. En Tita's Pink Seahorse Bar, a pasos de la playa.",dir:"Cómo llegar",pill:"WEST END · ROATÁN",svc:[["gear","Scuba","¿Nunca has buceado? Empieza aquí."],["crew","Buceos y cursos","Certificación hasta Divemaster."],["snork","Snorkel","Arrecifes con guía."]],close:"Cerrar",sendEmail:"Enviar correo",sendWa:"Enviar un mensaje por WhatsApp",cancelBtn:"Cancelar o Reprogramar",resNum:"Número de reserva",phoneNum:"Teléfono",fullName:"Nombre completo",choice:"¿Qué quieres hacer?",cancelOpt:"Cancelar",reschedOpt:"Reprogramar",newDate:"Fecha nueva preferida",cancelSend:"Enviar solicitud",cancelOk:"Recibimos tu solicitud. El centro de buceo te contactará.",cancelNeed:"Completa todos los campos obligatorios.",shopTitle:"¿Quiénes son estos locos Banana Nut Burgers?",shopBody:"Somos el centro de buceo del que les vas a hablar a tus amigos durante años.\n\nBanana Nut Burgers está sobre la arena, entre West End y West Bay, y la tienda está pegada a un bar de playa que parece una postal. Hamacas, bebidas frías, agua tibia y gente que de verdad quiere quedarse. Está lo bastante lejos del tramo lleno para que puedas respirar, y lo bastante cerca para que la fiesta quede a un corto paseo. Pasa tu intervalo de superficie al sol. Vuelve después del atardecer y baila junto al fuego. De una forma u otra, al segundo día vas a sentirte uno de nosotros.\n\n¿Y el buceo? Empieza en nuestra puerta. El legendario Blue Channel está justo frente a la tienda, y la verdad es nuestro patio. Lo conocemos como tú conoces tu propia calle.\n\nCuando quieres ir más lejos, te llevamos adonde la mayoría nunca llega. Viajes de un día a Utila, Guanaja, Cayos Cochinos y los Pigeon Keys. Arrecifes quietos. Paredes intactas. Cayos abandonados sin otros botes a la vista.\n\nLa mayoría de los centros te sacan y te regresan. Nosotros te hacemos parte de la tripulación.\n\nVen a bucear Roatán como se debe.",reqTitle:"Requisitos de Registro",reqBody:"Buzos certificados\n- Trae tu tarjeta de certificación (PADI, SSI, NAUI o equivalente) o una prueba digital. No podemos llevarte al agua sin ella.\n- Se requiere certificación Open Water o superior.\n- Si han pasado más de 12 meses desde tu último buceo, dínoslo. Podemos recomendarte un repaso.\n\nSi empiezas a bucear\n- Discover Scuba no requiere certificación. Recibirás una charla de seguridad y práctica antes de ir al arrecife.\n- Debes estar en un estado físico razonable y completar un cuestionario médico.\n\nEdades\n- La edad mínima para Discover Scuba y Junior Open Water es 12 años.\n- Los buzos de 12 a 14 años bucean dentro de los límites de profundidad junior.\n- Los buzos de 15 a 17 años están limitados a 70 pies, salvo que estén certificados para más profundidad.\n- Quien tenga menos de 18 años necesita que un padre o tutor firme los formularios de exención y liberación."}
 };
 let L=(navigator.language||"en").startsWith("es")?"es":"en";
 const $=i=>document.getElementById(i),PH="50498763374";
@@ -180,7 +199,7 @@ function render(){
   const u="https://wa.me/"+PH+"?text="+encodeURIComponent(L==="es"?"Hola Banana Nut Burgers, quiero información de buceo.":"Hi Banana Nut Burgers, I'd like info about diving.");
   $("wa").href=u;$("wa2").href=u;
 }
-$("lang").onclick=()=>{L=L==="en"?"es":"en";try{localStorage.setItem("bnb_lang",L)}catch(e){}render();paintPromos()};
+$("lang").onclick=()=>{L=L==="en"?"es":"en";try{localStorage.setItem("bnb_lang",L)}catch(e){}render();paintPromos();if($("sheet").style.display==="flex")paintSheet();};
 window.addEventListener("storage",(ev)=>{
   if(ev.key!=="bnb_lang") return;
   if(ev.newValue!=="en"&&ev.newValue!=="es") return;
@@ -230,6 +249,91 @@ async function loadPromos(){
   }catch(e){ promos=[]; }
   paintPromos();
 }
+
+let sheetKind = "";
+function paintSheet(){
+  const t = T[L];
+  $("sheetLang").textContent = L === "en" ? "ES" : "EN";
+  $("sheetClose").textContent = t.close;
+  if (sheetKind === "shop") { $("sheetTitle").textContent = t.shopTitle; $("sheetBody").textContent = t.shopBody; }
+  else if (sheetKind === "req") { $("sheetTitle").textContent = t.reqTitle; $("sheetBody").textContent = t.reqBody; }
+  else if (sheetKind === "cancel") {
+    const keep = { n: $("crNum").value, p: $("crPhone").value, f: $("crName").value, d: $("crDate").value, k: (document.querySelector('input[name="crKind"]:checked') || {}).value };
+    $("sheetTitle").textContent = t.cancelBtn;
+    $("sheetForm").innerHTML = cancelForm();
+    bindCancel();
+    $("crNum").value = keep.n; $("crPhone").value = keep.p; $("crName").value = keep.f; $("crDate").value = keep.d;
+    if (keep.k) { const r = document.querySelector('input[name="crKind"][value="' + keep.k + '"]'); if (r) { r.checked = true; $("crDateWrap").classList.toggle("hide", keep.k !== "reschedule"); } }
+    if (!$("sheetOk").classList.contains("hide")) $("sheetOk").textContent = t.cancelOk;
+  }
+}
+function openSheet(title, body, formHtml){
+  $("sheetLang").textContent = L === "en" ? "ES" : "EN";
+  $("sheetTitle").textContent = title;
+  $("sheetBody").textContent = body || "";
+  $("sheetBody").style.display = body ? "block" : "none";
+  $("sheetForm").classList.toggle("hide", !formHtml);
+  $("sheetForm").innerHTML = formHtml || "";
+  $("sheetOk").classList.add("hide");
+  $("sheetErr").textContent = "";
+  $("sheet").style.display = "flex";
+  $("sheetClose").textContent = T[L].close;
+}
+function closeSheet(){ $("sheet").style.display = "none"; $("sheetForm").innerHTML = ""; sheetKind = ""; }
+$("sheetLang").onclick = () => $("lang").click();
+$("sheetClose").onclick = closeSheet;
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+$("openShopInfo").onclick = () => { sheetKind = "shop"; openSheet(T[L].shopTitle, T[L].shopBody, ""); };
+$("openReq").onclick = () => { sheetKind = "req"; openSheet(T[L].reqTitle, T[L].reqBody, ""); };
+$("contactBtn").onclick = () => { $("contactMenu").classList.toggle("hide"); };
+document.addEventListener("click", (e) => {
+  if (!$("contactMenu") || $("contactMenu").classList.contains("hide")) return;
+  if (e.target.closest("#contactBtn") || e.target.closest("#contactMenu")) return;
+  $("contactMenu").classList.add("hide");
+});
+function cancelForm(){
+  const t = T[L];
+  return `<label>${t.resNum}</label><input id="crNum" autocomplete="off">
+<label>${t.phoneNum}</label><input id="crPhone" type="tel" inputmode="tel">
+<label>${t.fullName}</label><input id="crName" autocomplete="name">
+<label>${t.choice}</label>
+<div class="yesno" style="display:flex;gap:12px;flex-wrap:wrap">
+<label class="chk"><input type="radio" name="crKind" value="cancel"> ${t.cancelOpt}</label>
+<label class="chk"><input type="radio" name="crKind" value="reschedule"> ${t.reschedOpt}</label>
+</div>
+<div id="crDateWrap" class="hide"><label>${t.newDate}</label><input id="crDate" type="date"></div>
+<p><button type="button" id="crSend">${t.cancelSend}</button></p>`;
+}
+function bindCancel(){
+  const sync = () => {
+    const kind = (document.querySelector('input[name="crKind"]:checked') || {}).value;
+    $("crDateWrap").classList.toggle("hide", kind !== "reschedule");
+  };
+  document.querySelectorAll('input[name="crKind"]').forEach(r => r.onchange = sync);
+  $("crSend").onclick = async () => {
+    const t = T[L];
+    const kind = (document.querySelector('input[name="crKind"]:checked') || {}).value || "";
+    const payload = { reservationNumber: $("crNum").value.trim(), phone: $("crPhone").value.trim(), fullName: $("crName").value.trim(), kind, preferredDate: $("crDate") ? $("crDate").value : "" };
+    if (!payload.reservationNumber || !payload.phone || !payload.fullName || !kind || (kind === "reschedule" && !payload.preferredDate)) {
+      $("sheetErr").textContent = t.cancelNeed; return;
+    }
+    $("sheetErr").textContent = "";
+    $("crSend").disabled = true;
+    try {
+      const r = await fetch("/api/schedule-requests", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || t.cancelNeed);
+      $("sheetForm").classList.add("hide");
+      $("sheetOk").textContent = t.cancelOk;
+      $("sheetOk").classList.remove("hide");
+    } catch (e) {
+      $("sheetErr").textContent = e.message || t.cancelNeed;
+      $("crSend").disabled = false;
+    }
+  };
+}
+$("openCancel").onclick = () => { sheetKind = "cancel"; openSheet(T[L].cancelBtn, "", cancelForm()); bindCancel(); };
+
 render();
 loadPromos();
 if(location.hash==="#book"||location.hash==="#checkin")setTimeout(()=>$("checkin").scrollIntoView(),50);

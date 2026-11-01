@@ -1,13 +1,13 @@
-import { json, isAuthed, str, audit } from "../../_shared.js";
+import { json, isAuthed, str, audit, ensureSchema } from "../../_shared.js";
 
 async function loadReg(env, id) {
   return env.DB.prepare(
-    `SELECT r.*, c.first_name, c.last_name, c.preferred_name, c.phone, c.email, c.registration_number
+    `SELECT r.*, c.first_name, c.last_name, c.preferred_name, c.phone, c.email
      FROM registrations r JOIN customers c ON c.id = r.customer_id WHERE r.id=?`
   ).bind(Number(id)).first();
 }
 
-// GET /api/registrations/:id (admin) — full detail incl. history, consents, signature, packet forms
+// GET /api/registrations/:id (admin) — full detail incl. history, consents, signature
 export async function onRequestGet({ request, env, params }) {
   if (!env.DB) return json({ error: "Database not configured" }, 503);
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
@@ -19,37 +19,93 @@ export async function onRequestGet({ request, env, params }) {
   const history = (await env.DB.prepare(
     `SELECT r.id, r.ref, r.status, r.created_at FROM registrations r WHERE r.customer_id=? ORDER BY r.created_at DESC`
   ).bind(reg.customer_id).all()).results;
-  let formSubmissions = [], formRequests = [];
+  let participants = [];
+  let formSubmissions = [];
+  try {
+    participants = (await env.DB.prepare(
+      "SELECT * FROM participants WHERE registration_id=? AND status<>'removed' ORDER BY sort_order, id"
+    ).bind(reg.id).all()).results || [];
+  } catch (_) { participants = []; }
   try {
     formSubmissions = (await env.DB.prepare(
-      "SELECT id, registration_number, needs_physician, valid_until, signed_at, signed_pdf_r2_keys FROM form_submissions WHERE customer_id=? OR registration_id=? ORDER BY id DESC LIMIT 20"
-    ).bind(reg.customer_id, reg.id).all()).results || [];
-    formRequests = (await env.DB.prepare(
-      "SELECT id, status, sent_at, completed_at, expires_at FROM form_requests WHERE customer_id=? OR registration_id=? ORDER BY id DESC LIMIT 20"
-    ).bind(reg.customer_id, reg.id).all()).results || [];
-  } catch (_) { /* forms tables may be missing until migration */ }
-  await audit(env, "admin", "registration.viewed", "registration", reg.ref);
-  return json({
-    registration: reg,
-    customer: { id: reg.customer_id, registration_number: reg.registration_number },
-    consents, signature, documents, history, formSubmissions, formRequests,
+      `SELECT s.id, s.request_id, s.participant_id, s.registration_number, s.needs_physician, s.signed_at, s.signer_name, s.signed_pdf_r2_keys, s.valid_until
+       FROM form_submissions s
+       LEFT JOIN form_requests r ON r.id = s.request_id
+       WHERE s.registration_id=? OR r.registration_id=?
+       ORDER BY s.id DESC`
+    ).bind(reg.id, reg.id).all()).results || [];
+  } catch (_) { formSubmissions = []; }
+
+  // staff-facing party summary (medical flags OK for shop)
+  const party = participants.map((p) => {
+    const age = (() => {
+      if (!p.dob || !/^\d{4}-\d{2}-\d{2}$/.test(p.dob)) return null;
+      const [y, m, d] = p.dob.split("-").map(Number);
+      const now = new Date();
+      let a = now.getFullYear() - y;
+      if ((now.getMonth() + 1) * 100 + now.getDate() < m * 100 + d) a--;
+      return a;
+    })();
+    const sub = formSubmissions.find((s) => Number(s.participant_id) === Number(p.id));
+    return {
+      id: p.id,
+      firstName: p.first_name,
+      lastName: p.last_name,
+      dob: p.dob,
+      age,
+      isMinor: !!p.is_minor,
+      relationship: p.relationship,
+      mode: p.mode,
+      role: p.role,
+      status: p.status,
+      registrationNumber: p.registration_number || sub?.registration_number || "",
+      youthAddendumStatus: p.youth_addendum_status,
+      needsPhysician: !!(sub && sub.needs_physician),
+      email: p.email,
+      phone: p.phone,
+    };
   });
+
+  await audit(env, "admin", "registration.viewed", "registration", reg.ref);
+  return json({ registration: reg, consents, signature, documents, history, participants: party, formSubmissions });
 }
 
 // PATCH /api/registrations/:id {status?, reviewNote?} (admin) — audited review actions
 export async function onRequestPatch({ request, env, params }) {
   if (!env.DB) return json({ error: "Database not configured" }, 503);
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
+  await ensureSchema(env);
   const reg = await loadReg(env, params.id);
   if (!reg) return json({ error: "Not found" }, 404);
   let b;
   try { b = await request.json(); } catch { return json({ error: "Bad request" }, 400); }
   const status = str(b.status, 30), note = str(b.reviewNote, 1000);
-  if (status && !["submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested", "complete"].includes(status))
-    return json({ error: "Invalid status" }, 422);
-  await env.DB.prepare("UPDATE registrations SET status=?, review_note=?, updated_at=? WHERE id=?")
-    .bind(status || reg.status, note || reg.review_note, Date.now(), reg.id).run();
+  const allowed = ["submitted", "under_review", "approved", "rejected", "flagged", "corrections_requested", "complete", "draft"];
+  if (status && !allowed.includes(status)) return json({ error: "Invalid status" }, 422);
+  const next = status || reg.status;
+  const archived = next === "approved" ? 1 : 0;
+  await env.DB.prepare("UPDATE registrations SET status=?, review_note=?, updated_at=?, archived=? WHERE id=?")
+    .bind(next, note || reg.review_note, Date.now(), archived, reg.id).run();
+  if (next === "approved") {
+    let data = {};
+    try { data = JSON.parse(reg.data || "{}"); } catch (e) {}
+    const marker = `Registration ${reg.ref}`;
+    const existing = await env.DB.prepare("SELECT id FROM bookings WHERE note LIKE ?").bind(`%${reg.ref}%`).first();
+    if (!existing) {
+      const name = [data.firstName || reg.first_name || "", data.lastName || reg.last_name || ""].join(" ").trim();
+      await env.DB.prepare(
+        `INSERT INTO bookings (created_at,status,name,first_name,last_name,contact,email,guests,date,time,service,divers,note,ip_hash)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      ).bind(
+        Date.now(), "new", name, data.firstName || reg.first_name || "", data.lastName || reg.last_name || "",
+        data.phone || reg.phone || "", data.email || reg.email || "",
+        Math.min(20, Math.max(1, parseInt(data.participants || reg.participants, 10) || 1)),
+        data.plannedDate || reg.planned_date || "", str(data.plannedTime, 20),
+        data.activity || reg.activity || "", "[]", marker, ""
+      ).run();
+    }
+  }
   await audit(env, "admin", "registration.review", "registration", reg.ref,
-    `status:${reg.status}->${status || reg.status}${note ? " note:" + note : ""}`);
-  return json({ ok: true });
+    `status:${reg.status}->${next}${note ? " note:" + note : ""}`);
+  return json({ ok: true, status: next, archived: !!archived });
 }

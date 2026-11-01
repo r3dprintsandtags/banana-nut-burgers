@@ -1,0 +1,78 @@
+{
+  "tryRanges": {
+    "try_scuba_reg": [
+      0,
+      0
+    ],
+    "intro_code": [
+      1,
+      1
+    ],
+    "fit_to_dive": [
+      2,
+      2
+    ],
+    "privacy": [
+      3,
+      5
+    ]
+  },
+  "medRanges": {
+    "rec_waiver": [
+      0,
+      0
+    ],
+    "diver_medical": [
+      1,
+      3
+    ],
+    "diving_medical_guidance": [
+      4,
+      15
+    ]
+  },
+  "written": [
+    {
+      "key": "try_scuba_reg",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\try_scuba_reg.pdf",
+      "pages": 1,
+      "range": "1-1"
+    },
+    {
+      "key": "intro_code",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\intro_code.pdf",
+      "pages": 1,
+      "range": "2-2"
+    },
+    {
+      "key": "fit_to_dive",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\fit_to_dive.pdf",
+      "pages": 1,
+      "range": "3-3"
+    },
+    {
+      "key": "privacy",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\privacy.pdf",
+      "pages": 3,
+      "range": "4-6"
+    },
+    {
+      "key": "rec_waiver",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\rec_waiver.pdf",
+      "pages": 1,
+      "range": "1-1"
+    },
+    {
+      "key": "diver_medical",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\diver_medical.pdf",
+      "pages": 3,
+      "range": "2-4"
+    },
+    {
+      "key": "diving_medical_guidance",
+      "file": "C:\\Users\\adria\\Downloads\\projects\\Banana nut burger\\forms-source\\diving_medical_guidance.pdf",
+      "pages": 12,
+      "range": "5-16"
+    }
+  ]
+}

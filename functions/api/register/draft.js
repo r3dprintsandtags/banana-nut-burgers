@@ -8,7 +8,8 @@ import { json, str, normalizePhone, sha256, audit, makeRef, makeToken } from "..
 
 async function findDraft(env, ref, token) {
   if (!ref || !token) return null;
-  const reg = await env.DB.prepare("SELECT * FROM registrations WHERE upper(ref)=? AND status='draft'")
+  // Allow resume for drafts and incomplete submitted parties (token still required)
+  const reg = await env.DB.prepare("SELECT * FROM registrations WHERE upper(ref)=?")
     .bind(String(ref).toUpperCase()).first();
   if (!reg || !reg.draft_token_hash) return null;
   return (await sha256(token)) === reg.draft_token_hash ? reg : null;

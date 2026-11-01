@@ -3,15 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:forms": "node --test tests/forms/*.test.js",
+    "test:forms": "node --test tests/forms/automap.test.js tests/forms/party.test.js tests/forms/physician.test.js tests/forms/shared-schema.test.js tests/forms/wizard.test.js",
+    "test:forms:all": "node --test tests/forms/*.test.js",
     "inspect:pdfs": "node scripts/inspect-pdfs.mjs",
     "sync:legal": "node scripts/sync-legal-from-files.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
     "pdf-lib": "^1.17.1"
-  },
-  "devDependencies": {
-    "pdfjs-dist": "^3.11.174"
   }
 }

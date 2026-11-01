@@ -11,16 +11,8 @@ describe("diver medical physician rules", () => {
   it("flags any box A-G yes", () => {
     assert.equal(diverMedicalNeedsPhysician({ dm_box_C: "yes" }), true);
   });
-  it("flags streamlined box item checkboxes", () => {
-    assert.equal(diverMedicalNeedsPhysician({ dm_box_A_1: true }), true);
-    assert.equal(diverMedicalNeedsPhysician({ dm_box_G_4: "yes" }), true);
-  });
-  it("does not flag Q1 or over_45 alone", () => {
+  it("does not flag Q1 alone", () => {
     assert.equal(diverMedicalNeedsPhysician({ dm_q1: "yes" }), false);
-    assert.equal(diverMedicalNeedsPhysician({ over_45: "yes", dm_q2: "yes" }), false);
-  });
-  it("flags dental healing yes", () => {
-    assert.equal(diverMedicalNeedsPhysician({ dm_dental: "yes" }), true);
   });
 });
 

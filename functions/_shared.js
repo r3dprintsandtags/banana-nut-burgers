@@ -83,6 +83,83 @@ export function checklist(reg, { hasSignature = false, hasDeclaration = false } 
   };
 }
 
+let schemaReady = false;
+export async function ensureSchema(env) {
+  if (!env.DB || schemaReady) return;
+  const info = await env.DB.prepare("PRAGMA table_info(registrations)").all();
+  const names = new Set((info.results || []).map((c) => c.name));
+  if (!names.has("archived")) {
+    await env.DB.prepare("ALTER TABLE registrations ADD COLUMN archived INTEGER NOT NULL DEFAULT 0").run();
+  }
+  if (!names.has("shared_address_json")) {
+    await env.DB.prepare("ALTER TABLE registrations ADD COLUMN shared_address_json TEXT NOT NULL DEFAULT '{}'").run();
+  }
+  if (!names.has("shared_emergency_json")) {
+    await env.DB.prepare("ALTER TABLE registrations ADD COLUMN shared_emergency_json TEXT NOT NULL DEFAULT '{}'").run();
+  }
+  if (!names.has("party_complete")) {
+    await env.DB.prepare("ALTER TABLE registrations ADD COLUMN party_complete INTEGER NOT NULL DEFAULT 0").run();
+  }
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS schedule_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      reservation_number TEXT NOT NULL DEFAULT '',
+      phone TEXT NOT NULL DEFAULT '',
+      full_name TEXT NOT NULL DEFAULT '',
+      kind TEXT NOT NULL DEFAULT 'cancel',
+      preferred_date TEXT NOT NULL DEFAULT '',
+      registration_id INTEGER
+    )`
+  ).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS participants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      registration_id INTEGER NOT NULL,
+      contact_id INTEGER,
+      first_name TEXT NOT NULL DEFAULT '',
+      last_name TEXT NOT NULL DEFAULT '',
+      dob TEXT NOT NULL DEFAULT '',
+      is_minor INTEGER NOT NULL DEFAULT 0,
+      relationship TEXT NOT NULL DEFAULT 'self',
+      mode TEXT NOT NULL DEFAULT 'here',
+      role TEXT NOT NULL DEFAULT 'guest',
+      guardian_participant_id INTEGER,
+      guardian_json TEXT NOT NULL DEFAULT '{}',
+      email TEXT NOT NULL DEFAULT '',
+      phone TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'not_started',
+      registration_number TEXT NOT NULL DEFAULT '',
+      youth_addendum_status TEXT NOT NULL DEFAULT 'n/a',
+      valid_until INTEGER,
+      same_address INTEGER NOT NULL DEFAULT 1,
+      same_emergency INTEGER NOT NULL DEFAULT 1,
+      address_json TEXT NOT NULL DEFAULT '{}',
+      emergency_json TEXT NOT NULL DEFAULT '{}',
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      remove_reason TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL DEFAULT 0
+    )`
+  ).run();
+  try {
+    const fr = await env.DB.prepare("PRAGMA table_info(form_requests)").all();
+    const frNames = new Set((fr.results || []).map((c) => c.name));
+    if (!frNames.has("participant_id")) {
+      await env.DB.prepare("ALTER TABLE form_requests ADD COLUMN participant_id INTEGER").run();
+    }
+  } catch (_) {}
+  try {
+    const fs = await env.DB.prepare("PRAGMA table_info(form_submissions)").all();
+    const fsNames = new Set((fs.results || []).map((c) => c.name));
+    if (!fsNames.has("participant_id")) {
+      await env.DB.prepare("ALTER TABLE form_submissions ADD COLUMN participant_id INTEGER").run();
+    }
+  } catch (_) {}
+  schemaReady = true;
+}
+
 export function makeRef() {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const bytes = new Uint8Array(6);

@@ -566,6 +566,7 @@ function renderDocuments(){
       answers.__signatures=rec.map;
       if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
       saveSigs();
+      go("documents", docIndex, { replace:true });
     });
     if(saved){
       const img=new Image();
@@ -929,8 +930,28 @@ try{
 }catch(e){}
 $("themeBtn").onclick=()=>{ theme=theme==="dark"?"light":"dark"; try{localStorage.setItem("bnb_theme",theme)}catch(e){} applyTheme(); };
 if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
-  let idle;
-  const bump=()=>{ clearTimeout(idle); idle=setTimeout(()=>{ try{ sessionStorage.removeItem(sigKey()); localStorage.removeItem("bnb_reg_draft"); }catch(e){} location.href="/register?kiosk=1"; }, 600000); };
+  let idle, locked=false;
+  const clearKiosk=()=>{ try{ sessionStorage.removeItem(sigKey()); localStorage.removeItem("bnb_reg_draft"); }catch(e){} location.href="/register.html?kiosk=1"; };
+  const showLock=()=>{
+    const need=String(answers.dob||"").slice(0,10);
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(need)){ clearKiosk(); return; }
+    locked=true;
+    let box=$("kioskDobLock");
+    if(!box){
+      box=document.createElement("div"); box.id="kioskDobLock";
+      box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px";
+      const h=L==="es"?"¿Quién continúa?":"Who is continuing?";
+      const p=L==="es"?"Ingresa tu fecha de nacimiento para seguir.":"Enter your date of birth to continue.";
+      const go=L==="es"?"Continuar":"Continue";
+      box.innerHTML="<div style=\\"background:#fff;color:#111;border-radius:16px;padding:24px;max-width:360px;width:100%;text-align:center\\"><h2 style=\\"margin:0 0 8px;font-size:1.2rem\\">"+h+"</h2><p style=\\"margin:0 0 12px;color:#444\\">"+p+"</p><input id=\\"kioskDobIn\\" type=\\"date\\" style=\\"width:100%;padding:12px;font-size:16px;margin-bottom:8px\\"><p id=\\"kioskDobErr\\" style=\\"color:#b00020;min-height:1.2em\\"></p><button type=\\"button\\" id=\\"kioskDobGo\\" style=\\"width:100%;padding:14px;font-size:16px;border:0;border-radius:12px;background:#0a6;color:#fff\\">"+go+"</button></div>";
+      document.body.appendChild(box);
+      $("kioskDobGo").onclick=()=>{
+        if(($("kioskDobIn").value||"")!==need){ $("kioskDobErr").textContent=L==="es"?"No coincide.":"Does not match."; return; }
+        locked=false; box.remove(); bump();
+      };
+    }
+  };
+  const bump=()=>{ if(locked) return; clearTimeout(idle); idle=setTimeout(showLock, 420000); };
   ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev, bump, {passive:true}));
   bump();
 }
