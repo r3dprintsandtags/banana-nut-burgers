@@ -1,8 +1,9 @@
 import { json } from "../../_shared.js";
 import { formAudit } from "../../_lib/forms/submit.js";
+import { runPartyAppointmentReminders } from "../../_lib/forms/party-reminders.js";
 
 /**
- * GET/POST /api/forms/cron — retention deletion + valid_until reminders.
+ * GET/POST /api/forms/cron — retention deletion + valid_until reminders + party 24h reminders.
  * Secure with CRON_SECRET header or Cloudflare Cron Trigger.
  */
 export async function onRequest(context) {
@@ -60,21 +61,28 @@ export async function onRequest(context) {
     note: "TODO: queue WhatsApp/SMS via messaging helpers — link to renew waiver only, never medical data",
   }));
 
-  // Appointment reminders: incomplete form 24h before booking
-  const day = 86400000;
+  // Appointment reminders: incomplete party forms 24h before planned dive (names only, never medical)
+  let partyReminders = { sent: [], skipped: [], day: "" };
+  try {
+    partyReminders = await runPartyAppointmentReminders(env, request.url);
+  } catch (e) {
+    partyReminders = { sent: [], skipped: [], error: e.message || String(e) };
+  }
+
+  // Legacy booking-row open form_requests (non-party)
+  const dayMs = 86400000;
   const { results: books } = await env.DB.prepare(
     "SELECT id, date, name, contact FROM bookings WHERE date <> '' LIMIT 100"
   ).all();
   const apptReminders = [];
   for (const b of books || []) {
-    // date is YYYY-MM-DD
     const t = Date.parse(b.date + "T12:00:00");
-    if (!t || t - now > day || t - now < 0) continue;
+    if (!t || t - now > dayMs || t - now < 0) continue;
     const open = await env.DB.prepare(
       "SELECT id FROM form_requests WHERE booking_id=? AND status IN ('sent','opened') LIMIT 1"
     ).bind(b.id).first();
-    if (open) apptReminders.push({ bookingId: b.id, requestId: open.id, note: "TODO: send reminder link only" });
+    if (open) apptReminders.push({ bookingId: b.id, requestId: open.id, note: "open form_request on booking" });
   }
 
-  return json({ ok: true, deleted, reminders, apptReminders });
+  return json({ ok: true, deleted, reminders, apptReminders, partyReminders });
 }

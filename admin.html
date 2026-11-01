@@ -583,8 +583,21 @@ function paintBookingReview(){
         return `<div style="margin:8px 0">#${s.id} · ${esc(s.registration_number || "")} · ${s.needs_physician ? "⚠️ Pending staff review" : "Cleared"}<div class="acts" style="margin-top:6px">${pdfButtons(s.id, pdfs)}</div></div>`;
       }).join("")
     : `<p class="mut">${L === "es" ? "Sin envíos de paquete" : "No packet submissions"}</p>`;
+  const partyPeople = bookingReview.participants || [];
+  const partyBlock = partyPeople.length
+    ? partyPeople.map(p => {
+        const typeLbl = p.isMinor ? (L === "es" ? "Menor" : "Minor") : (L === "es" ? "Adulto" : "Adult");
+        return `<div style="margin:6px 0"><b>${esc(p.firstName)} ${esc(p.lastName)}</b>
+          <span class="pill">${esc(typeLbl)}${p.age != null ? " · " + p.age : ""}</span>
+          <span class="pill">${esc(p.status || "—")}</span>
+          ${p.needsPhysician ? `<span class="chip warn">⚠️</span>` : ""}
+          <span class="mut">${esc(p.registrationNumber || "")}</span></div>`;
+      }).join("") +
+      `<p class="mut">${partyPeople.length} / ${c.participants || partyPeople.length} ${L === "es" ? "registrados" : "registered"}</p>`
+    : "";
   el.innerHTML =
     checkinSummaryHtml(c, t) +
+    (partyBlock ? sec(L === "es" ? "Participantes" : "Participants", partyBlock) : "") +
     sec(L === "es" ? "Formularios" : "Forms", formsBlock) +
     (bookingReview.signature
       ? sec(L === "es" ? "Firma" : "Signature", `<p>${esc(bookingReview.signature.signer_name)} · ${new Date(bookingReview.signature.created_at).toLocaleString(L === "es" ? "es" : "en")}</p><img src="/api/registrations/${r.id}/signature" alt="" style="max-width:240px;background:#fff;border:1px solid var(--line);border-radius:8px">`)
@@ -844,6 +857,26 @@ function paintRegDetail(){
             <div class="acts" style="margin-top:6px">${pdfButtons(s.id, pdfs)} <button type="button" class="ghost" data-view-sub="${s.id}">${viewLbl}</button></div></div>`;
         }).join("")
       : `<p class="mut">${L === "es" ? "Sin envíos de paquete aún" : "No packet submissions yet"}</p>`;
+    const partyPeople = regDetail.participants || [];
+    const partyBlock = partyPeople.length
+      ? `<p class="mut">${partyPeople.length} ${L === "es" ? "personas" : "people"} · ${t.guests}: ${data.participants || r.participants || partyPeople.length}</p>` +
+        partyPeople.map(p => {
+          const sub = (regDetail.formSubmissions || []).find(s => Number(s.participant_id) === Number(p.id));
+          let pdfs = [];
+          try { pdfs = JSON.parse(sub?.signed_pdf_r2_keys || "[]"); } catch { pdfs = []; }
+          const typeLbl = p.isMinor ? (L === "es" ? "Menor" : "Minor") : (L === "es" ? "Adulto" : "Adult");
+          const youthBtn = p.isMinor && p.youthAddendumStatus === "waiting"
+            ? `<button type="button" class="ghost" data-youth="${p.id}">${L === "es" ? "Marcar Youth Addendum" : "Mark Youth Addendum received"}</button>` : "";
+          return `<div style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px">
+            <b>${esc(p.firstName)} ${esc(p.lastName)}</b>
+            <span class="pill">${esc(typeLbl)}${p.age != null ? " · " + p.age : ""}</span>
+            <span class="pill ${p.needsPhysician ? "warn" : ""}">${esc(p.status || "—")}</span>
+            ${p.needsPhysician ? `<span class="chip warn">⚠️ ${L === "es" ? "Revisión médica" : "Medical review"}</span>` : ""}
+            <p class="mut" style="margin:4px 0">${esc(p.registrationNumber || "")} · ${esc(p.mode || "")} · ${esc(p.relationship || "")}</p>
+            <div class="acts">${pdfButtons(sub?.id, pdfs)}${youthBtn}${sub ? ` <button type="button" class="ghost" data-view-sub="${sub.id}">${viewLbl}</button>` : ""}</div>
+          </div>`;
+        }).join("")
+      : `<p class="mut">${L === "es" ? "Sin participantes de grupo aún (registro individual)" : "No party participants yet (single registration)"}</p>`;
     el.innerHTML =
       checkinChips(c, t) +
       sec(t.trip, kv([
@@ -851,6 +884,7 @@ function paintRegDetail(){
         [L === "es" ? "Fecha" : "Date", [data.plannedDate || r.planned_date, data.plannedTime].filter(Boolean).join(" · ")],
         [t.guests, String(data.participants || r.participants || 1)],
       ])) +
+      sec(L === "es" ? "Participantes" : "Participants", partyBlock) +
       checkinSummaryHtml(c, t) +
       sec(L === "es" ? "Consentimientos" : "Consents",
         (regDetail.consents || []).length
@@ -865,8 +899,32 @@ function paintRegDetail(){
       sec(L === "es" ? "Revisión" : "Staff review",
         `<label>${L === "es" ? "Estado" : "Status"}</label><select id="revStatus">${RSTAT.map(s => `<option value="${s}" ${s === r.status ? "selected" : ""}>${esc(statusLabel(s))}</option>`).join("")}</select>` +
         `<textarea id="revNote" rows="2" placeholder="${L === "es" ? "Nota de revisión (solo personal)" : "Review note (visible to staff only)"}" style="width:100%;margin-top:8px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px">${esc(r.review_note || "")}</textarea>` +
-        `<span class="acts"><button id="revSave">${saveLbl}</button> <button type="button" class="btn" id="revDlDoc" style="background:var(--pri)">${dlLbl}</button></span>`);
+        `<span class="acts"><button id="revSave">${saveLbl}</button> <button type="button" class="btn" id="revDlDoc" style="background:var(--pri)">${dlLbl}</button>
+        <button type="button" class="ghost" id="revKiosk">${L === "es" ? "Iniciar en tienda (kiosk)" : "Start in shop (kiosk)"}</button></span>`);
     bindPdfButtons(el);
+    const kioskBtn = $("revKiosk");
+    if (kioskBtn) kioskBtn.onclick = async () => {
+      try {
+        const res = await api("/api/registrations/" + r.id + "/participants", {
+          method: "POST",
+          body: JSON.stringify({ action: "kiosk_link" }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.kioskUrl) return;
+        // same-tab navigation — never window.open / new tab
+        location.href = body.kioskUrl;
+      } catch (e) {}
+    };
+    el.querySelectorAll("[data-youth]").forEach(btn => btn.onclick = async () => {
+      try {
+        await api("/api/registrations/" + r.id + "/participants", {
+          method: "POST",
+          body: JSON.stringify({ action: "youth_received", id: Number(btn.dataset.youth) }),
+        });
+        regDetail = await (await api("/api/registrations/" + r.id)).json();
+        paintRegDetail();
+      } catch (e) {}
+    });
     const revDl = $("revDlDoc");
     if (revDl) revDl.onclick = () => downloadPdf(`/api/registrations/${r.id}/document`, `registration-${r.ref || r.id}.html`);
     $("revSave").onclick = async () => {

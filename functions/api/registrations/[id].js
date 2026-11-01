@@ -19,8 +19,55 @@ export async function onRequestGet({ request, env, params }) {
   const history = (await env.DB.prepare(
     `SELECT r.id, r.ref, r.status, r.created_at FROM registrations r WHERE r.customer_id=? ORDER BY r.created_at DESC`
   ).bind(reg.customer_id).all()).results;
+  let participants = [];
+  let formSubmissions = [];
+  try {
+    participants = (await env.DB.prepare(
+      "SELECT * FROM participants WHERE registration_id=? AND status<>'removed' ORDER BY sort_order, id"
+    ).bind(reg.id).all()).results || [];
+  } catch (_) { participants = []; }
+  try {
+    formSubmissions = (await env.DB.prepare(
+      `SELECT s.id, s.request_id, s.participant_id, s.registration_number, s.needs_physician, s.signed_at, s.signer_name, s.signed_pdf_r2_keys, s.valid_until
+       FROM form_submissions s
+       LEFT JOIN form_requests r ON r.id = s.request_id
+       WHERE s.registration_id=? OR r.registration_id=?
+       ORDER BY s.id DESC`
+    ).bind(reg.id, reg.id).all()).results || [];
+  } catch (_) { formSubmissions = []; }
+
+  // staff-facing party summary (medical flags OK for shop)
+  const party = participants.map((p) => {
+    const age = (() => {
+      if (!p.dob || !/^\d{4}-\d{2}-\d{2}$/.test(p.dob)) return null;
+      const [y, m, d] = p.dob.split("-").map(Number);
+      const now = new Date();
+      let a = now.getFullYear() - y;
+      if ((now.getMonth() + 1) * 100 + now.getDate() < m * 100 + d) a--;
+      return a;
+    })();
+    const sub = formSubmissions.find((s) => Number(s.participant_id) === Number(p.id));
+    return {
+      id: p.id,
+      firstName: p.first_name,
+      lastName: p.last_name,
+      dob: p.dob,
+      age,
+      isMinor: !!p.is_minor,
+      relationship: p.relationship,
+      mode: p.mode,
+      role: p.role,
+      status: p.status,
+      registrationNumber: p.registration_number || sub?.registration_number || "",
+      youthAddendumStatus: p.youth_addendum_status,
+      needsPhysician: !!(sub && sub.needs_physician),
+      email: p.email,
+      phone: p.phone,
+    };
+  });
+
   await audit(env, "admin", "registration.viewed", "registration", reg.ref);
-  return json({ registration: reg, consents, signature, documents, history });
+  return json({ registration: reg, consents, signature, documents, history, participants: party, formSubmissions });
 }
 
 // PATCH /api/registrations/:id {status?, reviewNote?} (admin) — audited review actions
