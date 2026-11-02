@@ -12,7 +12,7 @@ try{
   if(savedTheme==="light"||savedTheme==="dark") theme=savedTheme;
   else if(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches) theme="dark";
 }catch(e){}
-let payload=null, answers={}, flow=null, stepId="about", docIndex=0, returnTo="", doneOut=null, pendingFocus="", medicalAnchor="";
+let payload=null, answers={}, flow=null, stepId="about", docIndex=0, returnTo="", doneOut=null, pendingFocus="", medicalAnchor="", pendingNotice="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function applyTheme(){ document.documentElement.setAttribute("data-theme", theme); if($("themeBtn")) $("themeBtn").textContent=theme==="dark"?"Light":"Dark"; }
@@ -106,11 +106,17 @@ function onStepClick(id){
 }
 function go(id, nextDoc, opts){
   opts=opts||{};
+  pendingNotice="";
   if(!flow.steps.some(s=>s.id===id)) id="about";
+  const requested=id;
   const block=earlierBlock(id, flow, answers);
   if(block && !opts.force){
+    if(requested!==block.stepId){
+      const first=block.problems&&block.problems[0];
+      pendingNotice=(L==="es"?"Termina primero: ":"Finish ")+(first&&first.label?first.label:stepLabel(block.stepId, L));
+    }
     id=block.stepId;
-    nextDoc=0;
+    nextDoc=id==="documents"?firstOpenDocument(flow, answers):0;
   }
   stepId=id;
   if(id==="documents"){
@@ -126,6 +132,7 @@ function go(id, nextDoc, opts){
   else history.pushState({ stepId, docIndex }, "", url);
   scheduleSave();
   render();
+  if(pendingNotice && $("err")) $("err").textContent=pendingNotice;
 }
 function leaveForward(){
   const probs=stepProblems(stepId, flow, answers);
@@ -520,7 +527,10 @@ function renderDocuments(){
       const i=flow.steps.findIndex(s=>s.id==="documents");
       go(flow.steps[Math.max(i-1,0)].id);
     }
-  }, ()=>acceptDoc(doc, agree, pad, gpad, reuse), docIndex>=docs.length-1?(L==="es"?"Ir a revisar":"Continue to review"):(L==="es"?"Siguiente documento":"Next document")));
+  }, ()=>{
+    if(docIndex>=docs.length-1) finishLastDocument(doc, agree, pad, gpad, reuse);
+    else acceptDoc(doc, agree, pad, gpad, reuse);
+  }, docIndex>=docs.length-1?(L==="es"?"Listo":"Done"):(L==="es"?"Siguiente documento":"Next document")));
   const arm=()=>{
     const overflow=paper.scrollHeight-paper.clientHeight>12;
     const end=document.getElementById("docEnd");
@@ -566,7 +576,6 @@ function renderDocuments(){
       answers.__signatures=rec.map;
       if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
       saveSigs();
-      go("documents", docIndex, { replace:true });
     });
     if(saved){
       const img=new Image();
@@ -612,10 +621,20 @@ function renderDocuments(){
   }
   return card;
 }
-function acceptDoc(doc, agree, pad, gpad, reuse){
+function finishLastDocument(doc, agree, pad, gpad, reuse){
+  if(!acceptDoc(doc, agree, pad, gpad, reuse, { nav:false })) return;
+  const items=missingItems(flow, answers, L);
+  if(items.length || (payload&&payload.turnstileSiteKey)){
+    go("review");
+    return;
+  }
+  submitPacket();
+}
+function acceptDoc(doc, agree, pad, gpad, reuse, opts){
+  opts=opts||{};
   if(agree.disabled || !agree.checked){
     $("err").textContent=L==="es"?"Llega al final y marca que aceptas.":"Reach the end and check that you agree.";
-    return;
+    return false;
   }
   answers.__signatures=answers.__signatures||{};
   const reuseOn=docIndex===0 ? !!(reuse&&reuse.checked) : answers.__signatures._reuseOff!==true;
@@ -625,7 +644,7 @@ function acceptDoc(doc, agree, pad, gpad, reuse){
   }
   if(!String(answers.__signatures[doc.key]||"").startsWith("data:image/png;base64,")){
     $("err").textContent=L==="es"?"Firma el documento.":"Sign this document.";
-    return;
+    return false;
   }
   if(docIndex===0 && reuseOn){
     answers.__signatures._reuse=answers.__signatures[doc.key];
@@ -637,7 +656,7 @@ function acceptDoc(doc, agree, pad, gpad, reuse){
   }
   if(flow.minor && !String(answers.__signatures.guardian||"").startsWith("data:image/png;base64,")){
     $("err").textContent=L==="es"?"El tutor debe firmar.":"Guardian signature is required.";
-    return;
+    return false;
   }
   if(flow.minor){ answers.__guardian_signed=true; answers.guardian_signature="signed"; }
   answers.__agreements=answers.__agreements||{};
@@ -645,8 +664,10 @@ function acceptDoc(doc, agree, pad, gpad, reuse){
   if(doc.key==="privacy") answers.guardian_privacy_consent=true;
   answers.__consent_accepted=true;
   saveSigs();
+  if(opts.nav===false) return true;
   if(docIndex < (flow.docs||[]).length-1) go("documents", docIndex+1);
   else go("review");
+  return true;
 }
 function renderReview(){
   const card=document.createElement("div");
@@ -671,7 +692,7 @@ function renderReview(){
     cf.id="cf"; cf.className="cf-turnstile"; cf.dataset.sitekey=payload.turnstileSiteKey;
     card.appendChild(cf);
   }
-  const row=actions(()=>go("documents", Math.max((flow.docs||[]).length-1,0)), ()=>submitPacket(), L==="es"?"Terminar":"Finish");
+  const row=actions(()=>go("documents", Math.max((flow.docs||[]).length-1,0)), ()=>submitPacket(), L==="es"?"Listo":"Done");
   const finishBtn=row.querySelector("#nextBtn");
   if(items.length){
     const why=document.createElement("p");
@@ -703,12 +724,12 @@ async function submitPacket(){
     })});
     out=await r.json().catch(()=>({}));
   }catch(e){
-    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Terminar":"Finish"; }
+    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Listo":"Done"; }
     showRetry(L==="es"?"No se envió. Tus datos siguen aquí.":"Submit failed. Your answers are still here.");
     return;
   }
   if(!r.ok){
-    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Terminar":"Finish"; }
+    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Listo":"Done"; }
     const view=submitFailureView(out);
     showRetry(view.message);
     if(view.items.length) showMissing(view.items.map(i=>({ ...i, stepId: stepForError(i.id) })));
@@ -877,6 +898,7 @@ function render(){
   paintStepper();
   $("err").textContent="";
   clearMissing();
+  try{ window.scrollTo(0, 0); }catch(e){}
   const app=$("app");
   app.innerHTML="";
   let card=null;

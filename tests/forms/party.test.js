@@ -4,7 +4,7 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { computeIsMinor, participantPublic } from "../../functions/_lib/forms/party.js";
+import { computeIsMinor, participantPublic, applyGear, gearFromAddress } from "../../functions/_lib/forms/party.js";
 import { fromRegistrationData } from "../../functions/_lib/forms/shared.js";
 import { diverMedicalNeedsPhysician, fitToDiveNeedsPhysician } from "../../functions/_lib/forms/physician.js";
 import { validateAnswers } from "../../functions/_lib/forms/schema.js";
@@ -30,6 +30,28 @@ describe("party age / minor", () => {
     const asOf = new Date(today);
     asOf.setFullYear(asOf.getFullYear() + 1);
     assert.equal(computeIsMinor(`${y}-${m}-${d}`, asOf), 0);
+  });
+});
+
+describe("equipment for each additional person", () => {
+  it("stores a rental size and does not treat gear as an address", () => {
+    const address = applyGear({ city: "West End" }, { ownGear: "no", gearSize: "M", gearNote: "boots 9" });
+    assert.equal(address.city, "West End");
+    assert.deepEqual(gearFromAddress(address), { ownGear: "no", gearSize: "M", gearNote: "boots 9" });
+    assert.throws(() => applyGear({}, { ownGear: "no" }), /size/i);
+    const row = {
+      id: 3, registration_id: 1, contact_id: 4, first_name: "Jimmy", last_name: "Smith",
+      dob: "2014-01-01", is_minor: 1, relationship: "child", mode: "here", role: "guest",
+      guardian_participant_id: 1, guardian_json: "{}", email: "", phone: "",
+      status: "not_started", registration_number: "BNB-2611-0004",
+      youth_addendum_status: "waiting", same_address: 1, same_emergency: 1, sort_order: 2,
+      address_json: JSON.stringify(address), emergency_json: "{}",
+    };
+    const pub = participantPublic(row);
+    assert.equal(pub.ownGear, "no");
+    assert.equal(pub.gearSize, "M");
+    assert.equal(pub.address.ownGear, undefined);
+    assert.equal(pub.address.city, "West End");
   });
 });
 

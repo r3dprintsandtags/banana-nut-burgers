@@ -4,7 +4,7 @@ import fs from "fs";
 import {
   THEMES, buildFlow, stepLabel, stepProblems, earlierBlock, missingItems, resumeTarget,
   hashFor, parseHash, documentCanAgree, recordSignature, satisfyHiddenGates, submitFailureView,
-  themeContrastIssues,
+  themeContrastIssues, legalBundle, firstOpenDocument,
 } from "../../functions/_lib/forms/wizard.js";
 import { validateAnswers } from "../../functions/_lib/forms/schema.js";
 import { onRequestGet } from "../../functions/f/[token].js";
@@ -159,6 +159,36 @@ describe("completion gates", () => {
     const minor = buildFlow([medical, fit, youth], minorBase);
     assert.equal(missingItems(minor, minorBase).length, 0);
     assert.equal(minor.minor, true);
+  });
+
+  it("does not trap a signer when legal text arrives as {en, es}", () => {
+    const objectLegal = {
+      key: "privacy",
+      name: "Privacy Policy",
+      legal: { en: "x".repeat(80), es: "" },
+      schema: { sections: [] },
+    };
+    const flow = buildFlow([objectLegal], adultAnswers());
+    assert.equal(flow.docs[0].missing, false);
+    assert.equal(flow.docs[0].legal.length, 80);
+    assert.equal(legalBundle(objectLegal.legal).en.length, 80);
+    const signed = adultAnswers({
+      __agreements: { privacy: { accepted: true } },
+      __signatures: { privacy: "data:image/png;base64," + "a".repeat(80) },
+    });
+    assert.equal(stepProblems("documents", flow, signed).length, 0);
+    assert.equal(earlierBlock("review", flow, signed), null);
+  });
+
+  it("sends a blocked review back to the unfinished document, not the first one", () => {
+    const flow = buildFlow([medical, fit], adultAnswers());
+    const partial = adultAnswers({
+      __agreements: { diver_medical: { accepted: true } },
+      __signatures: { diver_medical: "data:image/png;base64," + "a".repeat(80) },
+    });
+    delete partial.__agreements.fit_to_dive;
+    delete partial.__signatures.fit_to_dive;
+    assert.equal(firstOpenDocument(flow, partial), 1);
   });
 
   it("keeps answers when submit fails and names the missing piece", () => {
