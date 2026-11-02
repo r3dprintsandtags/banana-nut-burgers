@@ -47,6 +47,9 @@ export async function onRequestGet({ request, env, params }) {
       return a;
     })();
     const sub = formSubmissions.find((s) => Number(s.participant_id) === Number(p.id));
+    let address = {};
+    try { address = JSON.parse(p.address_json || "{}"); } catch { address = {}; }
+    const ownGear = address.ownGear === "yes" || address.ownGear === "no" ? address.ownGear : "";
     return {
       id: p.id,
       firstName: p.first_name,
@@ -63,6 +66,9 @@ export async function onRequestGet({ request, env, params }) {
       needsPhysician: !!(sub && sub.needs_physician),
       email: p.email,
       phone: p.phone,
+      ownGear,
+      gearSize: ownGear === "no" ? String(address.gearSize || "") : "",
+      gearNote: ownGear === "no" ? String(address.gearNote || "") : "",
     };
   });
 
