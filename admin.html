@@ -591,7 +591,10 @@ function paintBookingReview(){
           <span class="pill">${esc(typeLbl)}${p.age != null ? " · " + p.age : ""}</span>
           <span class="pill">${esc(p.status || "—")}</span>
           ${p.needsPhysician ? `<span class="chip warn">⚠️</span>` : ""}
-          <span class="mut">${esc(p.registrationNumber || "")}</span></div>`;
+          <span class="mut">${esc(p.registrationNumber || "")}</span>
+          ${p.ownGear === "yes" ? `<span class="chip ok">${esc(L === "es" ? "Equipo propio" : "Own gear")}</span>` : ""}
+          ${p.ownGear === "no" ? `<span class="chip warn">${esc(L === "es" ? "Equipo de la tienda" : "Shop gear")}${p.gearSize ? ": " + esc(p.gearSize) : ""}</span>` : ""}
+          </div>`;
       }).join("") +
       `<p class="mut">${partyPeople.length} / ${c.participants || partyPeople.length} ${L === "es" ? "registrados" : "registered"}</p>`
     : "";
@@ -872,7 +875,7 @@ function paintRegDetail(){
             <span class="pill">${esc(typeLbl)}${p.age != null ? " · " + p.age : ""}</span>
             <span class="pill ${p.needsPhysician ? "warn" : ""}">${esc(p.status || "—")}</span>
             ${p.needsPhysician ? `<span class="chip warn">⚠️ ${L === "es" ? "Revisión médica" : "Medical review"}</span>` : ""}
-            <p class="mut" style="margin:4px 0">${esc(p.registrationNumber || "")} · ${esc(p.mode || "")} · ${esc(p.relationship || "")}</p>
+            <p class="mut" style="margin:4px 0">${esc(p.registrationNumber || "")} · ${esc(p.mode || "")} · ${esc(p.relationship || "")}${p.ownGear === "yes" ? " · " + (L === "es" ? "Equipo propio" : "Own gear") : ""}${p.ownGear === "no" ? " · " + (L === "es" ? "Equipo de la tienda" : "Shop gear") + (p.gearSize ? " " + esc(p.gearSize) : "") : ""}</p>
             <div class="acts">${pdfButtons(sub?.id, pdfs)}${youthBtn}${sub ? ` <button type="button" class="ghost" data-view-sub="${sub.id}">${viewLbl}</button>` : ""}</div>
           </div>`;
         }).join("")

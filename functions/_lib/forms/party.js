@@ -4,6 +4,47 @@ import { ensureRegistrationNumber } from "./regnum.js";
 import { createRequestForRegistration, packetKeyForActivity, fromRegistrationData } from "./submit.js";
 import { sha256 } from "../../_shared.js";
 
+export function gearFromAddress(address = {}) {
+  const ownGear = address.ownGear === "yes" || address.ownGear === "no" ? address.ownGear : "";
+  return {
+    ownGear,
+    gearSize: ownGear === "no" ? String(address.gearSize || "") : "",
+    gearNote: ownGear === "no" ? String(address.gearNote || "") : "",
+  };
+}
+
+export function addressWithoutGear(address = {}) {
+  const next = { ...(address || {}) };
+  delete next.ownGear;
+  delete next.gearSize;
+  delete next.gearNote;
+  return next;
+}
+
+/** Merge equipment into the participant address blob. Throws 422 when a rental has no size. */
+export function applyGear(address = {}, payload = {}) {
+  if (payload.ownGear !== "yes" && payload.ownGear !== "no") return { ...address };
+  const next = { ...address, ownGear: payload.ownGear };
+  if (payload.ownGear === "yes") {
+    next.gearSize = "";
+    next.gearNote = "";
+    return next;
+  }
+  const size = String(payload.gearSize || "").trim().slice(0, 12);
+  if (!size) {
+    throw Object.assign(new Error("Choose a size when this person needs shop equipment"), { status: 422 });
+  }
+  next.gearSize = size;
+  next.gearNote = String(payload.gearNote || "").trim().slice(0, 200);
+  return next;
+}
+
+function addressJsonWithGear(prevJson, payload) {
+  let address = {};
+  try { address = JSON.parse(prevJson || "{}"); } catch { address = {}; }
+  return JSON.stringify(applyGear(address, payload));
+}
+
 export function computeIsMinor(dob, asOf = new Date()) {
   const age = ageFromDob(dob, asOf);
   if (age == null) return 0;
@@ -40,6 +81,11 @@ export function participantPublic(row, { includeMedical = false, submission = nu
   try { out.guardian = JSON.parse(row.guardian_json || "{}"); } catch { out.guardian = {}; }
   try { out.address = JSON.parse(row.address_json || "{}"); } catch { out.address = {}; }
   try { out.emergency = JSON.parse(row.emergency_json || "{}"); } catch { out.emergency = {}; }
+  const gear = gearFromAddress(out.address);
+  out.ownGear = gear.ownGear;
+  out.gearSize = gear.gearSize;
+  out.gearNote = gear.gearNote;
+  out.address = addressWithoutGear(out.address);
   if (submission) {
     out.packetNeedsPhysician = !!submission.needs_physician;
     if (includeMedical) {
@@ -187,24 +233,25 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
   if (id) {
     const row = await env.DB.prepare("SELECT * FROM participants WHERE id=? AND registration_id=?").bind(id, reg.id).first();
     if (!row || row.status === "removed") throw Object.assign(new Error("Participant not found"), { status: 404 });
+    const addressJson = addressJsonWithGear(row.address_json, payload);
     if (row.role === "primary") {
       // primary: allow contact field updates but keep role/mode rules
       await env.DB.prepare(
         `UPDATE participants SET first_name=?, last_name=?, dob=?, is_minor=?, email=?, phone=?, contact_id=?,
-         registration_number=COALESCE(NULLIF(registration_number,''),?), youth_addendum_status=?, updated_at=? WHERE id=?`
-      ).bind(first, last, dob, isMinor, email, phone, contactId, regNum, isMinor ? (row.youth_addendum_status === "received" ? "received" : "waiting") : "n/a", now, id).run();
+         registration_number=COALESCE(NULLIF(registration_number,''),?), youth_addendum_status=?, address_json=?, updated_at=? WHERE id=?`
+      ).bind(first, last, dob, isMinor, email, phone, contactId, regNum, isMinor ? (row.youth_addendum_status === "received" ? "received" : "waiting") : "n/a", addressJson, now, id).run();
     } else {
       await env.DB.prepare(
         `UPDATE participants SET first_name=?, last_name=?, dob=?, is_minor=?, relationship=?, mode=?,
          guardian_participant_id=?, guardian_json=?, email=?, phone=?, contact_id=?,
          registration_number=COALESCE(NULLIF(registration_number,''),?), youth_addendum_status=?,
-         same_address=?, same_emergency=?, updated_at=? WHERE id=?`
+         same_address=?, same_emergency=?, address_json=?, updated_at=? WHERE id=?`
       ).bind(
         first, last, dob, isMinor, relationship, mode,
         guardianParticipantId, guardianJson, email, phone, contactId, regNum,
         isMinor ? (row.youth_addendum_status === "received" ? "received" : "waiting") : "n/a",
         payload.sameAddress === false ? 0 : 1, payload.sameEmergency === false ? 0 : 1,
-        now, id
+        addressJson, now, id
       ).run();
     }
     return env.DB.prepare("SELECT * FROM participants WHERE id=?").bind(id).first();
@@ -215,17 +262,18 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
   ).bind(reg.id).first();
   const sortOrder = (maxSort?.m || 0) + 1;
 
+  const addressJson = addressJsonWithGear("{}", payload);
   const ins = await env.DB.prepare(
     `INSERT INTO participants (
       registration_id, contact_id, first_name, last_name, dob, is_minor, relationship, mode, role,
       guardian_participant_id, guardian_json, email, phone, status, registration_number, youth_addendum_status,
-      same_address, same_emergency, sort_order, created_at, updated_at
-    ) VALUES (?,?,?,?,?,?,?,?,'guest',?,?,?,?,'not_started',?,?,?,?,?,?,?)`
+      same_address, same_emergency, address_json, sort_order, created_at, updated_at
+    ) VALUES (?,?,?,?,?,?,?,?,'guest',?,?,?,?,'not_started',?,?,?,?,?,?,?,?)`
   ).bind(
     reg.id, contactId, first, last, dob, isMinor, relationship, mode,
     guardianParticipantId, guardianJson, email, phone, regNum, isMinor ? "waiting" : "n/a",
     payload.sameAddress === false ? 0 : 1, payload.sameEmergency === false ? 0 : 1,
-    sortOrder, now, now
+    addressJson, sortOrder, now, now
   ).run();
 
   // bump registration.participants count
@@ -288,7 +336,13 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
   let sharedEmg = {};
   try { sharedAddr = JSON.parse(reg.shared_address_json || "{}"); } catch { sharedAddr = {}; }
   try { sharedEmg = JSON.parse(reg.shared_emergency_json || "{}"); } catch { sharedEmg = {}; }
-  try { if (participant.same_address && Object.keys(sharedAddr).length) { /* use shared */ } else { sharedAddr = { ...sharedAddr, ...JSON.parse(participant.address_json || "{}") }; } } catch (_) {}
+  try {
+    if (!(participant.same_address && Object.keys(sharedAddr).length)) {
+      let own = {};
+      try { own = JSON.parse(participant.address_json || "{}"); } catch { own = {}; }
+      sharedAddr = { ...sharedAddr, ...addressWithoutGear(own) };
+    }
+  } catch (_) {}
   try { if (participant.same_emergency && Object.keys(sharedEmg).length) { /* use shared */ } else { sharedEmg = { ...sharedEmg, ...JSON.parse(participant.emergency_json || "{}") }; } } catch (_) {}
 
   // defaults from primary registration data

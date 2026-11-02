@@ -84,6 +84,14 @@ export function stepLabel(id, lang = "en") {
   return (row && (row[lang] || row.en)) || id;
 }
 
+/** Legal copy may arrive as a string or as { en, es }. */
+export function legalBundle(raw) {
+  if (!raw) return { en: "", es: "" };
+  if (typeof raw === "string") return { en: raw, es: "" };
+  if (typeof raw === "object") return { en: String(raw.en || ""), es: String(raw.es || "") };
+  return { en: String(raw), es: "" };
+}
+
 export function buildFlow(templates, answers, now = new Date()) {
   const ABOUT_KEYS = new Set(["first_name", "last_name", "dob", "email", "cell_phone", "phone", "address", "city", "state", "zip", "full_name_print", "postal_code"]);
   const EMERGENCY_KEYS = new Set(["emergency_contact_name", "emergency_contact_relationship", "emergency_contact_email", "emergency_contact_phone"]);
@@ -95,6 +103,7 @@ export function buildFlow(templates, answers, now = new Date()) {
   if (minor) steps.push({ id: "guardian", kind: "guardian" });
   const medical = [];
   const docs = [];
+  const pdfDocKeys = new Set(["try_scuba_reg", "intro_code", "fit_to_dive", "privacy", "rec_waiver", "diver_medical"]);
   for (const t of templates || []) {
     if (!t || t.key === "diving_medical_guidance") continue;
     for (const sec of t.schema?.sections || []) {
@@ -114,12 +123,18 @@ export function buildFlow(templates, answers, now = new Date()) {
         section: { id: sec.id || t.key, title: sec.title, show_if: sec.show_if, fields },
       });
     }
+    const bundled = legalBundle(t.legal);
+    const legal = bundled.en;
+    const legalEs = legalBundle(t.legalEs).en || legalBundle(t.legalEs).es || bundled.es;
+    const pdf = pdfDocKeys.has(t.key);
     docs.push({
       key: t.key,
       name: t.name || t.key,
-      legal: String(t.legal || ""),
-      legalEs: String(t.legalEs || ""),
-      missing: String(t.legal || "").trim().length < 40 && t.key !== "youth_addendum",
+      legal,
+      legalEs,
+      pdf,
+      // Official PDFs are the document. A short or object-shaped legal blob must not trap the signer.
+      missing: !pdf && t.key !== "youth_addendum" && legal.trim().length < 40,
     });
   }
   if (medical.length) steps.push({ id: "medical", kind: "medical" });
@@ -173,7 +188,7 @@ export function stepProblems(stepId, flow, answers, now = new Date()) {
     const agreements = a.__agreements || {};
     const sigs = a.__signatures || {};
     for (const doc of flow?.docs || []) {
-      if (doc.missing) out.push({ id: "doc_" + doc.key, label: doc.name + " text" });
+      if (doc.missing && !doc.pdf) out.push({ id: "doc_" + doc.key, label: doc.name + " text" });
       if (!agreements[doc.key] || agreements[doc.key].accepted !== true) out.push({ id: "agree_" + doc.key, label: doc.name + " agreement" });
       if (!String(sigs[doc.key] || "").startsWith("data:image/png;base64,")) out.push({ id: "sign_" + doc.key, label: doc.name + " signature" });
     }
@@ -229,6 +244,17 @@ export function resumeTarget(flow, answers, now = new Date()) {
   let docIndex = Number(ui.docIndex) || 0;
   if (!Number.isFinite(docIndex) || docIndex < 0 || docIndex >= Math.max(docs.length, 1)) docIndex = 0;
   return { stepId, docIndex };
+}
+
+/** First document that still needs text, agreement, or a signature. */
+export function firstOpenDocument(flow, answers, now = new Date()) {
+  const problems = stepProblems("documents", flow, answers, now);
+  const docs = flow?.docs || [];
+  for (let i = 0; i < docs.length; i++) {
+    const key = docs[i].key;
+    if (problems.some((p) => p.id === "doc_" + key || p.id === "agree_" + key || p.id === "sign_" + key)) return i;
+  }
+  return 0;
 }
 
 export function hashFor(stepId, docIndex = 0) {

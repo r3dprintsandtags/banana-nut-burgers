@@ -84,11 +84,17 @@ export async function onRequestGet({ env, params, request }) {
   answers = over45Prefill(answers).answers;
 
   const age = ageFromDob(answers.dob);
-  const templatePayload = templates.map((t) => ({
-    id: t.id, key: t.key, name: t.name, version: t.version,
-    schema: JSON.parse(t.schema_json || "{}"),
-    legal: LEGAL[t.key] || "",
-  }));
+  const templatePayload = templates.map((t) => {
+    const raw = LEGAL[t.key];
+    const legal = typeof raw === "string" ? raw : String(raw?.en || "");
+    const legalEs = typeof raw === "string" ? "" : String(raw?.es || "");
+    return {
+      id: t.id, key: t.key, name: t.name, version: t.version,
+      schema: JSON.parse(t.schema_json || "{}"),
+      legal,
+      legalEs,
+    };
+  });
   if (age != null && age < 18 && !templatePayload.some((t) => t.key === "youth_addendum")) {
     const youth = youthTemplate("en");
     templatePayload.push({ ...youth, legalEs: youthTemplate("es").legal });

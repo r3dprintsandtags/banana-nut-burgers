@@ -2,14 +2,14 @@
 import { renderDocumentHtml } from "../_lib/forms/document.js";
 import { packetClientScript } from "../_lib/forms/packet-client.js";
 import {
-  ageYears, fieldVisible, isAckSection, buildFlow, stepLabel, stepProblems,
-  earlierBlock, missingItems, resumeTarget, hashFor, parseHash, documentCanAgree,
+  ageYears, fieldVisible, isAckSection, legalBundle, buildFlow, stepLabel, stepProblems,
+  earlierBlock, missingItems, resumeTarget, firstOpenDocument, hashFor, parseHash, documentCanAgree,
   recordSignature, submitFailureView,
 } from "../_lib/forms/wizard.js";
 
 const wizardSource = [
-  ageYears, fieldVisible, isAckSection, buildFlow, stepLabel, stepProblems,
-  earlierBlock, missingItems, resumeTarget, hashFor, parseHash, documentCanAgree,
+  ageYears, fieldVisible, isAckSection, legalBundle, buildFlow, stepLabel, stepProblems,
+  earlierBlock, missingItems, resumeTarget, firstOpenDocument, hashFor, parseHash, documentCanAgree,
   recordSignature, submitFailureView,
 ].map((fn) => fn.toString()).join("\n");
 
