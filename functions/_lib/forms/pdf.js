@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
-import stampMap from "../../../forms-source/ssi-stamp-map.json" with { type: "json" };
+import stampMap from "../../../forms-source/ssi-stamp-map.json";
 import { stampPdf } from "./stamp.js";
 
 const TEMPLATE_FILE = {
