@@ -1,7 +1,7 @@
 import { json, makeSession } from "../_shared.js";
 
 // Owner password for the Bookings CRM. Also accepts ADMIN_PASSWORD when that secret differs.
-export const OWNER_PASSWORD = "banananutburger";
+export const OWNER_PASSWORD = "bnb123";
 
 export function passwordMatches(given, configured) {
   const typed = String(given ?? "");
