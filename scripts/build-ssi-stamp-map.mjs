@@ -5,11 +5,12 @@
  */
 import fs from "fs";
 import path from "path";
+import { readFileSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.js";
 import { stampPdf } from "../functions/_lib/forms/stamp.js";
 import { pngStroke } from "./png-stroke.mjs";
-import schema from "../forms-source/diver_medical.schema.json" with { type: "json" };
+const schema = JSON.parse(readFileSync(new URL("../forms-source/diver_medical.schema.json", import.meta.url), "utf8"));
 
 const TRY = "C:/Users/adria/Downloads/SSI-Try-Scuba-Forms-2019.pdf";
 const MED = "C:/Users/adria/Downloads/SSI-Medical-and-Waiver-Forms-2020.pdf";
@@ -361,5 +362,7 @@ fs.copyFileSync(path.join(OUT, form.file), path.resolve("functions/_lib/forms/te
 }
 
 map.youth_addendum = { file: null, status: "missing-pdf", fields: [], note: "Official SSI Youth Addendum PDF is not in the packet. Minors still stamp guardian lines on the forms above. Shop consent stands in until the PDF is added." };
-fs.writeFileSync(path.join(OUT, "ssi-stamp-map.json"), JSON.stringify(map, null, 2));
+const stampJson = JSON.stringify(map, null, 2);
+fs.writeFileSync(path.join(OUT, "ssi-stamp-map.json"), stampJson);
+fs.writeFileSync(path.join(OUT, "ssi-stamp-map.js"), `export default ${stampJson};\n`);
 console.log("acro", JSON.stringify(acro));
