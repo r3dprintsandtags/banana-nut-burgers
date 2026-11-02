@@ -1036,15 +1036,8 @@ async function startPersonForms(id){
   const person = (party.participants || []).find(p => p.id === id);
   if (!person) return;
   activeParticipantId = id;
-  // Handoff screen when switching to another person on shared device
-  if (person.role !== "primary" && person.mode !== "own_phone") {
-    $("handoffBox").classList.remove("hide");
-    $("handoffTitle").textContent = (T[L].handoffTitle || "Pass the device to {name}").replace("{name}", person.firstName);
-    $("handoffContinue").textContent = (T[L].handoffGo || "Continue").replace("{name}", person.firstName);
-    $("handoffContinue").onclick = () => { $("handoffBox").classList.add("hide"); openPersonPacket(id); };
-    $("handoffBack").onclick = () => { $("handoffBox").classList.add("hide"); activeParticipantId = null; };
-    return;
-  }
+  // Open forms in place — no extra handoff screen hop.
+  if ($("handoffBox")) $("handoffBox").classList.add("hide");
   await openPersonPacket(id);
 }
 async function openPersonPacket(id){
@@ -1062,6 +1055,8 @@ async function openPersonPacket(id){
     if (out.alreadyCompleted || out.status === "completed") {
       if ($("packetStatus")) $("packetStatus").textContent = T[L].packetDone;
       if ($("packetFrameWrap")) $("packetFrameWrap").classList.add("hide");
+      if ($("packetBox")) $("packetBox").classList.add("hide");
+      activeParticipantId = null;
       await refreshParty();
       return;
     }
@@ -1254,7 +1249,14 @@ $("toWaivers").onclick = async () => {
   $("err3").textContent = "";
   await saveDraft();
   syncPacketSignUI();
-  go(4); // final shop sign — SSI questions already answered in packets
+  // Shop acknowledgment lives on step 4; medical/SSI already done in packets.
+  // If acknowledgment is already checked, skip straight to review.
+  if ($("ackShop")?.checked || draft.ackShop) {
+    if ($("signer") && !$("signer").value) $("signer").value = [V("first"), V("last")].filter(Boolean).join(" ");
+    go(6);
+    return;
+  }
+  go(4);
 };
 function renderForms(){
   const t = T[L], s = state();
