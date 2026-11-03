@@ -1,0 +1,24 @@
+{
+  "dryRun": true,
+  "applied": false,
+  "generatedAt": "2026-11-03T03:41:30.461Z",
+  "database": "remote",
+  "counts": {
+    "registrations": 0,
+    "participants": 0,
+    "multiAdultRegs": 0,
+    "adultsToSplit": 0,
+    "minorsOk": 0,
+    "ambiguousGuardians": 0,
+    "orphanPackets": 0,
+    "formSubmissionsTouched": 0,
+    "signaturesTouched": 0
+  },
+  "plan": [],
+  "risks": [
+    "Do not delete signed PDFs or audit entries.",
+    "Minors with null guardian_participant_id need shop review before apply.",
+    "Registration numbers must move with the adult (never reassign).",
+    "Booking headcount is informational; do not auto-change guests."
+  ]
+}
