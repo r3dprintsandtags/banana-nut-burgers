@@ -6,16 +6,11 @@ const renderDocumentHtml = ${renderSource};
 ${wizardSource}
 let L=(navigator.language||"en").startsWith("es")?"es":"en";
 try{const saved=localStorage.getItem("bnb_lang");if(saved==="en"||saved==="es")L=saved}catch(e){}
-let theme="light";
-try{
-  const savedTheme=localStorage.getItem("bnb_theme");
-  if(savedTheme==="light"||savedTheme==="dark") theme=savedTheme;
-  else if(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches) theme="dark";
-}catch(e){}
+try{ localStorage.removeItem("bnb_theme"); }catch(e){}
 let payload=null, answers={}, flow=null, stepId="about", docIndex=0, returnTo="", doneOut=null, pendingFocus="", medicalAnchor="", pendingNotice="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function applyTheme(){ document.documentElement.setAttribute("data-theme", theme); if($("themeBtn")) $("themeBtn").textContent=theme==="dark"?"Light":"Dark"; }
+function applyTheme(){ /* light-only — matches registration / Banana Nut Burgers brand */ }
 function lab(f){return typeof f.label==="string"?f.label:(f.label&&(f.label[L]||f.label.en))||f.key}
 function syncLangBtn(){ if($("langBtn")) $("langBtn").textContent=L==="en"?"ES":"EN"; document.documentElement.lang=L; }
 function sigKey(){ return "bnb_sigs_"+TOKEN; }
@@ -54,7 +49,20 @@ function showRetry(message){
   b.onclick=()=>{ box.classList.add("hide"); scheduleSave(); };
   box.append(p,b);
 }
-function rebuild(){ flow=buildFlow(payload&&payload.templates||[], answers); }
+function ensureYouthTemplate(){
+  if(!payload) return;
+  const age=ageYears(answers&&answers.dob);
+  if(age==null || age>=18) return;
+  const list=Array.isArray(payload.templates)?payload.templates:[];
+  if(list.some((t)=>t&&t.key==="youth_addendum")) return;
+  const en="I am the parent or legal guardian of the participant named in this packet. I have read the agreements in this packet. I consent to this minor taking part in the dive activity. The shop will keep the official SSI Youth Addendum with this registration before the dive.";
+  const es="Soy el padre, la madre o el tutor legal del participante de este paquete. Leí los acuerdos de este paquete. Autorizo a este menor a participar en la actividad de buceo. La tienda guardará el anexo juvenil oficial de SSI con este registro antes del buceo.";
+  payload.templates=list.concat([{ key:"youth_addendum", name:L==="es"?"Consentimiento del tutor":"Guardian consent", version:"shop-1", schema:{ key:"youth_addendum", sections:[] }, legal:en, legalEs:es }]);
+}
+function rebuild(){
+  ensureYouthTemplate();
+  flow=buildFlow(payload&&payload.templates||[], answers);
+}
 function statusOf(id){
   if(id===stepId) return "current";
   if(id==="finish") return doneOut?"complete":"notstarted";
@@ -167,7 +175,12 @@ function showMissing(items){
     const b=document.createElement("button");
     b.type="button"; b.className="miss";
     b.textContent=(L==="es"?"Ir a ":"Go to ")+item.label;
-    b.onclick=()=>{ pendingFocus=item.id; returnTo=stepId; go(item.stepId||stepId, 0); };
+    b.onclick=()=>{
+      pendingFocus=item.id; returnTo=stepId;
+      const target=item.stepId||stepId;
+      const docIdx=target==="documents"?firstOpenDocument(flow, answers):0;
+      go(target, docIdx);
+    };
     box.appendChild(b);
   }
 }
@@ -227,9 +240,10 @@ function heading(text){
   h.textContent=text;
   return h;
 }
-function actions(onBack, onNext, nextLabel){
+function actions(onBack, onNext, nextLabel, opts){
+  opts=opts||{};
   const row=document.createElement("div");
-  row.className="actions";
+  row.className="actions"+(opts.sticky?" sticky":"");
   if(onBack){
     const back=document.createElement("button");
     back.type="button"; back.className="ghost"; back.textContent=L==="es"?"Atrás":"Back";
@@ -241,6 +255,12 @@ function actions(onBack, onNext, nextLabel){
   next.onclick=onNext;
   row.appendChild(next);
   return row;
+}
+function enableAgree(agree, hint, why){
+  if(!agree) return;
+  agree.disabled=false;
+  if(hint) hint.textContent="";
+  if(why) why.textContent=L==="es"?"Ya puedes marcar que leíste el documento.":"You can now check that you read this document.";
 }
 function focusPending(){
   if(!pendingFocus) return;
@@ -423,6 +443,14 @@ function renderDocuments(){
   pos.id="docPos";
   pos.textContent=(L==="es"?"Documento ":"Document ")+(docIndex+1)+" "+(L==="es"?"de ":"of ")+Math.max(docs.length,1)+": "+(doc.name||"");
   card.appendChild(pos);
+  if(!docs.length){
+    const empty=document.createElement("p");
+    empty.className="err";
+    empty.textContent=L==="es"?"No hay documentos en este paquete.":"No documents in this packet.";
+    card.appendChild(empty);
+    card.appendChild(actions(()=>go("medical"), ()=>go("review"), L==="es"?"Continuar":"Continue", { sticky:true }));
+    return card;
+  }
   const list=document.createElement("ol");
   list.className="doclist";
   docs.forEach((d, i)=>{
@@ -430,7 +458,7 @@ function renderDocuments(){
     const b=document.createElement("button");
     b.type="button";
     const agreed=answers.__agreements&&answers.__agreements[d.key]&&answers.__agreements[d.key].accepted;
-    b.textContent=(agreed?"✓ ":"")+(d.name||d.key);
+    b.textContent=(agreed?"✓ ":"")+(d.name||d.key)+(i===docIndex?(L==="es"?" (actual)":" (current)"):"");
     b.onclick=()=>{
       if(i>docIndex){
         const prev=docs[docIndex];
@@ -454,34 +482,17 @@ function renderDocuments(){
     retry.type="button"; retry.className="ghost"; retry.textContent=L==="es"?"Reintentar":"Retry";
     retry.onclick=()=>location.reload();
     card.append(warn, retry);
+    card.appendChild(actions(()=>{
+      if(docIndex>0) go("documents", docIndex-1);
+      else go("medical");
+    }, ()=>go("documents", docIndex, { replace:true }), L==="es"?"Reintentar":"Retry", { sticky:true }));
     return card;
   }
   const minor=!!flow.minor;
   const dateText=new Intl.DateTimeFormat("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}).format(new Date());
-  const paper=document.createElement("div");
-  paper.className="doc paper";
-  paper.id="doc";
-  if(!usePdf){
-    paper.innerHTML=renderDocumentHtml(legal, answers, { minor, shopName:(payload&&payload.shopName)||"", dateText })+'<div data-doc-end="1" id="docEnd" style="height:32px"></div>';
-  } else {
-    const wait=document.createElement("p");
-    wait.className="mut";
-    wait.textContent=L==="es"?"Cargando el formulario oficial…":"Loading the official form…";
-    paper.appendChild(wait);
-  }
-  card.appendChild(paper);
-  const enlarge=document.createElement("button");
-  enlarge.type="button"; enlarge.className="doc-enlarge"; enlarge.id="docEnlarge";
-  enlarge.textContent=L==="es"?"Toca para ampliar y desplazarte":"Tap to enlarge and scroll";
-  enlarge.onclick=()=>openDocLightbox(paper);
-  paper.addEventListener("click",(ev)=>{
-    if(ev.target.closest("button,a,input,label")) return;
-    openDocLightbox(paper);
-  });
-  card.appendChild(enlarge);
   const hint=document.createElement("p");
   hint.className="mut"; hint.id="scrollHint";
-  hint.textContent=L==="es"?"Desplázate hasta el final del documento para aceptar. Toca el formulario para ampliarlo.":"Scroll to the end of the document to agree. Tap the form to enlarge it.";
+  hint.textContent=L==="es"?"Amplía el documento, llega al final, marca que aceptas y pulsa Siguiente.":"Enlarge the document, reach the end, check that you agree, then tap Next.";
   const agreeLab=document.createElement("label");
   agreeLab.className="chk";
   const agree=document.createElement("input");
@@ -491,7 +502,45 @@ function renderDocuments(){
   agreeLab.append(agree, agreeSpan);
   const why=document.createElement("p");
   why.className="mut"; why.id="agreeWhy";
-  why.textContent=L==="es"?"El recuadro se activa al final del texto.":"The checkbox turns on at the end of the text.";
+  why.textContent=L==="es"?"El recuadro se activa al final del texto o al ampliarlo.":"The checkbox turns on at the end of the text, or after you enlarge and finish it.";
+  const markRead=document.createElement("button");
+  markRead.type="button"; markRead.className="ghost"; markRead.id="markReadBtn";
+  markRead.style.width="100%";
+  markRead.style.marginTop="8px";
+  markRead.textContent=L==="es"?"Ya leí este documento — activar casilla":"I read this document — enable checkbox";
+  markRead.onclick=()=>{
+    enableAgree(agree, hint, why);
+    agree.checked=true;
+    if($("err")) $("err").textContent="";
+  };
+  const paper=document.createElement("div");
+  paper.className="doc paper";
+  paper.id="doc";
+  if(!usePdf){
+    try{
+      paper.innerHTML=renderDocumentHtml(String(legal||""), answers, { minor, shopName:(payload&&payload.shopName)||"", dateText })+'<div data-doc-end="1" id="docEnd" style="height:32px"></div>';
+    }catch(e){
+      paper.textContent=String(legal||"");
+      const end=document.createElement("div");
+      end.id="docEnd"; end.setAttribute("data-doc-end","1"); end.style.height="32px";
+      paper.appendChild(end);
+    }
+  } else {
+    const wait=document.createElement("p");
+    wait.className="mut";
+    wait.textContent=L==="es"?"Cargando el formulario oficial…":"Loading the official form…";
+    paper.appendChild(wait);
+  }
+  card.appendChild(paper);
+  const enlarge=document.createElement("button");
+  enlarge.type="button"; enlarge.className="doc-enlarge"; enlarge.id="docEnlarge";
+  enlarge.textContent=L==="es"?"Ampliar documento (recomendado en el teléfono)":"Enlarge document (recommended on phone)";
+  enlarge.onclick=(ev)=>{ ev.preventDefault(); openDocLightbox(paper, { onRead:()=>enableAgree(agree, hint, why) }); };
+  paper.addEventListener("click",(ev)=>{
+    if(ev.target.closest("button,a,input,label")) return;
+    openDocLightbox(paper, { onRead:()=>enableAgree(agree, hint, why) });
+  });
+  card.appendChild(enlarge);
   const stored=answers.__signatures||{};
   const reuseOff=stored._reuseOff===true;
   const hasReuse=String(stored._reuse||"").startsWith("data:image/png");
@@ -511,7 +560,7 @@ function renderDocuments(){
   pad.id="pad"; pad.className="sigpad"; pad.width=640; pad.height=160;
   const clear=document.createElement("button");
   clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
-  card.append(hint, agreeLab, why);
+  card.append(hint, agreeLab, why, markRead);
   if(docIndex===0) card.appendChild(reuseLab);
   if(showPad) card.append(sigLab, pad, clear);
   else {
@@ -537,28 +586,37 @@ function renderDocuments(){
       go(flow.steps[Math.max(i-1,0)].id);
     }
   }, ()=>{
+    if(agree.disabled){
+      enableAgree(agree, hint, why);
+      $("err").textContent=L==="es"?"Marca que aceptas y firma, luego pulsa otra vez.":"Check that you agree and sign, then tap again.";
+      try{ agreeLab.scrollIntoView({ block:"center" }); }catch(e){}
+      return;
+    }
     if(docIndex>=docs.length-1) finishLastDocument(doc, agree, pad, gpad, reuse);
     else acceptDoc(doc, agree, pad, gpad, reuse);
-  }, docIndex>=docs.length-1?(L==="es"?"Listo":"Done"):(L==="es"?"Siguiente documento":"Next document")));
+  }, docIndex>=docs.length-1?(L==="es"?"Listo":"Done"):(L==="es"?"Siguiente documento":"Next document"), { sticky:true }));
   const arm=()=>{
+    const end=document.getElementById("docEnd")||paper.querySelector("[data-doc-end]");
+    if(!end){
+      // Still loading — keep a short fallback so phones are never stuck.
+      setTimeout(()=>{ if(agree.disabled) enableAgree(agree, hint, why); }, 2500);
+      return;
+    }
     const overflow=paper.scrollHeight-paper.clientHeight>12;
-    const end=document.getElementById("docEnd");
-    if(!end) return;
-    const enable=()=>{
-      if(!documentCanAgree({ overflow, sentinelVisible:true }) && overflow) return;
-      agree.disabled=false;
-      hint.textContent="";
-      why.textContent=L==="es"?"Ya puedes marcar que leíste el documento.":"You can now check that you read this document.";
-    };
-    if(!overflow){ enable(); return; }
+    const enable=()=>enableAgree(agree, hint, why);
+    if(!overflow || documentCanAgree({ overflow:false, sentinelVisible:true })){ enable(); return; }
     const watch=(root)=>{
-      const io=new IntersectionObserver((entries)=>{
-        if(entries.some(e=>e.isIntersecting && e.intersectionRatio>0)) enable();
-      }, { root, threshold:[0, 0.01, 1] });
-      io.observe(end);
+      try{
+        const io=new IntersectionObserver((entries)=>{
+          if(entries.some(e=>e.isIntersecting && e.intersectionRatio>0)) enable();
+        }, { root, threshold:[0, 0.01, 1] });
+        io.observe(end);
+      }catch(e){ enable(); }
     };
     watch(paper);
     watch(null);
+    // Phone fallback: if nested scroll never fires, unlock after a beat.
+    setTimeout(()=>{ if(agree.disabled) enable(); }, 4000);
   };
   setTimeout(arm, 0);
   if(usePdf){
@@ -570,12 +628,15 @@ function renderDocuments(){
         paper.innerHTML="";
         const p=document.createElement("p");
         p.className="err";
-        p.textContent=L==="es"?"No se pudo mostrar el formulario oficial.":"The official form could not be shown.";
+        p.textContent=L==="es"?"No se pudo mostrar el formulario oficial. Puedes continuar marcando la casilla.":"The official form could not be shown. You can still check the box and continue.";
         const retry=document.createElement("button");
         retry.type="button"; retry.className="ghost";
         retry.textContent=L==="es"?"Reintentar":"Retry";
         retry.onclick=()=>go("documents", docIndex, { replace:true });
-        paper.append(p, retry);
+        const end=document.createElement("div");
+        end.id="docEnd"; end.setAttribute("data-doc-end","1"); end.style.height="8px";
+        paper.append(p, retry, end);
+        enableAgree(agree, hint, why);
       });
   }
   if(showPad){
@@ -632,12 +693,8 @@ function renderDocuments(){
 }
 function finishLastDocument(doc, agree, pad, gpad, reuse){
   if(!acceptDoc(doc, agree, pad, gpad, reuse, { nav:false })) return;
-  const items=missingItems(flow, answers, L);
-  if(items.length || (payload&&payload.turnstileSiteKey)){
-    go("review");
-    return;
-  }
-  submitPacket();
+  // Always land on Review after the last signature so Done/Turnstile never race a mid-render submit.
+  go("review");
 }
 function ensureTurnstile(){
   if(!payload||!payload.turnstileSiteKey) return Promise.resolve();
@@ -679,10 +736,23 @@ function acceptDoc(doc, agree, pad, gpad, reuse, opts){
     delete answers.__signatures._reuse;
   }
   if(flow.minor && !String(answers.__signatures.guardian||"").startsWith("data:image/png;base64,")){
-    $("err").textContent=L==="es"?"El tutor debe firmar.":"Guardian signature is required.";
+    if($("err")) $("err").textContent=L==="es"?"El tutor debe firmar.":"Guardian signature is required.";
     return false;
   }
-  if(flow.minor){ answers.__guardian_signed=true; answers.guardian_signature="signed"; }
+  if(flow.minor){
+    answers.__guardian_signed=true;
+    answers.guardian_signature="signed";
+    // Keep youth consent in sync with the guardian pad so Review is never blocked after signing.
+    if(String(answers.__signatures.guardian||"").startsWith("data:image/png;base64,")){
+      if(!String(answers.__signatures.youth_addendum||"").startsWith("data:image/png;base64,")){
+        answers.__signatures.youth_addendum=answers.__signatures.guardian;
+      }
+      answers.__agreements=answers.__agreements||{};
+      if(!answers.__agreements.youth_addendum||answers.__agreements.youth_addendum.accepted!==true){
+        answers.__agreements.youth_addendum={ accepted:true, at:Date.now(), text:"Guardian consent" };
+      }
+    }
+  }
   answers.__agreements=answers.__agreements||{};
   answers.__agreements[doc.key]={ accepted:true, at:Date.now(), text:"I have read and agree to this document" };
   if(doc.key==="privacy") answers.guardian_privacy_consent=true;
@@ -775,9 +845,8 @@ async function submitPacket(){
   }
   doneOut=out;
   stepId="finish";
-  history.pushState({ stepId:"finish" }, "", location.pathname+location.search+"#finish");
+  try{ history.pushState({ stepId:"finish" }, "", location.pathname+location.search+"#finish"); }catch(e){}
   render();
-  showDone(out);
 }
 function stepForError(key){
   if(!key) return "review";
@@ -834,7 +903,8 @@ function closeDocLightbox(){
   box.classList.remove("open");
   document.body.style.overflow="";
 }
-function openDocLightbox(sourcePaper){
+function openDocLightbox(sourcePaper, opts){
+  opts=opts||{};
   if(!sourcePaper) return;
   let box=document.getElementById("docLightbox");
   if(!box){
@@ -845,7 +915,7 @@ function openDocLightbox(sourcePaper){
     box.querySelector("#docLightboxClose").onclick=closeDocLightbox;
     box.addEventListener("click",(ev)=>{ if(ev.target===box) closeDocLightbox(); });
   }
-  box.querySelector(".lbbar b").textContent=L==="es"?"Documento ampliado":"Enlarged document";
+  box.querySelector(".lbbar b").textContent=L==="es"?"Documento ampliado — llega al final":"Enlarged document — scroll to the end";
   box.querySelector("#docLightboxClose").textContent=L==="es"?"Cerrar":"Close";
   const scroll=box.querySelector("#docLightboxScroll");
   scroll.innerHTML="";
@@ -859,8 +929,7 @@ function openDocLightbox(sourcePaper){
         img.alt="";
         scroll.appendChild(img);
       }catch(e){
-        const clone=c.cloneNode(true);
-        scroll.appendChild(clone);
+        scroll.appendChild(c.cloneNode(true));
       }
     });
   } else {
@@ -872,11 +941,24 @@ function openDocLightbox(sourcePaper){
     scroll.appendChild(clone);
   }
   const end=document.createElement("div");
-  end.style.height="48px";
+  end.setAttribute("data-lb-end","1");
+  end.style.height="64px";
   scroll.appendChild(end);
+  const done=document.createElement("button");
+  done.type="button"; done.className="ban"; done.style.width="100%"; done.style.marginTop="8px";
+  done.textContent=L==="es"?"Listo — volver y continuar":"Done — return and continue";
+  done.onclick=()=>{ if(typeof opts.onRead==="function") opts.onRead(); closeDocLightbox(); };
+  scroll.appendChild(done);
+  const markRead=()=>{ if(typeof opts.onRead==="function") opts.onRead(); };
+  const onScroll=()=>{
+    if(scroll.scrollTop+scroll.clientHeight >= scroll.scrollHeight-80) markRead();
+  };
+  scroll.onscroll=onScroll;
   box.classList.add("open");
   document.body.style.overflow="hidden";
   try{ scroll.scrollTop=0; }catch(e){}
+  // If content fits, unlock immediately.
+  setTimeout(()=>{ if(scroll.scrollHeight<=scroll.clientHeight+20) markRead(); }, 100);
 }
 function pdfFileName(key){
   const clean=(s)=>String(s||"Form").replace(/[^\\p{L}\\p{N}._-]+/gu,"_").replace(/_+/g,"_").slice(0,40);
@@ -896,7 +978,10 @@ async function downloadPdf(key){
   return blob;
 }
 function showDone(out){
+  out=out&&typeof out==="object"?out:{};
+  closeDocLightbox();
   const app=$("app");
+  if(!app) return;
   app.innerHTML="";
   const card=document.createElement("div");
   card.className="card";
@@ -904,7 +989,7 @@ function showDone(out){
   h.textContent=L==="es"?"Registro completo":"Registration complete";
   card.appendChild(h);
   const p=document.createElement("p");
-  p.append((L==="es"?"Registro #: ":"Registration #: "));
+  p.appendChild(document.createTextNode(L==="es"?"Registro #: ":"Registration #: "));
   const b=document.createElement("b");
   b.textContent=out.registrationNumber||"—";
   p.appendChild(b);
@@ -920,7 +1005,7 @@ function showDone(out){
     ok.textContent=L==="es"?"Tu formulario médico está en orden.":"Your medical form is clear.";
     card.appendChild(ok);
   }
-  const files=out.files||[];
+  const files=Array.isArray(out.files)?out.files.filter((f)=>f&&typeof f==="object"):[];
   const all=files.find((f)=>f.key==="packet");
   if(all){
     const allBtn=document.createElement("button");
@@ -971,9 +1056,9 @@ function showDone(out){
   back.onclick=()=>goBackAfterPacket(out);
   card.append(email, note, back);
   app.appendChild(card);
-  // Auto-return to registration (full-page or iframe parent) so "Done" / complete finishes the flow.
-  goBackAfterPacket(out, { auto: true });
   paintStepper();
+  // Brief pause so "Done" / downloads are visible, then return to registration.
+  setTimeout(()=>goBackAfterPacket(out, { auto: true }), 1800);
 }
 function packetReturnUrl(){
   try{
@@ -1003,25 +1088,47 @@ function goBackAfterPacket(out, opts){
 function render(){
   syncLangBtn();
   applyTheme();
+  closeDocLightbox();
   paintStepper();
-  $("err").textContent="";
+  if($("err")) $("err").textContent="";
   clearMissing();
+  document.body.style.overflow="";
   try{ window.scrollTo(0, 0); }catch(e){}
   const app=$("app");
+  if(!app) return;
+  if(stepId==="finish" && doneOut){
+    try{ showDone(doneOut); }catch(e){ try{ console.error(e); }catch(_){} }
+    return;
+  }
   app.innerHTML="";
   let card=null;
-  if(stepId==="about") card=renderAbout();
-  else if(stepId==="emergency") card=renderEmergency();
-  else if(stepId==="guardian") card=renderGuardian();
-  else if(stepId==="medical") card=renderMedical();
-  else if(stepId==="documents") card=renderDocuments();
-  else if(stepId==="review") card=renderReview();
-  else if(stepId==="finish" && doneOut){ showDone(doneOut); return; }
-  else card=renderAbout();
+  try{
+    if(stepId==="about") card=renderAbout();
+    else if(stepId==="emergency") card=renderEmergency();
+    else if(stepId==="guardian") card=renderGuardian();
+    else if(stepId==="medical") card=renderMedical();
+    else if(stepId==="documents") card=renderDocuments();
+    else if(stepId==="review") card=renderReview();
+    else card=renderAbout();
+  }catch(e){
+    const fail=document.createElement("div");
+    fail.className="card";
+    const p=document.createElement("p");
+    p.className="err";
+    p.textContent=L==="es"?"No se pudo mostrar este paso. Reintenta.":"This step could not be shown. Please retry.";
+    const b=document.createElement("button");
+    b.type="button"; b.className="ban"; b.style.width="100%";
+    b.textContent=L==="es"?"Reintentar":"Retry";
+    b.onclick=()=>render();
+    fail.append(p, b);
+    card=fail;
+    try{ console.error(e); }catch(_){}
+  }
   if(card) app.appendChild(card);
   focusPending();
+  if(!flow) return;
   const probs=stepProblems(stepId, flow, answers);
-  if(probs.length && stepId!=="review" && stepId!=="documents"){
+  if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
     const why=document.createElement("p");
     why.className="mut";
     why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
@@ -1058,7 +1165,6 @@ try{
   const q=new URLSearchParams(location.search).get("lang");
   if(q==="en"||q==="es") setLang(q,{skipRender:true});
 }catch(e){}
-$("themeBtn").onclick=()=>{ theme=theme==="dark"?"light":"dark"; try{localStorage.setItem("bnb_theme",theme)}catch(e){} applyTheme(); };
 if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
   let idle, locked=false;
   const clearKiosk=()=>{ try{ sessionStorage.removeItem(sigKey()); localStorage.removeItem("bnb_reg_draft"); }catch(e){} location.href="/register.html?kiosk=1"; };

@@ -152,15 +152,15 @@ export function stepProblems(stepId, flow, answers, now = new Date()) {
     if (!String(a.last_name || "").trim()) out.push({ id: "last_name", label: "Last name" });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(a.dob || ""))) out.push({ id: "dob", label: "Date of birth" });
     else if (String(a.dob) > now.toISOString().slice(0, 10)) out.push({ id: "dob", label: "Date of birth" });
+    // City required; state/ZIP optional for international visitors (Roatán guests often omit them).
     if (!String(a.city || "").trim()) out.push({ id: "city", label: "City" });
-    if (!String(a.state || "").trim()) out.push({ id: "state", label: "State" });
-    if (!String(a.zip || a.postal_code || "").trim()) out.push({ id: "zip", label: "ZIP" });
     return out;
   }
   if (stepId === "emergency") {
     const out = [];
     if (String(a.emergency_contact_name || "").trim().length < 2) out.push({ id: "emergency_contact_name", label: "Emergency contact name" });
-    if (String(a.emergency_contact_phone || "").replace(/\D/g, "").length < 8) out.push({ id: "emergency_contact_phone", label: "Emergency contact phone" });
+    // Allow shorter local numbers (min 7 digits) — international guests vary.
+    if (String(a.emergency_contact_phone || "").replace(/\D/g, "").length < 7) out.push({ id: "emergency_contact_phone", label: "Emergency contact phone" });
     return out;
   }
   if (stepId === "guardian") {

@@ -60,6 +60,7 @@ describe("one stepper", () => {
     assert.equal(html.includes('id="steps"'), false);
     assert.equal(html.includes("sections.length"), false);
     assert.equal(/Step "\+/.test(html), false);
+    assert.match(html, /\.stepper\{[^}]*flex-direction:column/);
     const reg = fs.readFileSync("register.html", "utf8");
     assert.equal(reg.includes('id="steps"'), false);
     assert.equal(reg.includes("packetFrameWrap") && reg.includes('classList.toggle("hide"'), true);
@@ -107,6 +108,9 @@ describe("contrast tokens", () => {
     assert.match(html, /--filled:#08315c/);
     assert.equal(/mix-blend-mode/.test(html), false);
     assert.match(html, /button:disabled\{opacity:1/);
+    assert.equal(html.includes("themeBtn"), false);
+    assert.equal(/data-theme="dark"/.test(html), false);
+    assert.match(html, /Banana Nut Burgers/);
   });
 });
 

@@ -98,7 +98,7 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
   <section class="card hide" data-step="1">
     <h2 data-i="tH"></h2>
     <label for="act" data-i="activity"></label><select id="act"><option value="" id="actPh"></option></select>
-    <p class="mut" data-i="oneAdultNote" style="margin:8px 0 12px">Each adult completes their own registration. You can invite other adults after you finish.</p>
+    <p class="mut" data-i="oneAdultNote" style="margin:8px 0 12px">Each adult completes their own registration. After you finish, you can start a new registration for the next person.</p>
     <label data-i="minorsQ">Is anyone under 18 coming with you?</label>
     <div class="yesno">
       <label><input type="radio" name="hasMinorsQ" id="hasMinorsYes" value="yes"><span data-i="yes"></span></label>
@@ -353,30 +353,36 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
     </div>
     <p class="okmsg hide" id="confCopied" data-i="confCopied"></p>
     <div id="confList"></div>
-    <div id="inviteAdultBox" class="decl" style="margin-top:16px">
-      <b data-i="inviteAdultH">Invite another adult in your group</b>
-      <p class="mut" data-i="inviteAdultSub">Each adult completes their own registration. Share this link or start the next adult on this device.</p>
-      <p><button type="button" class="ban" id="inviteAdultBtn" data-i="inviteAdultGo" style="width:100%">Get invite link</button></p>
-      <div id="inviteAdultResult" class="hide" style="margin-top:10px">
-        <img id="inviteQr" alt="" width="160" height="160" style="display:block;margin:8px auto">
-        <input id="inviteUrl" readonly style="width:100%">
+    <div id="nextPersonBox" class="decl" style="margin-top:16px">
+      <b data-i="nextPersonH">Next person?</b>
+      <p class="mut" data-i="nextPersonSub">Each adult completes their own registration. Start a new one on this device, or scan the code or share the link to register on another phone.</p>
+      <p class="mut hide" id="nextPersonDlHint" data-i="nextPersonDlHint">Download your copy first if you want one.</p>
+      <p class="err hide" id="nextPersonSaveErr" aria-live="polite"></p>
+      <p><button type="button" class="ban" id="startNewRegBtn" data-i="startNewReg" style="width:100%;min-height:48px">Start new registration</button></p>
+      <p><button type="button" class="ghost" id="showNextQrBtn" data-i="showQr" style="width:100%;min-height:48px">Show QR code</button></p>
+      <div id="nextPersonShare" class="hide" style="margin-top:10px">
+        <img id="nextPersonQr" alt="" width="160" height="160" style="display:block;margin:8px auto">
+        <input id="nextPersonUrl" readonly autocomplete="off" style="width:100%">
         <div class="acts" style="margin-top:8px;flex-wrap:wrap">
-          <a class="btn" id="inviteWa" href="#" data-i="linkWa">WhatsApp</a>
-          <a class="btn" id="inviteSms" href="#" data-i="linkSms">SMS</a>
-          <a class="btn" id="inviteMail" href="#" data-i="linkEmail">Email</a>
-          <button type="button" class="ghost" id="inviteCopy" data-i="confCopy">Copy</button>
+          <button type="button" class="ghost" id="nextPersonShareBtn" data-i="shareBtn" style="min-height:48px">Share</button>
+          <a class="btn" id="nextPersonWa" href="#" data-i="linkWa">WhatsApp</a>
+          <a class="btn" id="nextPersonSms" href="#" data-i="linkSms">SMS</a>
+          <a class="btn" id="nextPersonMail" href="#" data-i="linkEmail">Email</a>
+          <button type="button" class="ghost" id="nextPersonCopy" data-i="confCopy" style="min-height:48px">Copy</button>
         </div>
-        <p><button type="button" class="ghost" id="inviteNextDevice" data-i="inviteNextDevice" style="width:100%;margin-top:8px">Start the next adult on this device</button></p>
+        <p class="okmsg hide" id="nextPersonCopied" data-i="confCopied" aria-live="polite"></p>
       </div>
+      <p class="mut hide" id="nextPersonIdle" aria-live="polite"></p>
+      <p><button type="button" class="ghost hide" id="nextPersonStay" data-i="stayOnPage" style="width:100%;min-height:48px">Stay on this page</button></p>
     </div>
     <p data-i="fNext"></p>
-    <p><a class="btn" href="./" data-i="fBack"></a></p>
+    <p><a class="btn" href="/" data-i="fBack">Back to home</a></p>
   </section>
 
-  <section class="card hide" id="passDeviceCard">
-    <h2 data-i="passDeviceH">Pass the device to the next adult</h2>
-    <p class="mut" data-i="passDeviceSub">All personal answers were cleared. The next adult starts a fresh registration for the same booking.</p>
-    <p><button type="button" class="ban" id="passDeviceGo" data-i="passDeviceGo" style="width:100%">I am the next adult — start</button></p>
+  <section class="card hide" id="passDeviceCard" role="status" aria-live="assertive">
+    <h2 data-i="passDeviceH">Thank you</h2>
+    <p class="mut" id="passDeviceMsg" data-i="passDeviceSub">Pass the device to the next person.</p>
+    <p><button type="button" class="ban" id="passDeviceGo" data-i="passDeviceGo" style="width:100%;min-height:48px">Continue</button></p>
   </section>
 
   <!-- correction request -->
@@ -405,8 +411,8 @@ const DECL = {
 };
 const ACTS = ["Scuba","Dives & courses","Snorkel"];
 const T = {
-  en:{h1:"Digital dive check-in",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Book my Dive",aP1:"One flow: pick activity and time, complete forms and medical screening, then sign. That books your appointment and registers you with the shop.",aP2:"You get a registration reference for staff, and your date/time appears in our Bookings inbox. No account needed — save and finish anytime.",reqH:"What you may need",reqP:"Your certification card details (if certified), emergency contact, and a phone or email we can reach you on. Signed forms are stored privately; only authorized staff can view them.",priv:"Privacy: we only collect what this registration needs. Never share your resume code — it opens your saved draft.",help:"Need help? Contact us:",start:"Book my Dive",resumeOpen:"Finish or Update My Registration",corrOpen:"Correct an existing registration",corrRef:"Registration reference *",resumeCode:"Resume code *",resumeBtn:"Resume my draft",resumeNote:"Your resume code was shown when your draft was saved (and is kept on this device). Without it, a draft cannot be opened — contact us for help.",tH:"Book your activity",activity:"Activity / dive type *",pdate:"Preferred date & time",parts:"Number of participants",adultsLabel:"Number of adults *",oneAdultNote:"Each adult completes their own registration. You can invite other adults after you finish.",minorsQ:"Is anyone under 18 coming with you?",bref:"Booking reference (if you have one)",sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat",calLegend:"Green: available · Yellow: almost full · Red: unavailable",pickTime:"Pick an open time",availTimes:"Available times",noTimes:"No times left this day — pick another date.",needDate:"Please pick a date and time.",bH:"Diver information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",ownGear:"Do you have your own gear? *",yes:"Yes",no:"No",gearSize:"What size do you need? *",gearNote:"Size notes (boots, BCD, etc.)",gearNotePh:"e.g. boots 9, BCD medium",needGear:"Please tell us if you have your own gear.",needGearSize:"Please choose the size you need.",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgRel:"Emergency contact relationship",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",saveNext:"Save & continue",fH2:"Required registration forms",fSub:"These SSI forms apply to your activity. Complete the packet on your phone (shared details are asked once). Your registration number is saved on your customer profile for the shop CRM.",packetHint:"Complete and sign the packet, then return here and continue. Your registration number stays on your profile for staff search.",packetOpen:"Open packet forms →",dH:"Waivers & acknowledgments",dSub:"Read the document, accept each item separately, then sign. Nothing is pre-checked.",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",sH:"Safety & medical information",sPend:"Medical screening",sP:"Answer every medical question. This is a screening for shop staff — it is not dive clearance. Any YES may require a physician review before you dive.",eH:"Review & submit",edit:"Edit information",editHint:"Something missing? Tap a step in the checklist below to go back and finish it.",submit:"Sign and Submit Registration",doneH:"Registration submitted",statusAwait:"Submitted · Awaiting Review",fRef:"Your registration reference — show this to staff when you arrive:",fNext:"Next: our staff will review your registration. If anything is missing we'll contact you. To correct something, use the correction form on this page or message us on WhatsApp.",fBack:"Back to the digital card",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needAct:"Please choose your activity.",needName:"First name, last name and a valid phone are required.",needDecl:"Accept the accuracy declaration and privacy acknowledgement, type your name, and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed (connection?). Your draft is saved — try again, or contact us on WhatsApp.",saved:"Draft saved ✓ Reference",req:"Required",opt:"Optional",ver:"Version",stepOf:"Step",of:"of",trActivity:"Activity Details",trDiver:"Diver Information",trForms:"Registration Forms",trWaivers:"Waivers & Acknowledgments",trSafety:"Medical Information",trReview:"Final Review",stDone:"Complete",stTodo:"Action Required",stWait:"Not Started",stPend:"Pending",packetCheck:"I finished the packet — check status",needPacket:"Open and complete the required form packet before continuing. Then tap check status.",packetDone:"Packet completed. You can continue.",packetPending:"Packet not finished yet. Open the link, complete and sign every form, then check status again.",packetNone:"Open the packet link to start your forms.",packetWait:"Waiting for packet… this updates when you finish signing.",dob:"Date of birth *",needDob:"Date of birth is required.",addr:"Street address",city:"City *",state:"State / Province *",zip:"ZIP / Postal *",packetSignNote:"SSI packet complete",packetSignSkip:"Waivers and medical from your forms are done. Confirm accuracy, sign once for the shop, then review and submit.",needAddr:"City, state, and ZIP are required",dSubPacket:"SSI forms are done — sign for the shop to finish check-in.",medHeart:"Heart or circulation problems? *",medLung:"Lung or breathing problems? *",medOther:"Any other medical condition that may affect diving? *",medOtherDetail:"Describe it *",medOtherPh:"Brief details for staff",medPregnant:"I understand: do not dive if pregnant. *",medTruth:"I confirm these medical answers are true and complete. *",medFlag:"Based on your answers, staff may require a physician review before you dive.",medPacketDone:"SSI medical packet already completed",medPacketSkip:"You already answered the dive medical in the packet. Confirm the acknowledgements below — no need to repeat Yes/No here.",medStaffNote:"Anything else staff should know? (optional)",medStaffNotePh:"Optional note for the shop",needMed:"Complete date of birth and both acknowledgements.",needMedDetail:"Describe the medical condition.",returning:"Welcome back — we filled what we could from your last visit.",confBooking:"Booking #",confRegNum:"Registration #",confRefLab:"Reference",confQrHint:"Show this QR or your numbers at the shop / boat.",confCal:"Add to calendar",confShare:"Share on WhatsApp",confCopy:"Copy IDs",confCopied:"Copied ✓",slotFull:"Full",slotLeft:"left",packetTry:"Try Scuba packet",packetRec:"Recreational packet",regNumLabel:"Registration #",packetFail:"Could not start packet forms",resumeBad:"Draft not found. Check the reference and resume code.",actLabels:{"Scuba":"Scuba","Dives & courses":"Dives & courses","Snorkel":"Snorkel"},partyH:"Who else is coming?",partySoloH:"Your forms",partySub:"Add everyone in your party. Each person completes and signs their own SSI forms under this one registration.",partySoloSub:"Complete and sign your SSI forms for this registration.",partySlot:"Person {n}",partySlotOpen:"Not added yet",partySlotHint:"Add their name to open their forms.",partyAdd:"Add a person",partyGearAdd:"Add equipment",partyGearEdit:"Edit equipment",partyGearSave:"Save equipment",partyRel:"Relationship to you",relChild:"Child",relSpouse:"Spouse / partner",relFriend:"Friend",relOther:"Other",partyMode:"How will they fill out forms?",modeHere:"Fill out here",modePhone:"Fill out on their own phone",partyGuardian:"Who is the parent or legal guardian?",partyMinorNote:"Minors always complete forms with their guardian on this registration. The SSI Youth Addendum is required before they are marked complete.",partySavePerson:"Save person",sharedH:"Shared party details",sameEveryone:"Same address and emergency contact for everyone",sharedSave:"Save shared details",partyProgress:"{done} of {total} complete",partyAdult:"Adult",partyMinor:"Minor",partyPrimary:"You (primary)",partyStartForms:"Start forms",partyContinueForms:"Continue forms",partySendLink:"Send link",partyResend:"Resend link",partyRemove:"Remove",partyEdit:"Edit",partyStatus:"Status",partyDash:"Back to party list",partyBackList:"Done — back to party",handoffTitle:"Pass the device to {name}",handoffSub:"Only their forms will show next. Medical answers stay private to each person.",handoffGo:"I am {name} — continue",partyNeedDob:"Date of birth is required for each person.",partyNeedName:"First and last name are required.",partyLinkCopied:"Link ready — share it with them.",partyPast:"Add someone you've registered before",partyPastSub:"Names, dates of birth, and contact info only — never medical answers.",dobLockH:"Who is continuing?",dobLockGo:"Continue",dobLockBad:"Date of birth does not match. Try again.",partyDup:"That person is already on this registration.",partyCount:"{n} of {head} added",partyOverHead:"More people than the booking headcount (OK to continue)",partyDocs:"Signed forms",partyDlAll:"Download all (allowed)",partyPrivNote:"Other adults medical forms stay private to them and the shop.",partyAllDone:"Everyone in the party has finished their forms.",partyWaitingYouth:"Waiting for Youth Addendum",partyNeedsMed:"Needs a medical review with the shop",stNotStarted:"Not started",stInProgress:"In progress",stComplete:"Complete",cancelOpt:"Cancel",minorsLabel:"There are minors in our group",minorCount:"Number of minors *",minorsLine:"Kids under 12 have their own options and restrictions and need a parent or guardian with them at all times.",guardianLine:"You will sign their forms as parent or legal guardian.",courseQ:"Are you interested in any course?",needAdults:"Tell us how many adults are in your group.",needMinors:"Tell us how many minors are in your group.",needPartyMax:"Maximum 20 people total.",needGuardianFirst:"A parent or guardian needs to register first. Please ask them to open this link.",adultInviteInstead:"Adults need their own registration. Invite them after you finish — only minors can be added here.",partyAddMinor:"Add a minor",partyPastMinor:"Add a minor you've registered before",partyMinorsH:"You and your minors",partyMinorsSub:"Add each minor. You complete and sign their forms as guardian.",inviteAdultH:"Invite another adult in your group",inviteAdultSub:"Each adult completes their own registration. Share this link or start the next adult on this device.",inviteAdultGo:"Get invite link",inviteNextDevice:"Start the next adult on this device",inviteShareMsg:"Complete your dive registration: ",passDeviceH:"Pass the device to the next adult",passDeviceSub:"All personal answers were cleared. The next adult starts a fresh registration for the same booking.",passDeviceGo:"I am the next adult — start",needCourse:"Please answer whether you are interested in a course.",formSet:"Form set",formSetNote:"Each diver gets their own form set. You need {n}.",diverName:"Diver full name *",needDiverSet:"Each diver needs a name and a signature.",kioskWarn:"Still there? This tablet will clear for the next customer soon."},
-  es:{h1:"Check-in digital de buceo",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Reservar Mi Buceo",aP1:"Un solo flujo: elige actividad y hora, completa formularios y screening médico, y firma. Así reservas tu cita y te registras en la tienda.",aP2:"Recibes una referencia para el personal, y tu fecha/hora aparece en Reservas. Sin crear cuenta: guarda y termina cuando quieras.",reqH:"Lo que puedes necesitar",reqP:"Datos de tu certificación (si estás certificado), un contacto de emergencia y un teléfono o correo donde contactarte. Los formularios firmados se guardan de forma privada; solo el personal autorizado puede verlos.",priv:"Privacidad: solo recopilamos lo necesario para este registro. Nunca compartas tu código de continuación: abre tu borrador guardado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Reservar Mi Buceo",resumeOpen:"Terminar o Actualizar Mi Registro",corrOpen:"Corregir un registro existente",corrRef:"Referencia de registro *",resumeCode:"Código de continuación *",resumeBtn:"Continuar mi borrador",resumeNote:"Tu código se mostró al guardar el borrador (y queda en este dispositivo). Sin él, el borrador no puede abrirse: contáctanos para ayuda.",tH:"Reserva tu actividad",activity:"Actividad / tipo de buceo *",pdate:"Fecha y hora preferidas",parts:"Número de participantes",adultsLabel:"Número de adultos *",oneAdultNote:"Cada adulto completa su propio registro. Puedes invitar a otros adultos al terminar.",minorsQ:"¿Viene alguien menor de 18 contigo?",bref:"Referencia de reserva (si tienes)",sun:"Dom",mon:"Lun",tue:"Mar",wed:"Mié",thu:"Jue",fri:"Vie",sat:"Sáb",calLegend:"Verde: disponible · Amarillo: casi lleno · Rojo: no disponible",pickTime:"Elige un horario abierto",availTimes:"Horarios disponibles",noTimes:"No quedan horarios este día — elige otra fecha.",needDate:"Elige una fecha y un horario.",bH:"Información del buzo",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",ownGear:"¿Traes tu propio equipo? *",yes:"Sí",no:"No",gearSize:"¿Qué talla necesitas? *",gearNote:"Notas de talla (botas, BCD, etc.)",gearNotePh:"ej. botas 9, BCD mediano",needGear:"Indica si traes tu propio equipo.",needGearSize:"Elige la talla que necesitas.",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgRel:"Relación del contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",saveNext:"Guardar y continuar",fH2:"Formularios de registro requeridos",fSub:"Estos formularios SSI aplican a tu actividad. Completa el paquete en el teléfono (los datos compartidos se piden una vez). Tu número de registro queda en tu perfil del CRM.",packetHint:"Completa y firma el paquete, vuelve aquí y continúa. Tu número de registro queda en tu perfil para búsqueda del personal.",packetOpen:"Abrir formularios del paquete →",dH:"Exenciones y reconocimientos",dSub:"Lee el documento, acepta cada punto por separado y firma. Nada viene marcado.",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",sH:"Seguridad e información médica",sPend:"Evaluación médica",sP:"Responde todas las preguntas médicas. Esto es un filtro para el personal — no es autorización para bucear. Cualquier SÍ puede requerir revisión médica antes de bucear.",eH:"Revisar y enviar",edit:"Editar información",editHint:"¿Falta algo? Toca un paso en la lista de abajo para volver y completarlo.",submit:"Firmar y enviar registro",doneH:"Registro enviado",statusAwait:"Enviado · En espera de revisión",fRef:"Tu referencia de registro — muéstrala al personal al llegar:",fNext:"Siguiente: nuestro personal revisará tu registro. Si falta algo, te contactaremos. Para corregir algo, usa el formulario de corrección en esta página o escríbenos por WhatsApp.",fBack:"Volver a la tarjeta digital",corrH:"Solicitar una corrección",corrSub:"Ingresa tu referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needAct:"Elige tu actividad.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad, escribe tu nombre y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló (¿conexión?). Tu borrador está guardado: inténtalo de nuevo o contáctanos por WhatsApp.",saved:"Borrador guardado ✓ Referencia",req:"Requerido",opt:"Opcional",ver:"Versión",stepOf:"Paso",of:"de",trActivity:"Detalles de la actividad",trDiver:"Información del buzo",trForms:"Formularios de registro",trWaivers:"Exenciones y reconocimientos",trSafety:"Información médica",trReview:"Revisión final",stDone:"Completo",stTodo:"Acción requerida",stWait:"Sin empezar",stPend:"Pendiente",packetCheck:"Ya terminé el paquete — verificar estado",needPacket:"Abre y completa el paquete de formularios antes de continuar. Luego toca verificar estado.",packetDone:"Paquete completado. Puedes continuar.",packetPending:"El paquete aún no está terminado. Abre el enlace, completa y firma cada formulario, y vuelve a verificar.",packetNone:"Abre el enlace del paquete para empezar tus formularios.",packetWait:"Esperando el paquete… se actualiza cuando termines de firmar.",dob:"Fecha de nacimiento *",needDob:"La fecha de nacimiento es requerida.",addr:"Dirección",city:"Ciudad *",state:"Estado / Provincia *",zip:"ZIP / Código postal *",packetSignNote:"Paquete SSI completo",packetSignSkip:"Exenciones y médico del paquete listos. Confirma exactitud, firma una vez para la tienda, revisa y envía.",needAddr:"Ciudad, estado y ZIP son requeridos",dSubPacket:"Formularios SSI listos — firma para la tienda y termina el check-in.",medHeart:"¿Problemas del corazón o circulación? *",medLung:"¿Problemas pulmonares o respiratorios? *",medOther:"¿Otra condición médica que pueda afectar el buceo? *",medOtherDetail:"Descríbela *",medOtherPh:"Detalles breves para el personal",medPregnant:"Entiendo: no bucear si está embarazada. *",medTruth:"Confirmo que estas respuestas médicas son verdaderas y completas. *",medFlag:"Según tus respuestas, el personal puede exigir revisión médica antes de bucear.",medPacketDone:"Paquete médico SSI ya completado",medPacketSkip:"Ya respondiste el médico de buceo en el paquete. Confirma los reconocimientos abajo — no hace falta repetir Sí/No aquí.",medStaffNote:"¿Algo más que deba saber el personal? (opcional)",medStaffNotePh:"Nota opcional para la tienda",needMed:"Completa fecha de nacimiento y ambos reconocimientos.",needMedDetail:"Describe la condición médica.",returning:"Bienvenido de nuevo — rellenamos lo que pudimos de tu última visita.",confBooking:"Reserva #",confRegNum:"Registro #",confRefLab:"Referencia",confQrHint:"Muestra este QR o tus números en la tienda / bote.",confCal:"Añadir al calendario",confShare:"Compartir por WhatsApp",confCopy:"Copiar IDs",confCopied:"Copiado ✓",slotFull:"Lleno",slotLeft:"libres",packetTry:"Paquete Try Scuba",packetRec:"Paquete recreativo",regNumLabel:"Registro #",packetFail:"No se pudieron iniciar los formularios",resumeBad:"Borrador no encontrado. Revisa la referencia y el código.",actLabels:{"Scuba":"Scuba / Try Scuba","Dives & courses":"Buceos y cursos","Snorkel":"Snorkel"},partyH:"Quien mas viene?",partySoloH:"Tus formularios",partySub:"Agrega a todos en tu grupo. Cada persona completa y firma sus propios formularios SSI bajo este mismo registro.",partySoloSub:"Completa y firma tus formularios SSI para este registro.",partySlot:"Persona {n}",partySlotOpen:"Falta agregar",partySlotHint:"Agrega su nombre para abrir sus formularios.",partyAdd:"Agregar una persona",partyGearAdd:"Agregar equipo",partyGearEdit:"Editar equipo",partyGearSave:"Guardar equipo",partyRel:"Relacion contigo",relChild:"Hijo/a",relSpouse:"Esposo/a o pareja",relFriend:"Amigo/a",relOther:"Otro",partyMode:"Como llenaran los formularios?",modeHere:"Llenar aqui",modePhone:"Llenar en su telefono",partyGuardian:"Quien es el padre o tutor legal?",partyMinorNote:"Los menores siempre completan los formularios con su tutor en este registro. El anexo juvenil SSI es obligatorio antes de marcarlos completos.",partySavePerson:"Guardar persona",sharedH:"Datos compartidos del grupo",sameEveryone:"Misma direccion y contacto de emergencia para todos",sharedSave:"Guardar datos compartidos",partyProgress:"{done} de {total} completos",partyAdult:"Adulto",partyMinor:"Menor",partyPrimary:"Tu (principal)",partyStartForms:"Empezar formularios",partyContinueForms:"Continuar formularios",partySendLink:"Enviar enlace",partyResend:"Reenviar enlace",partyRemove:"Quitar",partyEdit:"Editar",partyStatus:"Estado",partyDash:"Volver a la lista",partyBackList:"Listo — volver al grupo",handoffTitle:"Pasa el dispositivo a {name}",handoffSub:"Solo se veran sus formularios. Las respuestas medicas son privadas por persona.",handoffGo:"Soy {name} — continuar",partyNeedDob:"La fecha de nacimiento es requerida para cada persona.",partyNeedName:"Nombre y apellido son requeridos.",partyLinkCopied:"Enlace listo — compartelo.",partyPast:"Agregar a alguien que registraste antes",partyPastSub:"Solo nombres, fechas de nacimiento y contacto — nunca respuestas médicas.",dobLockH:"¿Quién continúa?",dobLockGo:"Continuar",dobLockBad:"La fecha de nacimiento no coincide. Intenta de nuevo.",partyDup:"Esa persona ya está en este registro.",partyCount:"{n} de {head} agregados",partyOverHead:"Mas personas que el cupo de la reserva (puedes continuar)",partyDocs:"Formularios firmados",partyDlAll:"Descargar todo (permitido)",partyPrivNote:"Los formularios medicos de otros adultos son privados para ellos y la tienda.",partyAllDone:"Todos en el grupo terminaron sus formularios.",partyWaitingYouth:"Esperando anexo juvenil",partyNeedsMed:"Necesita revision medica con la tienda",stNotStarted:"Sin empezar",stInProgress:"En progreso",stComplete:"Completo",cancelOpt:"Cancelar",minorsLabel:"Hay menores en nuestro grupo",minorCount:"Número de menores *",minorsLine:"Los ninos menores de 12 anos tienen sus propias opciones y restricciones y necesitan un padre o tutor con ellos en todo momento.",guardianLine:"Tú firmas sus formularios como padre o tutor legal.",courseQ:"Le interesa algun curso?",needAdults:"Indica cuántos adultos hay en el grupo.",needMinors:"Indica cuántos menores hay en el grupo.",needPartyMax:"Máximo 20 personas en total.",needGuardianFirst:"Un padre o tutor debe registrarse primero. Pídele que abra este enlace.",adultInviteInstead:"Los adultos necesitan su propio registro. Invítalos al terminar — aquí solo se agregan menores.",partyAddMinor:"Agregar un menor",partyPastMinor:"Agregar un menor que registraste antes",partyMinorsH:"Tú y tus menores",partyMinorsSub:"Agrega cada menor. Completas y firmas sus formularios como tutor.",inviteAdultH:"Invitar a otro adulto de tu grupo",inviteAdultSub:"Cada adulto completa su propio registro. Comparte este enlace o inicia el siguiente adulto en este dispositivo.",inviteAdultGo:"Obtener enlace de invitación",inviteNextDevice:"Iniciar el siguiente adulto en este dispositivo",inviteShareMsg:"Completa tu registro de buceo: ",passDeviceH:"Pasa el dispositivo al siguiente adulto",passDeviceSub:"Se borraron todas las respuestas personales. El siguiente adulto inicia un registro nuevo para la misma reserva.",passDeviceGo:"Soy el siguiente adulto — empezar",needCourse:"Responde si te interesa algún curso.",formSet:"Juego de formularios",formSetNote:"Cada buzo tiene su propio juego de formularios. Necesitas {n}.",diverName:"Nombre completo del buzo *",needDiverSet:"Cada buzo necesita nombre y firma.",kioskWarn:"¿Sigues ahí? Esta tablet se limpiará pronto para el siguiente cliente."}
+  en:{h1:"Digital dive check-in",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Book my Dive",aP1:"One flow: pick activity and time, complete forms and medical screening, then sign. That books your appointment and registers you with the shop.",aP2:"You get a registration reference for staff, and your date/time appears in our Bookings inbox. No account needed — save and finish anytime.",reqH:"What you may need",reqP:"Your certification card details (if certified), emergency contact, and a phone or email we can reach you on. Signed forms are stored privately; only authorized staff can view them.",priv:"Privacy: we only collect what this registration needs. Never share your resume code — it opens your saved draft.",help:"Need help? Contact us:",start:"Book my Dive",resumeOpen:"Finish or Update My Registration",corrOpen:"Correct an existing registration",corrRef:"Registration reference *",resumeCode:"Resume code *",resumeBtn:"Resume my draft",resumeNote:"Your resume code was shown when your draft was saved (and is kept on this device). Without it, a draft cannot be opened — contact us for help.",tH:"Book your activity",activity:"Activity / dive type *",pdate:"Preferred date & time",parts:"Number of participants",adultsLabel:"Number of adults *",oneAdultNote:"Each adult completes their own registration. After you finish, you can start a new registration for the next person.",minorsQ:"Is anyone under 18 coming with you?",bref:"Booking reference (if you have one)",sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat",calLegend:"Green: available · Yellow: almost full · Red: unavailable",pickTime:"Pick an open time",availTimes:"Available times",noTimes:"No times left this day — pick another date.",needDate:"Please pick a date and time.",bH:"Diver information",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",ownGear:"Do you have your own gear? *",yes:"Yes",no:"No",gearSize:"What size do you need? *",gearNote:"Size notes (boots, BCD, etc.)",gearNotePh:"e.g. boots 9, BCD medium",needGear:"Please tell us if you have your own gear.",needGearSize:"Please choose the size you need.",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgName:"Emergency contact name",emgRel:"Emergency contact relationship",emgPhone:"Emergency contact phone",notes:"Notes (optional)",sel:"Select…",back:"Back",next:"Continue",saveNext:"Save & continue",fH2:"Required registration forms",fSub:"These SSI forms apply to your activity. Complete the packet on your phone (shared details are asked once). Your registration number is saved on your customer profile for the shop CRM.",packetHint:"Complete and sign the packet, then return here and continue. Your registration number stays on your profile for staff search.",packetOpen:"Open packet forms →",dH:"Waivers & acknowledgments",dSub:"Read the document, accept each item separately, then sign. Nothing is pre-checked.",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",signer:"Type your full legal name *",draw:"Draw your signature *",clear:"Clear signature",sH:"Safety & medical information",sPend:"Medical screening",sP:"Answer every medical question. This is a screening for shop staff — it is not dive clearance. Any YES may require a physician review before you dive.",eH:"Review & submit",edit:"Edit information",editHint:"Something missing? Tap a step in the checklist below to go back and finish it.",submit:"Sign and Submit Registration",doneH:"Registration submitted",statusAwait:"Submitted · Awaiting Review",fRef:"Your registration reference — show this to staff when you arrive:",fNext:"Next: our staff will review your registration. If anything is missing we'll contact you. To correct something, use the correction form on this page or message us on WhatsApp.",fBack:"Back to home",corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",needAct:"Please choose your activity.",needName:"First name, last name and a valid phone are required.",needDecl:"Accept the accuracy declaration and privacy acknowledgement, type your name, and draw your signature.",missing:"Missing: ",sending:"Sending…",failed:"Submission failed (connection?). Your draft is saved — try again, or contact us on WhatsApp.",saved:"Draft saved ✓ Reference",req:"Required",opt:"Optional",ver:"Version",stepOf:"Step",of:"of",trActivity:"Activity Details",trDiver:"Diver Information",trForms:"Registration Forms",trWaivers:"Waivers & Acknowledgments",trSafety:"Medical Information",trReview:"Final Review",stDone:"Complete",stTodo:"Action Required",stWait:"Not Started",stPend:"Pending",packetCheck:"I finished the packet — check status",needPacket:"Open and complete the required form packet before continuing. Then tap check status.",packetDone:"Packet completed. You can continue.",packetPending:"Packet not finished yet. Open the link, complete and sign every form, then check status again.",packetNone:"Open the packet link to start your forms.",packetWait:"Waiting for packet… this updates when you finish signing.",dob:"Date of birth *",needDob:"Date of birth is required.",addr:"Street address",city:"City *",state:"State / Province *",zip:"ZIP / Postal *",packetSignNote:"SSI packet complete",packetSignSkip:"Waivers and medical from your forms are done. Confirm accuracy, sign once for the shop, then review and submit.",needAddr:"City, state, and ZIP are required",dSubPacket:"SSI forms are done — sign for the shop to finish check-in.",medHeart:"Heart or circulation problems? *",medLung:"Lung or breathing problems? *",medOther:"Any other medical condition that may affect diving? *",medOtherDetail:"Describe it *",medOtherPh:"Brief details for staff",medPregnant:"I understand: do not dive if pregnant. *",medTruth:"I confirm these medical answers are true and complete. *",medFlag:"Based on your answers, staff may require a physician review before you dive.",medPacketDone:"SSI medical packet already completed",medPacketSkip:"You already answered the dive medical in the packet. Confirm the acknowledgements below — no need to repeat Yes/No here.",medStaffNote:"Anything else staff should know? (optional)",medStaffNotePh:"Optional note for the shop",needMed:"Complete date of birth and both acknowledgements.",needMedDetail:"Describe the medical condition.",returning:"Welcome back — we filled what we could from your last visit.",confBooking:"Booking #",confRegNum:"Registration #",confRefLab:"Reference",confQrHint:"Show this QR or your numbers at the shop / boat.",confCal:"Add to calendar",confShare:"Share on WhatsApp",confCopy:"Copy IDs",confCopied:"Copied ✓",slotFull:"Full",slotLeft:"left",packetTry:"Try Scuba packet",packetRec:"Recreational packet",regNumLabel:"Registration #",packetFail:"Could not start packet forms",resumeBad:"Draft not found. Check the reference and resume code.",actLabels:{"Scuba":"Scuba","Dives & courses":"Dives & courses","Snorkel":"Snorkel"},partyH:"Who else is coming?",partySoloH:"Your forms",partySub:"Add everyone in your party. Each person completes and signs their own SSI forms under this one registration.",partySoloSub:"Complete and sign your SSI forms for this registration.",partySlot:"Person {n}",partySlotOpen:"Not added yet",partySlotHint:"Add their name to open their forms.",partyAdd:"Add a person",partyGearAdd:"Add equipment",partyGearEdit:"Edit equipment",partyGearSave:"Save equipment",partyRel:"Relationship to you",relChild:"Child",relSpouse:"Spouse / partner",relFriend:"Friend",relOther:"Other",partyMode:"How will they fill out forms?",modeHere:"Fill out here",modePhone:"Fill out on their own phone",partyGuardian:"Who is the parent or legal guardian?",partyMinorNote:"Minors always complete forms with their guardian on this registration. The SSI Youth Addendum is required before they are marked complete.",partySavePerson:"Save person",sharedH:"Shared party details",sameEveryone:"Same address and emergency contact for everyone",sharedSave:"Save shared details",partyProgress:"{done} of {total} complete",partyAdult:"Adult",partyMinor:"Minor",partyPrimary:"You (primary)",partyStartForms:"Start forms",partyContinueForms:"Continue forms",partySendLink:"Send link",partyResend:"Resend link",partyRemove:"Remove",partyEdit:"Edit",partyStatus:"Status",partyDash:"Back to party list",partyBackList:"Done — back to party",handoffTitle:"Pass the device to {name}",handoffSub:"Only their forms will show next. Medical answers stay private to each person.",handoffGo:"I am {name} — continue",partyNeedDob:"Date of birth is required for each person.",partyNeedName:"First and last name are required.",partyLinkCopied:"Link ready — share it with them.",partyPast:"Add someone you've registered before",partyPastSub:"Names, dates of birth, and contact info only — never medical answers.",dobLockH:"Who is continuing?",dobLockGo:"Continue",dobLockBad:"Date of birth does not match. Try again.",partyDup:"That person is already on this registration.",partyCount:"{n} of {head} added",partyOverHead:"More people than the booking headcount (OK to continue)",partyDocs:"Signed forms",partyDlAll:"Download all (allowed)",partyPrivNote:"Other adults medical forms stay private to them and the shop.",partyAllDone:"Everyone in the party has finished their forms.",partyWaitingYouth:"Waiting for Youth Addendum",partyNeedsMed:"Needs a medical review with the shop",stNotStarted:"Not started",stInProgress:"In progress",stComplete:"Complete",cancelOpt:"Cancel",minorsLabel:"There are minors in our group",minorCount:"Number of minors *",minorsLine:"Kids under 12 have their own options and restrictions and need a parent or guardian with them at all times.",guardianLine:"You will sign their forms as parent or legal guardian.",courseQ:"Are you interested in any course?",needAdults:"Tell us how many adults are in your group.",needMinors:"Tell us how many minors are in your group.",needPartyMax:"Maximum 20 people total.",needGuardianFirst:"A parent or guardian needs to register first. Please ask them to open this link.",adultInviteInstead:"Adults need their own registration. Use Start new registration after you finish — only minors can be added here.",partyAddMinor:"Add a minor",partyPastMinor:"Add a minor you've registered before",partyMinorsH:"You and your minors",partyMinorsSub:"Add each minor. You complete and sign their forms as guardian.",inviteAdultH:"Next person?",inviteAdultSub:"Each adult completes their own registration. Start a new one on this device, or scan the code or share the link to register on another phone.",inviteAdultGo:"Start new registration",inviteNextDevice:"Start new registration",inviteShareMsg:"Dive registration: ",passDeviceH:"Thank you",passDeviceSub:"Pass the device to the next person.",passDeviceGo:"Continue",needCourse:"Please answer whether you are interested in a course.",formSet:"Form set",formSetNote:"Each diver gets their own form set. You need {n}.",diverName:"Diver full name *",needDiverSet:"Each diver needs a name and a signature.",kioskWarn:"Still there? This tablet will clear for the next customer soon.",kioskDone:"Done — start new registration",shareBtn:"Share",nextPersonSavedA11y:"New registration started",nextPersonRetry:"Retry save",nextPersonSaveFail:"Could not save. Tap retry, then start a new registration.",nextPersonSaving:"Still saving, one moment…",nextPersonThanks:"Thank you, {name}. Pass the device to the next person.",nextPersonIdle:"Starting a new registration in {n}…",stayOnPage:"Stay on this page",hideQr:"Hide QR code",showQr:"Show QR code",startNewReg:"Start new registration",nextPersonDlHint:"Download your copy first if you want one.",nextPersonSub:"Each adult completes their own registration. Start a new one on this device, or scan the code or share the link to register on another phone.",nextPersonH:"Next person?"},
+  es:{h1:"Check-in digital de buceo",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Reservar Mi Buceo",aP1:"Un solo flujo: elige actividad y hora, completa formularios y screening médico, y firma. Así reservas tu cita y te registras en la tienda.",aP2:"Recibes una referencia para el personal, y tu fecha/hora aparece en Reservas. Sin crear cuenta: guarda y termina cuando quieras.",reqH:"Lo que puedes necesitar",reqP:"Datos de tu certificación (si estás certificado), un contacto de emergencia y un teléfono o correo donde contactarte. Los formularios firmados se guardan de forma privada; solo el personal autorizado puede verlos.",priv:"Privacidad: solo recopilamos lo necesario para este registro. Nunca compartas tu código de continuación: abre tu borrador guardado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Reservar Mi Buceo",resumeOpen:"Terminar o Actualizar Mi Registro",corrOpen:"Corregir un registro existente",corrRef:"Referencia de registro *",resumeCode:"Código de continuación *",resumeBtn:"Continuar mi borrador",resumeNote:"Tu código se mostró al guardar el borrador (y queda en este dispositivo). Sin él, el borrador no puede abrirse: contáctanos para ayuda.",tH:"Reserva tu actividad",activity:"Actividad / tipo de buceo *",pdate:"Fecha y hora preferidas",parts:"Número de participantes",adultsLabel:"Número de adultos *",oneAdultNote:"Cada adulto completa su propio registro. Al terminar, puedes iniciar un nuevo registro para la siguiente persona.",minorsQ:"¿Viene alguien menor de 18 contigo?",bref:"Referencia de reserva (si tienes)",sun:"Dom",mon:"Lun",tue:"Mar",wed:"Mié",thu:"Jue",fri:"Vie",sat:"Sáb",calLegend:"Verde: disponible · Amarillo: casi lleno · Rojo: no disponible",pickTime:"Elige un horario abierto",availTimes:"Horarios disponibles",noTimes:"No quedan horarios este día — elige otra fecha.",needDate:"Elige una fecha y un horario.",bH:"Información del buzo",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",ownGear:"¿Traes tu propio equipo? *",yes:"Sí",no:"No",gearSize:"¿Qué talla necesitas? *",gearNote:"Notas de talla (botas, BCD, etc.)",gearNotePh:"ej. botas 9, BCD mediano",needGear:"Indica si traes tu propio equipo.",needGearSize:"Elige la talla que necesitas.",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgName:"Nombre de contacto de emergencia",emgRel:"Relación del contacto de emergencia",emgPhone:"Teléfono de emergencia",notes:"Notas (opcional)",sel:"Seleccionar…",back:"Atrás",next:"Continuar",saveNext:"Guardar y continuar",fH2:"Formularios de registro requeridos",fSub:"Estos formularios SSI aplican a tu actividad. Completa el paquete en el teléfono (los datos compartidos se piden una vez). Tu número de registro queda en tu perfil del CRM.",packetHint:"Completa y firma el paquete, vuelve aquí y continúa. Tu número de registro queda en tu perfil para búsqueda del personal.",packetOpen:"Abrir formularios del paquete →",dH:"Exenciones y reconocimientos",dSub:"Lee el documento, acepta cada punto por separado y firma. Nada viene marcado.",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",signer:"Escribe tu nombre legal completo *",draw:"Dibuja tu firma *",clear:"Borrar firma",sH:"Seguridad e información médica",sPend:"Evaluación médica",sP:"Responde todas las preguntas médicas. Esto es un filtro para el personal — no es autorización para bucear. Cualquier SÍ puede requerir revisión médica antes de bucear.",eH:"Revisar y enviar",edit:"Editar información",editHint:"¿Falta algo? Toca un paso en la lista de abajo para volver y completarlo.",submit:"Firmar y enviar registro",doneH:"Registro enviado",statusAwait:"Enviado · En espera de revisión",fRef:"Tu referencia de registro — muéstrala al personal al llegar:",fNext:"Siguiente: nuestro personal revisará tu registro. Si falta algo, te contactaremos. Para corregir algo, usa el formulario de corrección en esta página o escríbenos por WhatsApp.",fBack:"Volver al inicio",corrH:"Solicitar una corrección",corrSub:"Ingresa tu referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",needAct:"Elige tu actividad.",needName:"Nombre, apellido y un teléfono válido son requeridos.",needDecl:"Acepta la declaración de exactitud y el reconocimiento de privacidad, escribe tu nombre y dibuja tu firma.",missing:"Falta: ",sending:"Enviando…",failed:"El envío falló (¿conexión?). Tu borrador está guardado: inténtalo de nuevo o contáctanos por WhatsApp.",saved:"Borrador guardado ✓ Referencia",req:"Requerido",opt:"Opcional",ver:"Versión",stepOf:"Paso",of:"de",trActivity:"Detalles de la actividad",trDiver:"Información del buzo",trForms:"Formularios de registro",trWaivers:"Exenciones y reconocimientos",trSafety:"Información médica",trReview:"Revisión final",stDone:"Completo",stTodo:"Acción requerida",stWait:"Sin empezar",stPend:"Pendiente",packetCheck:"Ya terminé el paquete — verificar estado",needPacket:"Abre y completa el paquete de formularios antes de continuar. Luego toca verificar estado.",packetDone:"Paquete completado. Puedes continuar.",packetPending:"El paquete aún no está terminado. Abre el enlace, completa y firma cada formulario, y vuelve a verificar.",packetNone:"Abre el enlace del paquete para empezar tus formularios.",packetWait:"Esperando el paquete… se actualiza cuando termines de firmar.",dob:"Fecha de nacimiento *",needDob:"La fecha de nacimiento es requerida.",addr:"Dirección",city:"Ciudad *",state:"Estado / Provincia *",zip:"ZIP / Código postal *",packetSignNote:"Paquete SSI completo",packetSignSkip:"Exenciones y médico del paquete listos. Confirma exactitud, firma una vez para la tienda, revisa y envía.",needAddr:"Ciudad, estado y ZIP son requeridos",dSubPacket:"Formularios SSI listos — firma para la tienda y termina el check-in.",medHeart:"¿Problemas del corazón o circulación? *",medLung:"¿Problemas pulmonares o respiratorios? *",medOther:"¿Otra condición médica que pueda afectar el buceo? *",medOtherDetail:"Descríbela *",medOtherPh:"Detalles breves para el personal",medPregnant:"Entiendo: no bucear si está embarazada. *",medTruth:"Confirmo que estas respuestas médicas son verdaderas y completas. *",medFlag:"Según tus respuestas, el personal puede exigir revisión médica antes de bucear.",medPacketDone:"Paquete médico SSI ya completado",medPacketSkip:"Ya respondiste el médico de buceo en el paquete. Confirma los reconocimientos abajo — no hace falta repetir Sí/No aquí.",medStaffNote:"¿Algo más que deba saber el personal? (opcional)",medStaffNotePh:"Nota opcional para la tienda",needMed:"Completa fecha de nacimiento y ambos reconocimientos.",needMedDetail:"Describe la condición médica.",returning:"Bienvenido de nuevo — rellenamos lo que pudimos de tu última visita.",confBooking:"Reserva #",confRegNum:"Registro #",confRefLab:"Referencia",confQrHint:"Muestra este QR o tus números en la tienda / bote.",confCal:"Añadir al calendario",confShare:"Compartir por WhatsApp",confCopy:"Copiar IDs",confCopied:"Copiado ✓",slotFull:"Lleno",slotLeft:"libres",packetTry:"Paquete Try Scuba",packetRec:"Paquete recreativo",regNumLabel:"Registro #",packetFail:"No se pudieron iniciar los formularios",resumeBad:"Borrador no encontrado. Revisa la referencia y el código.",actLabels:{"Scuba":"Scuba / Try Scuba","Dives & courses":"Buceos y cursos","Snorkel":"Snorkel"},partyH:"Quien mas viene?",partySoloH:"Tus formularios",partySub:"Agrega a todos en tu grupo. Cada persona completa y firma sus propios formularios SSI bajo este mismo registro.",partySoloSub:"Completa y firma tus formularios SSI para este registro.",partySlot:"Persona {n}",partySlotOpen:"Falta agregar",partySlotHint:"Agrega su nombre para abrir sus formularios.",partyAdd:"Agregar una persona",partyGearAdd:"Agregar equipo",partyGearEdit:"Editar equipo",partyGearSave:"Guardar equipo",partyRel:"Relacion contigo",relChild:"Hijo/a",relSpouse:"Esposo/a o pareja",relFriend:"Amigo/a",relOther:"Otro",partyMode:"Como llenaran los formularios?",modeHere:"Llenar aqui",modePhone:"Llenar en su telefono",partyGuardian:"Quien es el padre o tutor legal?",partyMinorNote:"Los menores siempre completan los formularios con su tutor en este registro. El anexo juvenil SSI es obligatorio antes de marcarlos completos.",partySavePerson:"Guardar persona",sharedH:"Datos compartidos del grupo",sameEveryone:"Misma direccion y contacto de emergencia para todos",sharedSave:"Guardar datos compartidos",partyProgress:"{done} de {total} completos",partyAdult:"Adulto",partyMinor:"Menor",partyPrimary:"Tu (principal)",partyStartForms:"Empezar formularios",partyContinueForms:"Continuar formularios",partySendLink:"Enviar enlace",partyResend:"Reenviar enlace",partyRemove:"Quitar",partyEdit:"Editar",partyStatus:"Estado",partyDash:"Volver a la lista",partyBackList:"Listo — volver al grupo",handoffTitle:"Pasa el dispositivo a {name}",handoffSub:"Solo se veran sus formularios. Las respuestas medicas son privadas por persona.",handoffGo:"Soy {name} — continuar",partyNeedDob:"La fecha de nacimiento es requerida para cada persona.",partyNeedName:"Nombre y apellido son requeridos.",partyLinkCopied:"Enlace listo — compartelo.",partyPast:"Agregar a alguien que registraste antes",partyPastSub:"Solo nombres, fechas de nacimiento y contacto — nunca respuestas médicas.",dobLockH:"¿Quién continúa?",dobLockGo:"Continuar",dobLockBad:"La fecha de nacimiento no coincide. Intenta de nuevo.",partyDup:"Esa persona ya está en este registro.",partyCount:"{n} de {head} agregados",partyOverHead:"Mas personas que el cupo de la reserva (puedes continuar)",partyDocs:"Formularios firmados",partyDlAll:"Descargar todo (permitido)",partyPrivNote:"Los formularios medicos de otros adultos son privados para ellos y la tienda.",partyAllDone:"Todos en el grupo terminaron sus formularios.",partyWaitingYouth:"Esperando anexo juvenil",partyNeedsMed:"Necesita revision medica con la tienda",stNotStarted:"Sin empezar",stInProgress:"En progreso",stComplete:"Completo",cancelOpt:"Cancelar",minorsLabel:"Hay menores en nuestro grupo",minorCount:"Número de menores *",minorsLine:"Los ninos menores de 12 anos tienen sus propias opciones y restricciones y necesitan un padre o tutor con ellos en todo momento.",guardianLine:"Tú firmas sus formularios como padre o tutor legal.",courseQ:"Le interesa algun curso?",needAdults:"Indica cuántos adultos hay en el grupo.",needMinors:"Indica cuántos menores hay en el grupo.",needPartyMax:"Máximo 20 personas en total.",needGuardianFirst:"Un padre o tutor debe registrarse primero. Pídele que abra este enlace.",adultInviteInstead:"Los adultos necesitan su propio registro. Usa Iniciar nuevo registro al terminar — aquí solo se agregan menores.",partyAddMinor:"Agregar un menor",partyPastMinor:"Agregar un menor que registraste antes",partyMinorsH:"Tú y tus menores",partyMinorsSub:"Agrega cada menor. Completas y firmas sus formularios como tutor.",inviteAdultH:"¿Siguiente persona?",inviteAdultSub:"Cada adulto completa su propio registro. Inicia uno nuevo en este dispositivo, o escanea el código o comparte el enlace para registrarse en otro teléfono.",inviteAdultGo:"Iniciar nuevo registro",inviteNextDevice:"Iniciar nuevo registro",inviteShareMsg:"Registro de buceo: ",passDeviceH:"Gracias",passDeviceSub:"Pasa el dispositivo a la siguiente persona.",passDeviceGo:"Continuar",needCourse:"Responde si te interesa algún curso.",formSet:"Juego de formularios",formSetNote:"Cada buzo tiene su propio juego de formularios. Necesitas {n}.",diverName:"Nombre completo del buzo *",needDiverSet:"Cada buzo necesita nombre y firma.",kioskWarn:"¿Sigues ahí? Esta tablet se limpiará pronto para el siguiente cliente.",kioskDone:"Listo — iniciar nuevo registro",shareBtn:"Compartir",nextPersonSavedA11y:"Nuevo registro iniciado",nextPersonRetry:"Reintentar guardado",nextPersonSaveFail:"No se pudo guardar. Toca reintentar y luego inicia un nuevo registro.",nextPersonSaving:"Aún se está guardando, un momento…",nextPersonThanks:"Gracias, {name}. Pasa el dispositivo a la siguiente persona.",nextPersonIdle:"Iniciando un nuevo registro en {n}…",stayOnPage:"Quedarme en esta página",hideQr:"Ocultar código QR",showQr:"Mostrar código QR",startNewReg:"Iniciar nuevo registro",nextPersonDlHint:"Descarga tu copia primero si la quieres.",nextPersonSub:"Cada adulto completa su propio registro. Inicia uno nuevo en este dispositivo, o escanea el código o comparte el enlace para registrarse en otro teléfono.",nextPersonH:"¿Siguiente persona?"}
 };
 let L = (navigator.language||"en").startsWith("es") ? "es" : "en";
 try { const saved = localStorage.getItem("bnb_lang"); if (saved === "en" || saved === "es") L = saved; } catch(e) {}
@@ -795,7 +801,7 @@ $("saveNext2").onclick = async () => {
     $("err2").textContent = T[L].needGuardianFirst || "A parent or guardian needs to register first. Please ask them to open this link.";
     return;
   }
-  if (!d.city || !d.state || !d.zip) { $("err2").textContent = T[L].needAddr || "City, state, and ZIP are required"; return; }
+  if (!d.city) { $("err2").textContent = T[L].needAddr || (L === "es" ? "Ciudad requerida" : "City is required"); return; }
   if (!d.ownGear) { $("err2").textContent = T[L].needGear; return; }
   if (d.ownGear === "no" && !d.gearSize) { $("err2").textContent = T[L].needGearSize; return; }
   $("err2").textContent = "";
@@ -822,7 +828,7 @@ $("dob").addEventListener("change", tracker);
 
 async function saveDraft(show){
   const d = collect();
-  if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) return;
+  if (!d.firstName || !d.lastName || d.phone.replace(/\D/g,"").length < 8) return false;
   try {
     const creating = !(draft.ref && draft.token);
     const body = creating ? { data: d } : { ref: draft.ref, token: draft.token, data: d };
@@ -838,8 +844,14 @@ async function saveDraft(show){
         if (out.returning) $("draftMsg").textContent = T[L].returning;
       }
       if (show) $("draftMsg").textContent = (out.returning ? T[L].returning + " · " : "") + `${T[L].saved}: ${out.ref} · ${T[L].resumeCode.replace(" *","")}: ${draft.token}`;
+      return true;
     }
-  } catch(e) { /* offline: data stays on this device and in the form */ }
+    if (show && $("draftMsg")) $("draftMsg").textContent = out.error || (T[L].failed || "Could not save draft");
+    return false;
+  } catch(e) {
+    if (show && $("draftMsg")) $("draftMsg").textContent = T[L].failed || "Could not save draft";
+    return false;
+  }
 }
 
 $("resumeBtn").onclick = async () => {
@@ -917,6 +929,10 @@ function syncPartyChrome(){
   if ($("partyAddBtn")) $("partyAddBtn").classList.toggle("hide", !wantMinors);
   if ($("partyPastBtn")) $("partyPastBtn").classList.toggle("hide", !wantMinors);
   if ($("sharedBox")) $("sharedBox").classList.toggle("hide", !wantMinors);
+  if (!wantMinors) {
+    if ($("partyAddPanel")) $("partyAddPanel").classList.add("hide");
+    if ($("partyPastPanel")) $("partyPastPanel").classList.add("hide");
+  }
   const tip = $("partyNeedTip");
   if (tip) {
     tip.classList.toggle("hide", !needMore);
@@ -932,7 +948,33 @@ async function refreshParty(){
   try {
     const r = await fetch(`/api/register/participants?ref=${encodeURIComponent(draft.ref)}&token=${encodeURIComponent(draft.token)}`);
     const out = await r.json().catch(() => ({}));
-    if (!r.ok) { if ($("err3")) $("err3").textContent = out.error || ""; return null; }
+    if (!r.ok) {
+      // Stale local draft after a wipe — recreate so Start forms can work again.
+      if (r.status === 404 || /not found/i.test(String(out.error || ""))) {
+        draft.ref = ""; draft.token = ""; draft.packetCompleted = false; saveLocal();
+        party = { participants: [], progress: { done: 0, total: 0 } };
+        packetCompleted = false;
+        await saveDraft(false);
+        if (draft.ref && draft.token) {
+          const again = await fetch(`/api/register/participants?ref=${encodeURIComponent(draft.ref)}&token=${encodeURIComponent(draft.token)}`);
+          const retry = await again.json().catch(() => ({}));
+          if (again.ok) {
+            party = retry;
+            const total = retry.progress?.total || 0;
+            const done = retry.progress?.done || 0;
+            packetCompleted = total > 0 && done >= total;
+            medicalFromPacket = packetCompleted;
+            draft.packetCompleted = packetCompleted; saveLocal();
+            if ($("err3")) $("err3").textContent = "";
+            paintParty();
+            return retry;
+          }
+        }
+      }
+      if ($("err3")) $("err3").textContent = out.error || "";
+      paintParty();
+      return null;
+    }
     party = out;
     // Party complete ⇒ all packets done (medical review still counts as forms done)
     const total = out.progress?.total || 0;
@@ -942,21 +984,25 @@ async function refreshParty(){
     draft.packetCompleted = packetCompleted; saveLocal();
     paintParty();
     return out;
-  } catch (e) { return null; }
+  } catch (e) { paintParty(); return null; }
 }
 function setPartyFormsFocus(on){
-  ["partyList","partyProgress","partyNeedTip","partyAddBtn","partyPastBtn","partyPastPanel","partyAddPanel","sharedBox"].forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-    if (on) el.classList.add("hide");
-    else if (id === "partyList" || id === "partyProgress") el.classList.remove("hide");
-  });
-  // Re-apply add/past visibility from current party state when leaving forms focus.
-  if (!on) syncPartyChrome();
+  // While forms are open, tuck the party chrome away. Never force-open Add/Past panels.
+  const hideAlways = ["partyAddPanel","partyPastPanel"];
+  const chrome = ["partyList","partyProgress","partyNeedTip","partyAddBtn","partyPastBtn","sharedBox"];
+  if (on) {
+    [...chrome, ...hideAlways].forEach((id) => { const el = $(id); if (el) el.classList.add("hide"); });
+  } else {
+    chrome.forEach((id) => { const el = $(id); if (el) el.classList.remove("hide"); });
+    hideAlways.forEach((id) => { const el = $(id); if (el) el.classList.add("hide"); });
+    syncPartyChrome();
+  }
 }
 function paintParty(){
   const t = T[L];
   const list = $("partyList"); if (!list) return;
+  list.classList.remove("hide");
+  if ($("partyProgress")) $("partyProgress").classList.remove("hide");
   const people = party.participants || [];
   const prog = party.progress || { done: 0, total: people.length };
   syncPartyChrome();
@@ -991,7 +1037,7 @@ function paintParty(){
     people.forEach(p => {
       const badge = p.isMinor ? (t.partyMinor || "Minor") : (t.partyAdult || "Adult");
       const role = p.role === "primary" ? (t.partyPrimary || (L === "es" ? "Tú" : "You")) : badge;
-      const done = p.status === "complete" || p.status === "needs_medical_review";
+      const done = p.status === "complete" || p.status === "needs_medical_review" || p.status === "waiting_youth_addendum";
       const sendBtn = (!p.isMinor && p.mode === "own_phone")
         ? `<button type="button" class="ghost partySend" data-id="${p.id}">${esc(t.partySendLink || "Send link")}</button>` : "";
       const removeBtn = p.role === "primary" ? "" : `<button type="button" class="ghost partyRemove" data-id="${p.id}">${esc(t.partyRemove || "Remove")}</button>`;
@@ -1045,8 +1091,8 @@ function paintParty(){
 function syncAddPanelAge(){
   const age = ageFromDobStr(($("pDob") && $("pDob").value) || "");
   if (age != null && age >= 18 && $("partyAddErr")) {
-    $("partyAddErr").textContent = T[L].adultInviteInstead || "Adults need their own registration. Use Invite another adult after you finish.";
-  } else if ($("partyAddErr") && /own registration|Invite another/i.test($("partyAddErr").textContent || "")) {
+    $("partyAddErr").textContent = T[L].adultInviteInstead || "Adults need their own registration. Use Start new registration after you finish.";
+  } else if ($("partyAddErr") && /own registration|Invite another|Start new registration/i.test($("partyAddErr").textContent || "")) {
     $("partyAddErr").textContent = "";
   }
 }
@@ -1058,7 +1104,7 @@ async function savePartyPerson(forceDuplicate){
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) { $("partyAddErr").textContent = t.partyNeedDob || t.needDob; return; }
   const age = ageFromDobStr(dob);
   if (age == null || age >= 18) {
-    $("partyAddErr").textContent = t.adultInviteInstead || "Only minors can be added here. Invite other adults separately.";
+    $("partyAddErr").textContent = t.adultInviteInstead || "Only minors can be added here. Use Start new registration after you finish.";
     return;
   }
   const ownGear = personGearVal();
@@ -1176,19 +1222,39 @@ async function sendPersonLink(id){
   await refreshParty();
 }
 async function ensureAndStartPrimary(){
-  $("err3").textContent = "";
+  if ($("err3")) $("err3").textContent = T[L].packetWait || "Opening forms…";
+  await saveDraft(false);
+  if (!draft.ref || !draft.token) {
+    if ($("err3")) $("err3").textContent = T[L].needName || "Save your name and phone first.";
+    go(2);
+    return;
+  }
   const out = await refreshParty();
-  const primary = (out?.participants || party.participants || []).find(p => p.role === "primary")
+  if (!out) {
+    if ($("err3") && !$("err3").textContent) {
+      $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+    }
+    return;
+  }
+  const primary = (out.participants || party.participants || []).find(p => p.role === "primary")
     || (party.participants || [])[0];
   if (!primary) {
-    $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+    if ($("err3")) $("err3").textContent = T[L].packetFail || "Could not start packet forms";
     return;
   }
   await startPersonForms(primary.id);
 }
 async function startPersonForms(id){
   const pid = Number(id);
-  const person = (party.participants || []).find(p => Number(p.id) === pid);
+  if (!Number.isFinite(pid) || pid < 1) {
+    if ($("err3")) $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+    return;
+  }
+  let person = (party.participants || []).find(p => Number(p.id) === pid);
+  if (!person) {
+    await refreshParty();
+    person = (party.participants || []).find(p => Number(p.id) === pid);
+  }
   if (!person) {
     if ($("err3")) $("err3").textContent = T[L].packetFail || "Could not start packet forms";
     return;
@@ -1199,9 +1265,11 @@ async function startPersonForms(id){
 }
 async function openPersonPacket(id){
   const pid = Number(id);
-  $("err3").textContent = "";
+  if ($("err3")) $("err3").textContent = "";
+  await saveDraft(false);
   if (!draft.ref || !draft.token) {
-    $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+    if ($("err3")) $("err3").textContent = T[L].needName || "Save your name and phone first.";
+    go(2);
     return;
   }
   if ($("err3")) $("err3").textContent = T[L].packetWait || "Opening forms…";
@@ -1210,7 +1278,10 @@ async function openPersonPacket(id){
       body: JSON.stringify({ ref: draft.ref, token: draft.token }) });
     const out = await r.json().catch(() => ({}));
     if (!r.ok) {
-      $("err3").textContent = out.error || T[L].packetFail || "Could not start packet forms";
+      const msg = out.error || out.message || (T[L].packetFail || "Could not start packet forms");
+      if ($("err3")) $("err3").textContent = msg;
+      // Only bounce to diver info for auth / registration missing — not "packet not found".
+      if (r.status === 401 || r.status === 404 || /unauthorized|participant not found|registration not found/i.test(msg)) go(2);
       return;
     }
     const person = (party.participants || []).find(p => Number(p.id) === pid);
@@ -1221,8 +1292,8 @@ async function openPersonPacket(id){
       await refreshParty();
       return;
     }
-    if (!out.formLink) {
-      $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+    if (!out.formLink || typeof out.formLink !== "string") {
+      if ($("err3")) $("err3").textContent = out.error || T[L].packetFail || "Could not start packet forms";
       return;
     }
     // Full-page forms (not iframe): Turnstile + Done work reliably on phones.
@@ -1250,7 +1321,7 @@ async function openPersonPacket(id){
     }
     location.assign(url);
   } catch (e) {
-    $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+    if ($("err3")) $("err3").textContent = (e && e.message) ? e.message : (T[L].packetFail || "Could not start packet forms");
   }
 }
 async function loadForms(){
@@ -1262,8 +1333,14 @@ async function loadForms(){
   renderForms();
   if ($("formList")) $("formList").classList.add("hide");
   await saveDraft(false);
+  if (!draft.ref || !draft.token) {
+    if ($("err3")) $("err3").textContent = T[L].needName || "Save your name and phone first.";
+    paintParty();
+    return;
+  }
   // seed primary participant + show party dashboard (packets opened per person)
-  await refreshParty();
+  const dash = await refreshParty();
+  if (!dash) paintParty();
   // Prefill shared emergency from primary collect()
   const d = collect();
   if ($("sharedEmgName") && !$("sharedEmgName").value) $("sharedEmgName").value = d.emergencyName || "";
@@ -1271,10 +1348,13 @@ async function loadForms(){
   if ($("sharedEmgPhone") && !$("sharedEmgPhone").value) $("sharedEmgPhone").value = d.emergencyPhone || "";
   if ($("packetBox")) $("packetBox").classList.add("hide");
   if ($("handoffBox")) $("handoffBox").classList.add("hide");
-  // Solo registration: open your forms immediately — unless we just returned from the packet.
+  setPartyFormsFocus(false);
+  // Solo (no minors planned): open your forms immediately — unless we just returned from the packet.
+  // When minors are planned, stay on the party list so Start forms / Add a minor stay visible.
   const backFromPacket = new URLSearchParams(location.search).get("fromPacket") === "1"
     || new URLSearchParams(location.search).get("packetDone") === "1";
-  if (!backFromPacket && !packetCompleted && partyHeadcount() <= 1) {
+  const wantMinors = hasMinorsOn() || minorCountNum() > 0 || (party.participants || []).some(p => p.isMinor);
+  if (!backFromPacket && !packetCompleted && !wantMinors && partyHeadcount() <= 1) {
     const primary = (party.participants || []).find(p => p.role === "primary") || (party.participants || [])[0];
     if (primary && primary.status !== "complete" && primary.status !== "needs_medical_review") {
       await startPersonForms(primary.id);
@@ -1463,13 +1543,19 @@ window.addEventListener("message", async (ev) => {
   }
 });
 $("toWaivers").onclick = async () => {
-  await refreshParty();
+  await saveDraft(false);
+  const dash = await refreshParty();
+  if (!dash && (!draft.ref || !draft.token)) {
+    if ($("err3")) $("err3").textContent = T[L].needName || "Save your name and phone first.";
+    go(2);
+    return;
+  }
   if (!packetCompleted) {
-    const nextPerson = (party.participants || []).find(p =>
-      p.status !== "complete" && p.status !== "needs_medical_review"
-    );
+    const formsDone = (p) => p.status === "complete" || p.status === "needs_medical_review" || p.status === "waiting_youth_addendum";
+    const nextPerson = (party.participants || []).find(p => !formsDone(p));
     if (nextPerson) {
-      $("err3").textContent = T[L].needPacket || "Finish the SSI forms first.";
+      const who = `${nextPerson.firstName || ""} ${nextPerson.lastName || ""}`.trim() || (T[L].partyPrimary || "You");
+      if ($("err3")) $("err3").textContent = (T[L].packetWait || "Opening forms…") + " · " + who;
       await startPersonForms(nextPerson.id);
       return;
     }
@@ -1477,7 +1563,7 @@ $("toWaivers").onclick = async () => {
       await ensureAndStartPrimary();
       return;
     }
-    $("err3").textContent = T[L].needPacket;
+    if ($("err3")) $("err3").textContent = T[L].needPacket;
     return;
   }
   $("err3").textContent = "";
@@ -1590,6 +1676,7 @@ function paintConfirm(out, trip){
   const t = T[L];
   lastConfirm = { ...out, ...trip };
   submittedRef = out.ref;
+  submittedCreds = { ref: out.ref || draft.ref || "", token: draft.token || submittedCreds.token || "" };
   $("confBooking").textContent = out.bookingId ? String(out.bookingId) : "—";
   $("confRegNum").textContent = out.registrationNumber || "—";
   $("confRef").textContent = out.ref || "—";
@@ -1619,66 +1706,373 @@ function paintConfirm(out, trip){
   $("cRef").value = out.ref || "";
   try { localStorage.setItem("bnb_reg_number", out.registrationNumber || ""); localStorage.setItem("bnb_last_confirm", JSON.stringify(lastConfirm)); } catch (e) {}
   paintConfirmPartyDocs();
-  if ($("inviteAdultResult")) $("inviteAdultResult").classList.add("hide");
-  if ($("kioskDone")) $("kioskDone").onclick = () => kioskClearAndRestart();
-  if (kioskMode) setTimeout(() => kioskClearAndRestart(), 90 * 1000);
+  confirmSaveOk = true;
+  confirmSaveFailed = false;
+  downloadedCopy = false;
+  setupNextPersonBox(out);
+  if ($("kioskDone")) $("kioskDone").onclick = () => startNewRegistration({ auto: true });
+  armDoneIdleReset();
 }
-async function loadInviteAdult(){
-  if (!draft.ref || !draft.token) return;
-  const r = await fetch("/api/register/invite-adult", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ref: draft.ref, token: draft.token }),
-  });
-  const out = await r.json().catch(() => ({}));
-  if (!r.ok) {
-    const msg = out.error || "Could not create invite";
-    if ($("inviteUrl")) $("inviteUrl").value = msg;
-    if ($("inviteAdultResult")) $("inviteAdultResult").classList.remove("hide");
-    return;
+let confirmSaveOk = false;
+let confirmSaveFailed = false;
+let downloadedCopy = false;
+let submittedCreds = { ref: "", token: "" };
+let shopPublic = { kioskAutoReset: true, kioskDoneIdleSec: 45, allowDeviceMultiReg: true };
+let nextRegUrl = "";
+let doneIdleTimer = null;
+let doneCountdownTimer = null;
+let passTransitionTimer = null;
+let formSessionKey = "bnb1";
+let armKioskIdle = () => {};
+
+(async () => {
+  try {
+    const r = await fetch("/api/register/shop-public");
+    const out = await r.json().catch(() => ({}));
+    if (r.ok && out) {
+      shopPublic = {
+        kioskAutoReset: out.kioskAutoReset !== false,
+        kioskDoneIdleSec: Number(out.kioskDoneIdleSec) || 45,
+        allowDeviceMultiReg: out.allowDeviceMultiReg !== false,
+      };
+    }
+  } catch (e) {}
+})();
+
+function buildFreshRegistrationUrl(ctx = {}) {
+  const u = new URL(location.origin + "/register.html");
+  const booking = String(ctx.bookingId || ctx.bookingRef || draft.bookingRef || (lastConfirm && lastConfirm.bookingId) || "").trim();
+  if (booking) u.searchParams.set("booking", booking);
+  u.searchParams.set("fresh", "1");
+  const lang = ctx.lang || L || "en";
+  if (lang) u.searchParams.set("lang", lang);
+  const act = ctx.activity || (lastConfirm && lastConfirm.activity) || ($("act") && $("act").value) || "";
+  if (act) u.searchParams.set("activity", act);
+  if (kioskMode || ctx.kiosk) u.searchParams.set("kiosk", "1");
+  // Never attach ref/token/name/registration numbers — new empty registration only.
+  return u.toString();
+}
+
+function paintNextPersonShare(url) {
+  nextRegUrl = url || "";
+  if ($("nextPersonUrl")) $("nextPersonUrl").value = nextRegUrl;
+  if ($("nextPersonQr") && nextRegUrl) {
+    $("nextPersonQr").src = "https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=" + encodeURIComponent(nextRegUrl);
+    $("nextPersonQr").alt = T[L].showQr || "QR code";
   }
-  draft.bookingRef = String(out.bookingId || out.bookingRef || ""); saveLocal();
-  if ($("inviteAdultResult")) $("inviteAdultResult").classList.remove("hide");
-  if ($("inviteUrl")) $("inviteUrl").value = out.inviteUrl || "";
-  if ($("inviteQr") && out.qrUrl) { $("inviteQr").src = out.qrUrl; $("inviteQr").alt = "Invite QR"; }
-  const msg = encodeURIComponent((T[L].inviteShareMsg || "Complete your dive registration: ") + (out.inviteUrl || ""));
-  if ($("inviteWa")) $("inviteWa").href = "https://wa.me/?text=" + msg;
-  if ($("inviteSms")) $("inviteSms").href = "sms:?&body=" + msg;
-  if ($("inviteMail")) $("inviteMail").href = "mailto:?subject=" + encodeURIComponent(T[L].inviteAdultH || "Dive registration") + "&body=" + msg;
+  const msg = encodeURIComponent((T[L].inviteShareMsg || "Dive registration: ") + nextRegUrl);
+  if ($("nextPersonWa")) { $("nextPersonWa").href = "https://wa.me/?text=" + msg; $("nextPersonWa").removeAttribute("target"); }
+  if ($("nextPersonSms")) { $("nextPersonSms").href = "sms:?&body=" + msg; $("nextPersonSms").removeAttribute("target"); }
+  if ($("nextPersonMail")) {
+    $("nextPersonMail").href = "mailto:?subject=" + encodeURIComponent(T[L].nextPersonH || "Dive registration") + "&body=" + msg;
+    $("nextPersonMail").removeAttribute("target");
+  }
 }
-function startNextAdultOnDevice(){
-  const booking = draft.bookingRef || new URLSearchParams(location.search).get("booking") || "";
-  try { localStorage.removeItem("bnb_reg_draft"); } catch (e) {}
-  draft = booking ? { bookingRef: String(booking) } : {};
+
+async function ensureNextPersonLink() {
+  let url = buildFreshRegistrationUrl();
+  const booking = String((lastConfirm && lastConfirm.bookingId) || draft.bookingRef || "").trim();
+  // If we already have a booking id, prefer the local clean URL (no personal tokens).
+  if (booking) {
+    paintNextPersonShare(url);
+    return url;
+  }
+  // Otherwise ask the server to ensure a booking exists (auth while this registration is still in memory).
+  const linkRef = (lastConfirm && lastConfirm.ref) || submittedCreds.ref || "";
+  const linkTok = submittedCreds.token || draft.token || "";
+  if (linkRef && linkTok) {
+    try {
+      const r = await fetch("/api/register/invite-adult", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ref: linkRef, token: linkTok }),
+      });
+      const out = await r.json().catch(() => ({}));
+      if (r.ok && (out.registrationUrl || out.inviteUrl || out.bookingId)) {
+        if (out.bookingId) draft.bookingRef = String(out.bookingId);
+        url = out.registrationUrl || out.inviteUrl || buildFreshRegistrationUrl({ bookingId: out.bookingId });
+        // Strip any accidental personal params if a legacy response included them.
+        try {
+          const parsed = new URL(url, location.origin);
+          ["ref", "token", "resume", "name", "registration", "reg"].forEach((k) => parsed.searchParams.delete(k));
+          parsed.searchParams.set("fresh", "1");
+          url = parsed.toString();
+        } catch (e) {}
+      }
+    } catch (e) {}
+  }
+  paintNextPersonShare(url);
+  return url;
+}
+
+function setupNextPersonBox(out) {
+  const box = $("nextPersonBox");
+  if (!box) return;
+  box.classList.remove("hide");
+  if ($("nextPersonSaveErr")) { $("nextPersonSaveErr").textContent = ""; $("nextPersonSaveErr").classList.add("hide"); }
+  if ($("nextPersonIdle")) { $("nextPersonIdle").textContent = ""; $("nextPersonIdle").classList.add("hide"); }
+  if ($("nextPersonStay")) $("nextPersonStay").classList.add("hide");
+  const allowMulti = shopPublic.allowDeviceMultiReg !== false;
+  if ($("startNewRegBtn")) $("startNewRegBtn").classList.toggle("hide", !allowMulti);
+  if ($("nextPersonDlHint")) $("nextPersonDlHint").classList.toggle("hide", !!downloadedCopy);
+  const alwaysQr = kioskMode || (window.matchMedia && window.matchMedia("(min-width: 900px)").matches);
+  if ($("nextPersonShare")) $("nextPersonShare").classList.toggle("hide", !alwaysQr);
+  if ($("showNextQrBtn")) {
+    $("showNextQrBtn").classList.toggle("hide", alwaysQr);
+    $("showNextQrBtn").textContent = T[L].showQr || "Show QR code";
+    $("showNextQrBtn").setAttribute("aria-expanded", alwaysQr ? "true" : "false");
+  }
+  ensureNextPersonLink();
+}
+
+function logRegEvent(event, extra = {}) {
+  const bookingId = String((lastConfirm && lastConfirm.bookingId) || draft.bookingRef || "").trim();
+  fetch("/api/register/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event, bookingId, shop: "BNB", ...extra }),
+  }).catch(() => {});
+}
+
+function announceA11y(msg) {
+  let live = $("bnbA11yLive");
+  if (!live) {
+    live = document.createElement("div");
+    live.id = "bnbA11yLive";
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "assertive");
+    live.className = "hide";
+    live.style.position = "absolute";
+    live.style.width = "1px";
+    live.style.height = "1px";
+    live.style.overflow = "hidden";
+    document.body.appendChild(live);
+  }
+  live.textContent = "";
+  setTimeout(() => { live.textContent = msg || ""; }, 40);
+}
+
+function clearBrowserPersonalStorage() {
+  try {
+    localStorage.removeItem("bnb_reg_draft");
+    localStorage.removeItem("bnb_reg_number");
+    localStorage.removeItem("bnb_last_confirm");
+    localStorage.removeItem("bnb_reg_prefill");
+  } catch (e) {}
+  try {
+    const keys = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && /^bnb_/i.test(k)) keys.push(k);
+    }
+    keys.forEach((k) => sessionStorage.removeItem(k));
+  } catch (e) {}
+  try {
+    if (indexedDB && indexedDB.databases) {
+      indexedDB.databases().then((dbs) => {
+        (dbs || []).forEach((db) => {
+          if (db && db.name && /bnb|banana|reg/i.test(db.name)) {
+            try { indexedDB.deleteDatabase(db.name); } catch (e) {}
+          }
+        });
+      }).catch(() => {});
+    }
+  } catch (e) {}
+}
+
+function wipePersonalFields() {
+  formSessionKey = "bnb" + Date.now().toString(36);
+  const ids = ["fn","ln","pn","ph","em","dob","addr","city","state","zip","en","erel","ep","notes","cert","logged","lastdive","signer","bref","pFirst","pLast","pDob","pPhone","pEmail","pGearSize","pGearNote","sharedEmgName","sharedEmgRel","sharedEmgPhone","cName","cPhone","cMsg","rRef","rTok","gearSize","gearNote","minorCount"];
+  ids.forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+    el.value = "";
+    try { el.setAttribute("autocomplete", "off"); el.setAttribute("data-form-key", formSessionKey); } catch (e) {}
+  });
+  ["cbDecl","cbPriv","cbMkt","cbPregnant","cbMedTruth","cbPregnantSign","cbMedTruthSign"].forEach((id) => {
+    if ($(id)) $(id).checked = false;
+  });
+  if ($("hasMinorsNo")) $("hasMinorsNo").checked = true;
+  if ($("hasMinorsYes")) $("hasMinorsYes").checked = false;
+  if ($("courseYes")) $("courseYes").checked = false;
+  if ($("courseNo")) $("courseNo").checked = false;
+  if ($("gearYes")) $("gearYes").checked = false;
+  if ($("gearNo")) $("gearNo").checked = false;
+  try { syncMinors(); syncGearUI(); resetPersonGear(); } catch (e) {}
+  try {
+    if (typeof pad !== "undefined" && pad && pad.clear) pad.clear();
+    signed = false;
+    document.querySelectorAll("canvas.diverpad").forEach((c) => {
+      const ctx = c.getContext && c.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+      c.dataset.signed = "0";
+    });
+  } catch (e) {}
+  if ($("packetFrame")) $("packetFrame").src = "about:blank";
+  if ($("confPartyDocs")) $("confPartyDocs").innerHTML = "";
+  if ($("confQr")) { $("confQr").removeAttribute("src"); $("confQr").alt = ""; }
+  document.title = "Banana Nut Burgers · Check-in";
+}
+
+function keepBookingContextOnly() {
+  const booking = String((lastConfirm && lastConfirm.bookingId) || draft.bookingRef || new URLSearchParams(location.search).get("booking") || "").trim();
+  const activity = (lastConfirm && lastConfirm.activity) || ($("act") && $("act").value) || "";
+  const plannedDate = (lastConfirm && lastConfirm.plannedDate) || "";
+  const plannedTime = (lastConfirm && lastConfirm.plannedTime) || "";
+  const lang = L;
+  const next = {
+    idempotencyKey: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
+  };
+  if (booking) next.bookingRef = booking;
+  if (activity) next.activity = activity;
+  if (plannedDate) next.plannedDate = plannedDate;
+  if (plannedTime) next.plannedTime = plannedTime;
+  if (lang) next.preferredLanguage = lang;
+  return next;
+}
+
+function finishPassTransition() {
+  if (passTransitionTimer) { clearTimeout(passTransitionTimer); passTransitionTimer = null; }
+  if ($("passDeviceCard")) $("passDeviceCard").classList.add("hide");
+  if ($("passDeviceMsg")) $("passDeviceMsg").textContent = T[L].passDeviceSub || "";
+  const ctx = keepBookingContextOnly();
+  clearBrowserPersonalStorage();
+  wipePersonalFields();
+  draft = ctx;
   party = { participants: [], progress: { done: 0, total: 0 } };
   packetCompleted = false; medicalFromPacket = false; packetNeedsPhysician = false;
-  activeParticipantId = null; signed = false; submittedRef = ""; partyAdvanceOnce = false;
+  activeParticipantId = null; editingParticipantId = null; signed = false; submittedRef = "";
+  partyAdvanceOnce = false; lastConfirm = null; confirmSaveOk = false; downloadedCopy = false;
   saveLocal();
-  ["fn","ln","pn","ph","em","dob","addr","city","state","zip","en","erel","ep","notes","cert","logged","lastdive"].forEach(id => { if ($(id)) $(id).value = ""; });
-  if ($("hasMinorsNo")) $("hasMinorsNo").checked = true;
-  syncMinors();
-  document.querySelectorAll("[data-step]").forEach(s => s.classList.add("hide"));
-  if ($("passDeviceCard")) $("passDeviceCard").classList.remove("hide");
-  if ($("corrCard")) $("corrCard").classList.add("hide");
+  const q = new URLSearchParams();
+  if (draft.bookingRef) q.set("booking", draft.bookingRef);
+  q.set("fresh", "1");
+  if (L) q.set("lang", L);
+  if (draft.activity) q.set("activity", draft.activity);
+  if (kioskMode) q.set("kiosk", "1");
+  try { history.replaceState({}, "", location.pathname + "?" + q.toString()); } catch (e) {}
+  if (draft.bookingRef && $("bref")) $("bref").value = String(draft.bookingRef);
+  if (draft.activity && $("act")) $("act").value = draft.activity;
+  if (draft.plannedDate && $("pdate")) { $("pdate").value = draft.plannedDate; selDate = draft.plannedDate; }
+  if (draft.plannedTime) selTime = draft.plannedTime;
+  announceA11y(T[L].nextPersonSavedA11y || "New registration started");
+  logRegEvent("new_registration_started_from_done");
+  go(1);
+  armKioskIdle();
 }
-if ($("inviteAdultBtn")) $("inviteAdultBtn").onclick = loadInviteAdult;
-if ($("inviteCopy")) $("inviteCopy").onclick = () => {
-  const v = ($("inviteUrl") && $("inviteUrl").value) || "";
-  if (!v) return;
-  navigator.clipboard.writeText(v).then(() => { if ($("confCopied")) { $("confCopied").classList.remove("hide"); setTimeout(() => $("confCopied").classList.add("hide"), 1500); } }).catch(() => {});
-};
-if ($("inviteNextDevice")) $("inviteNextDevice").onclick = startNextAdultOnDevice;
-if ($("passDeviceGo")) $("passDeviceGo").onclick = () => {
-  if ($("passDeviceCard")) $("passDeviceCard").classList.add("hide");
-  const booking = draft.bookingRef || "";
-  if (booking) {
-    try { history.replaceState({}, "", location.pathname + "?booking=" + encodeURIComponent(booking) + "&fresh=1"); } catch (e) {}
+
+async function startNewRegistration(opts = {}) {
+  if (!confirmSaveOk || confirmSaveFailed) {
+    if ($("nextPersonSaveErr")) {
+      $("nextPersonSaveErr").classList.remove("hide");
+      $("nextPersonSaveErr").textContent = confirmSaveFailed
+        ? (T[L].nextPersonSaveFail || "Could not save.")
+        : (T[L].nextPersonSaving || "Still saving, one moment…");
+    }
+    return;
   }
-  go(0);
+  clearDoneIdle();
+  const first = (($("fn") && $("fn").value) || (lastConfirm && (lastConfirm.firstName || lastConfirm.first_name)) || "").trim();
+  const thanks = (T[L].nextPersonThanks || "Thank you, {name}. Pass the device to the next person.")
+    .replace("{name}", first || (L === "es" ? "amigo" : "friend"));
+  document.querySelectorAll("[data-step]").forEach((s) => s.classList.add("hide"));
+  if ($("corrCard")) $("corrCard").classList.add("hide");
+  if ($("passDeviceCard")) $("passDeviceCard").classList.remove("hide");
+  if ($("passDeviceMsg")) $("passDeviceMsg").textContent = thanks;
+  if ($("passDeviceH")) $("passDeviceH").textContent = T[L].passDeviceH || "Thank you";
+  if (passTransitionTimer) clearTimeout(passTransitionTimer);
+  passTransitionTimer = setTimeout(() => finishPassTransition(), opts.auto ? 1200 : 3000);
+}
+
+function clearDoneIdle() {
+  if (doneIdleTimer) { clearTimeout(doneIdleTimer); doneIdleTimer = null; }
+  if (doneCountdownTimer) { clearInterval(doneCountdownTimer); doneCountdownTimer = null; }
+  if ($("nextPersonIdle")) { $("nextPersonIdle").classList.add("hide"); $("nextPersonIdle").textContent = ""; }
+  if ($("nextPersonStay")) $("nextPersonStay").classList.add("hide");
+}
+
+function armDoneIdleReset() {
+  clearDoneIdle();
+  if (!kioskMode || !shopPublic.kioskAutoReset) return;
+  const idleMs = Math.max(10, Number(shopPublic.kioskDoneIdleSec) || 45) * 1000;
+  doneIdleTimer = setTimeout(() => {
+    let left = 10;
+    if ($("nextPersonIdle")) {
+      $("nextPersonIdle").classList.remove("hide");
+      $("nextPersonIdle").textContent = (T[L].nextPersonIdle || "Starting a new registration in {n}…").replace("{n}", String(left));
+    }
+    if ($("nextPersonStay")) $("nextPersonStay").classList.remove("hide");
+    doneCountdownTimer = setInterval(() => {
+      left -= 1;
+      if ($("nextPersonIdle")) {
+        $("nextPersonIdle").textContent = (T[L].nextPersonIdle || "Starting a new registration in {n}…").replace("{n}", String(Math.max(0, left)));
+      }
+      if (left <= 0) {
+        clearDoneIdle();
+        startNewRegistration({ auto: true });
+      }
+    }, 1000);
+  }, idleMs);
+}
+
+if ($("startNewRegBtn")) $("startNewRegBtn").onclick = () => startNewRegistration();
+if ($("showNextQrBtn")) $("showNextQrBtn").onclick = () => {
+  const open = $("nextPersonShare") && $("nextPersonShare").classList.contains("hide");
+  if ($("nextPersonShare")) $("nextPersonShare").classList.toggle("hide", !open);
+  if ($("showNextQrBtn")) {
+    $("showNextQrBtn").textContent = open ? (T[L].hideQr || "Hide QR code") : (T[L].showQr || "Show QR code");
+    $("showNextQrBtn").setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (open) ensureNextPersonLink();
+};
+if ($("nextPersonCopy")) $("nextPersonCopy").onclick = async () => {
+  const v = nextRegUrl || ($("nextPersonUrl") && $("nextPersonUrl").value) || "";
+  if (!v) return;
+  try { await navigator.clipboard.writeText(v); } catch (e) {}
+  if ($("nextPersonCopied")) {
+    $("nextPersonCopied").classList.remove("hide");
+    setTimeout(() => $("nextPersonCopied").classList.add("hide"), 1600);
+  }
+  logRegEvent("registration_link_shared", { method: "copy" });
+};
+if ($("nextPersonShareBtn")) $("nextPersonShareBtn").onclick = async () => {
+  const v = nextRegUrl || ($("nextPersonUrl") && $("nextPersonUrl").value) || await ensureNextPersonLink();
+  if (!v) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: T[L].nextPersonH || "Registration", url: v, text: (T[L].inviteShareMsg || "") + v });
+      logRegEvent("registration_link_shared", { method: "native" });
+      return;
+    } catch (e) { /* fall through to copy */ }
+  }
+  try { await navigator.clipboard.writeText(v); } catch (e) {}
+  if ($("nextPersonCopied")) {
+    $("nextPersonCopied").classList.remove("hide");
+    setTimeout(() => $("nextPersonCopied").classList.add("hide"), 1600);
+  }
+  logRegEvent("registration_link_shared", { method: "copy" });
+};
+["nextPersonWa", "nextPersonSms", "nextPersonMail"].forEach((id) => {
+  if (!$(id)) return;
+  $(id).addEventListener("click", () => {
+    const method = id === "nextPersonWa" ? "whatsapp" : (id === "nextPersonSms" ? "sms" : "email");
+    logRegEvent("registration_link_shared", { method });
+  });
+});
+if ($("nextPersonStay")) $("nextPersonStay").onclick = () => { clearDoneIdle(); armDoneIdleReset(); };
+if ($("passDeviceGo")) $("passDeviceGo").onclick = () => finishPassTransition();
+if ($("passDeviceCard")) {
+  $("passDeviceCard").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "passDeviceGo") return;
+    finishPassTransition();
+  });
 }
 async function paintConfirmPartyDocs(){
-  const box = $("confPartyDocs"); if (!box || !draft.ref || !draft.token) return;
+  const box = $("confPartyDocs");
+  const ref = submittedCreds.ref || draft.ref || (lastConfirm && lastConfirm.ref) || "";
+  const token = submittedCreds.token || draft.token || "";
+  if (!box || !ref || !token) return;
   try {
-    const r = await fetch(`/api/register/party-downloads?ref=${encodeURIComponent(draft.ref)}&token=${encodeURIComponent(draft.token)}`);
+    const r = await fetch(`/api/register/party-downloads?ref=${encodeURIComponent(ref)}&token=${encodeURIComponent(token)}`);
     const out = await r.json().catch(() => ({}));
     if (!r.ok || !out.participants) return;
     const t = T[L];
@@ -1692,12 +2086,20 @@ async function paintConfirmPartyDocs(){
     box.innerHTML = `<h3 style="margin:0 0 8px;font-size:15px">${esc(t.partyDocs || "Signed forms")}</h3>${rows}
       <p><button type="button" class="ghost" id="confDlAll">${esc(t.partyDlAll || "Download all (allowed)")}</button></p>
       <p class="mut">${esc(t.partyPrivNote || "Other adults' medical forms stay private.")}</p>`;
-    box.querySelectorAll(".confDl").forEach(btn => btn.onclick = () => blobDownload(btn.dataset.url, btn.dataset.name));
+    const markDownloaded = () => {
+      downloadedCopy = true;
+      if ($("nextPersonDlHint")) $("nextPersonDlHint").classList.add("hide");
+    };
+    box.querySelectorAll(".confDl").forEach(btn => btn.onclick = async () => {
+      await blobDownload(btn.dataset.url, btn.dataset.name);
+      markDownloaded();
+    });
     const all = $("confDlAll");
     if (all) all.onclick = async () => {
       for (const btn of box.querySelectorAll(".confDl")) {
         await blobDownload(btn.dataset.url, btn.dataset.name);
       }
+      markDownloaded();
     };
   } catch (_) {}
 }
@@ -1782,10 +2184,17 @@ $("submitBtn").onclick = async () => {
     })});
     const out = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(out.error || out.detail || "failed");
-    paintConfirm(out, { activity: d.activity, plannedDate: d.plannedDate, plannedTime: d.plannedTime });
-    draft = { idempotencyKey: draft.idempotencyKey }; saveLocal();
+    paintConfirm(out, { activity: d.activity, plannedDate: d.plannedDate, plannedTime: d.plannedTime, firstName: d.firstName });
+    submittedCreds = { ref: out.ref || draft.ref || "", token: draft.token || "" };
+    draft = {
+      idempotencyKey: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
+      bookingRef: out.bookingId ? String(out.bookingId) : (draft.bookingRef || ""),
+    };
+    saveLocal();
     go(7);
   } catch(e) {
+    confirmSaveOk = false;
+    confirmSaveFailed = true;
     await saveDraft();
     const msg = e.message && e.message !== "failed" ? e.message : t.failed;
     const low = String(msg).toLowerCase();
@@ -1929,15 +2338,20 @@ const params = new URLSearchParams(location.search);
 kioskMode = kioskMode || params.get("kiosk") === "1";
 let kioskLocked = false;
 function kioskClearAndRestart(){
-  try {
-    localStorage.removeItem("bnb_reg_draft");
-    localStorage.removeItem("bnb_reg_number");
-    localStorage.removeItem("bnb_last_confirm");
-  } catch (e) {}
-  draft = {}; party = { participants: [], progress: { done: 0, total: 0 } };
-  activeParticipantId = null; packetCompleted = false; signed = false; submittedRef = ""; partyAdvanceOnce = false;
-  if ($("packetFrame")) $("packetFrame").src = "about:blank";
-  location.href = "/register.html?kiosk=1";
+  // Full local clear keeping only kiosk mode — no personal data left for Back/reload.
+  clearDoneIdle();
+  clearBrowserPersonalStorage();
+  wipePersonalFields();
+  draft = { idempotencyKey: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()) };
+  party = { participants: [], progress: { done: 0, total: 0 } };
+  activeParticipantId = null; editingParticipantId = null;
+  packetCompleted = false; medicalFromPacket = false; packetNeedsPhysician = false;
+  signed = false; submittedRef = ""; partyAdvanceOnce = false; lastConfirm = null;
+  confirmSaveOk = false; downloadedCopy = false; submittedCreds = { ref: "", token: "" };
+  saveLocal();
+  try { history.replaceState({}, "", "/register.html?kiosk=1"); } catch (e) {}
+  announceA11y(T[L].nextPersonSavedA11y || "New registration started");
+  go(0);
 }
 function showDobLock(){
   if (!kioskMode || !activeParticipantId) return false;
@@ -1973,21 +2387,35 @@ if (kioskMode) {
   warn.textContent = T[L].kioskWarn || "This kiosk will clear personal data after idle time.";
   document.body.prepend(warn);
   let idleWarn, idleLock, idleReset;
-  const arm = () => {
+  armKioskIdle = () => {
     if (kioskLocked) return;
+    if (!shopPublic.kioskAutoReset) return;
     clearTimeout(idleWarn); clearTimeout(idleLock); clearTimeout(idleReset);
     warn.classList.add("hide");
-    idleWarn = setTimeout(() => warn.classList.remove("hide"), 5 * 60 * 1000);
+    const doneIdle = Math.max(10, Number(shopPublic.kioskDoneIdleSec) || 45);
+    // Flow-wide idle: warn → DOB lock or clear → hard clear. Done-screen uses its own countdown.
+    const warnAfter = Math.max(doneIdle, 60) * 1000;
+    const lockAfter = Math.max(doneIdle + 30, 90) * 1000;
+    const resetAfter = Math.max(doneIdle + 60, 120) * 1000;
+    idleWarn = setTimeout(() => warn.classList.remove("hide"), warnAfter);
     idleLock = setTimeout(() => {
-      if (!showDobLock()) {
-        // no active person — full clear
-        kioskClearAndRestart();
-      }
-    }, 7 * 60 * 1000);
-    idleReset = setTimeout(() => kioskClearAndRestart(), 12 * 60 * 1000);
+      if (step === 7) return; // Done screen has its own countdown
+      if (!showDobLock()) kioskClearAndRestart();
+    }, lockAfter);
+    idleReset = setTimeout(() => {
+      if (step === 7) return;
+      kioskClearAndRestart();
+    }, resetAfter);
   };
-  ["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, () => { if (!kioskLocked) arm(); }, { passive: true }));
-  arm();
+  ["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, () => {
+    if (!kioskLocked) armKioskIdle();
+    if (step === 7 && shopPublic.kioskAutoReset) {
+      // Activity on Done resets the idle countdown unless a stay/countdown is showing.
+      if ($("nextPersonStay") && !$("nextPersonStay").classList.contains("hide")) return;
+      armDoneIdleReset();
+    }
+  }, { passive: true }));
+  armKioskIdle();
 }
 const actQ = params.get("activity");
 if (actQ && ACTS.includes(actQ)) { $("act").value = actQ; }

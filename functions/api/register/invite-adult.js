@@ -1,17 +1,12 @@
 /**
  * POST /api/register/invite-adult
- * Create/reuse a booking context and return a fresh registration link for another adult.
- * Body: { ref, token } — auth as the inviting registrant.
- * Returns: { ok, bookingId, bookingRef, inviteUrl, message }
+ * Ensure a booking exists and return a fresh, reusable registration link for the
+ * same shop/booking context. The link contains no personal data or registration tokens.
+ * Body: { ref, token } — auth as the finished registrant (only to look up booking).
+ * Returns: { ok, bookingId, bookingRef, registrationUrl, inviteUrl (alias), qrUrl, message }
  */
-import { json, str, sha256 } from "../../_shared.js";
+import { json, str } from "../../_shared.js";
 import { loadRegByRefToken } from "../../_lib/forms/party.js";
-
-function makeToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 export async function onRequestPost({ request, env }) {
   if (!env.DB) return json({ error: "Not configured" }, 503);
@@ -64,18 +59,28 @@ export async function onRequestPost({ request, env }) {
   }
 
   const origin = new URL(request.url).origin;
-  const inviteUrl = `${origin}/register.html?booking=${bookingId}&fresh=1`;
-  const shortPath = `/register.html?booking=${bookingId}&fresh=1`;
+  const lang = str(data.preferredLanguage || b.lang || "", 5);
+  const activity = str(data.activity || reg.activity || b.activity || "", 80);
+  const q = new URLSearchParams();
+  // Reusable multi-scan link: booking + fresh=1 only (no ref/token/personal data).
+  q.set("booking", String(bookingId));
+  q.set("fresh", "1");
+  if (lang === "en" || lang === "es") q.set("lang", lang);
+  if (activity) q.set("activity", activity);
+  if (b.kiosk) q.set("kiosk", "1");
+  const qs = q.toString(); // includes fresh=1
+  const registrationUrl = `${origin}/register.html?${qs}`;
+  const shortPath = `/register.html?${qs}`;
 
   return json({
     ok: true,
     bookingId,
     bookingRef: String(bookingId),
-    inviteUrl,
+    registrationUrl,
+    // Alias kept for older clients / tests — same clean URL, no personal data.
+    inviteUrl: registrationUrl,
     shortPath,
-    qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(inviteUrl)}`,
+    qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(registrationUrl)}`,
     message: "Each adult completes their own registration.",
-    // Opaque nonce reserved for future single-use invites (not required to open the link today).
-    inviteNonce: makeToken(),
   });
 }

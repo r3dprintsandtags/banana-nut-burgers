@@ -2,7 +2,7 @@
  * GET/POST /api/register/participants
  * Party roster for a registration (draft token auth).
  */
-import { json, str } from "../../_shared.js";
+import { json, str, ensureSchema } from "../../_shared.js";
 import {
   loadRegByRefToken,
   ensurePrimaryParticipant,
@@ -15,6 +15,7 @@ import {
 
 export async function onRequestGet({ request, env }) {
   if (!env.DB) return json({ error: "Not configured" }, 503);
+  await ensureSchema(env);
   const u = new URL(request.url);
   const ref = str(u.searchParams.get("ref"), 20);
   const token = str(u.searchParams.get("token"), 80);
@@ -27,7 +28,9 @@ export async function onRequestGet({ request, env }) {
   try { data = JSON.parse(loaded.reg.data || "{}"); } catch { data = {}; }
   try {
     await ensurePrimaryParticipant(env, loaded.reg, customer || {}, data);
-  } catch (_) { /* migration may not be applied yet */ }
+  } catch (e) {
+    return json({ error: e.message || "Could not create the primary registrant", code: e.code || undefined }, e.status || 500);
+  }
 
   try {
     const dash = await partyDashboard(env, loaded.reg, { staff: false });
@@ -39,6 +42,7 @@ export async function onRequestGet({ request, env }) {
 
 export async function onRequestPost({ request, env }) {
   if (!env.DB) return json({ error: "Not configured" }, 503);
+  await ensureSchema(env);
   let b;
   try { b = await request.json(); } catch { return json({ error: "Bad request" }, 400); }
   const ref = str(b.ref, 20);

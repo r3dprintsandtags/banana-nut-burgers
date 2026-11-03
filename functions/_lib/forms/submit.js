@@ -75,12 +75,11 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
       errors: [{ key: "dob", message: language === "es" ? "Fecha de nacimiento requerida" : "Date of birth is required" }],
     };
   }
-  if (!String(answers.city || "").trim() || !String(answers.state || "").trim() || !String(answers.zip || answers.postal_code || "").trim()) {
+  if (!String(answers.city || "").trim()) {
     return {
-      error: language === "es" ? "Ciudad, estado y ZIP requeridos" : "City, state, and ZIP are required",
+      error: language === "es" ? "Ciudad requerida" : "City is required",
       status: 422,
-      errors: [{ key: !String(answers.city || "").trim() ? "city" : (!String(answers.state || "").trim() ? "state" : "zip"),
-        message: language === "es" ? "Ciudad, estado y ZIP requeridos" : "City, state, and ZIP are required" }],
+      errors: [{ key: "city", message: language === "es" ? "Ciudad requerida" : "City is required" }],
     };
   }
   let todayIso = new Date().toISOString().slice(0, 10);
@@ -152,6 +151,17 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
 
   const agreements = answers.__agreements && typeof answers.__agreements === "object" ? answers.__agreements : {};
   const sigMap = answers.__signatures && typeof answers.__signatures === "object" ? answers.__signatures : {};
+  // Shop youth consent can ride the guardian pad when the client never showed a separate youth doc.
+  if (ageGate != null && ageGate < 18 && String(sigMap.guardian || "").startsWith("data:image/png;base64,")) {
+    if (!agreements.youth_addendum || agreements.youth_addendum.accepted !== true) {
+      agreements.youth_addendum = { accepted: true, at: Date.now(), text: "Guardian consent" };
+      answers.__agreements = agreements;
+    }
+    if (!String(sigMap.youth_addendum || "").startsWith("data:image/png;base64,")) {
+      sigMap.youth_addendum = sigMap.guardian;
+      answers.__signatures = sigMap;
+    }
+  }
   for (const t of templates) {
     if (t.key === "diving_medical_guidance") continue;
     const ag = agreements[t.key];
@@ -354,7 +364,9 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
     } catch (_) { /* non-fatal */ }
   }
 
-  // Sync party participant status (youth addendum / medical review gates)
+  // Sync party participant status (youth addendum / medical review gates).
+  // Must not silently leave the participant in_progress or Continue stays blocked.
+  let participantSyncError = "";
   try {
     const { syncParticipantAfterSubmit } = await import("./party.js");
     let pid = reqRow.participant_id || null;
@@ -365,7 +377,11 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
       pid = primary?.id || null;
     }
     if (pid) await syncParticipantAfterSubmit(env, pid, { needsPhysician });
-  } catch (_) { /* non-fatal until migration applied */ }
+    else if (reqRow.registration_id) participantSyncError = "No participant row to sync";
+  } catch (e) {
+    participantSyncError = String(e?.message || e || "participant sync failed");
+    try { console.error("syncParticipantAfterSubmit", participantSyncError); } catch (_) {}
+  }
 
   return {
     ok: true,
@@ -379,6 +395,7 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
     files: pdfKeys.filter((k) => k.r2_key).map((k) => ({ key: k.template_key, reference: !!k.reference })),
     guidanceAttached: !!guidanceKey,
     validUntil: validUntil ? new Date(validUntil).toISOString() : null,
+    participantSyncError: participantSyncError || undefined,
   };
 }
 

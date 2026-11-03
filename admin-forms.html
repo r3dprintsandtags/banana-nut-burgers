@@ -76,6 +76,18 @@ label{display:block;font-weight:600;margin-top:10px;font-size:13px;color:#0a2533
         <div class="chips" id="fieldChips"></div>
         <label>Instructor name (shop default)</label>
         <input id="instructor" placeholder="Leave blank — set per booking later">
+        <hr style="border:0;border-top:1px solid #eadfc2;margin:14px 0">
+        <b>Kiosk settings</b>
+        <label class="chk" style="font-weight:500;display:flex;gap:8px;align-items:center;margin-top:8px">
+          <input type="checkbox" id="kioskAutoReset" checked> Auto-reset after idle on Done
+        </label>
+        <label>Done-screen idle seconds (default 45)</label>
+        <input id="kioskIdleSec" type="number" min="10" max="600" value="45">
+        <label class="chk" style="font-weight:500;display:flex;gap:8px;align-items:center;margin-top:8px">
+          <input type="checkbox" id="allowMultiReg" checked> Allow “Start new registration” on same device
+        </label>
+        <p style="margin-top:8px"><button type="button" class="ghost" id="saveKioskSettings">Save kiosk settings</button></p>
+        <p class="mut" id="kioskMsg"></p>
         <p style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
           <button id="saveMap" class="ban">Save mapping</button>
           <button id="previewBtn" class="ghost">Preview PDF</button>
@@ -112,6 +124,31 @@ $("loginBtn").onclick = async () => {
   hide($("loginCard")); show($("app"));
   await loadTemplates();
   renderChips();
+  await loadKioskSettings();
+};
+
+async function loadKioskSettings() {
+  try {
+    const r = await api("/api/forms/settings");
+    const out = await r.json();
+    const s = out.settings || {};
+    if ($("instructor") && s.instructor_name) $("instructor").value = s.instructor_name;
+    if ($("kioskAutoReset")) $("kioskAutoReset").checked = s.kiosk_auto_reset !== "0";
+    if ($("kioskIdleSec")) $("kioskIdleSec").value = s.kiosk_done_idle_sec || "45";
+    if ($("allowMultiReg")) $("allowMultiReg").checked = s.allow_device_multi_reg !== "0";
+  } catch (e) {}
+}
+
+if ($("saveKioskSettings")) $("saveKioskSettings").onclick = async () => {
+  const body = {
+    kiosk_auto_reset: $("kioskAutoReset").checked ? "1" : "0",
+    kiosk_done_idle_sec: String($("kioskIdleSec").value || "45"),
+    allow_device_multi_reg: $("allowMultiReg").checked ? "1" : "0",
+  };
+  if ($("instructor").value.trim()) body.instructor_name = $("instructor").value.trim();
+  const r = await api("/api/forms/settings", { method: "POST", body: JSON.stringify(body) });
+  $("kioskMsg").textContent = r.ok ? "Kiosk settings saved ✓" : "Save failed";
+  $("kioskMsg").className = r.ok ? "ok" : "err";
 };
 
 async function loadTemplates() {

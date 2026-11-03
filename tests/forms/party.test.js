@@ -168,15 +168,39 @@ describe("one adult per registration", () => {
     assert.ok(fs.existsSync(path.join(root, "functions/api/bookings/[id]/party.js")));
     assert.ok(fs.existsSync(path.join(root, "functions/api/bookings/[id]/invite-context.js")));
     const invite = fs.readFileSync(path.join(root, "functions/api/register/invite-adult.js"), "utf8");
-    assert.ok(invite.includes("fresh=1"));
-    assert.ok(invite.includes("booking="));
+    assert.ok(invite.includes('set("fresh"') || invite.includes("fresh=1"));
+    assert.ok(invite.includes("booking"));
   });
-  it("register.html has invite + minors Yes/No and no adult guest modes", () => {
+  it("register.html has Next person / Start new registration and no invite framing", () => {
     const html = fs.readFileSync(path.join(root, "register.html"), "utf8");
-    assert.ok(html.includes("inviteAdultBtn"));
+    assert.ok(html.includes("startNewRegBtn"));
+    assert.ok(html.includes("nextPersonBox"));
     assert.ok(html.includes("passDeviceGo"));
     assert.ok(html.includes("hasMinorsYes"));
+    assert.equal(html.includes("inviteAdultBtn"), false);
+    assert.equal(/Invite another adult/i.test(html), false);
+    assert.equal(/Invitar a otro adulto/i.test(html), false);
+    assert.ok(html.includes("Start new registration"));
+    assert.ok(html.includes("Iniciar nuevo registro"));
+    assert.ok(html.includes("buildFreshRegistrationUrl") || html.includes("fresh=1"));
+    assert.ok(html.includes("new_registration_started_from_done"));
+    assert.ok(html.includes("registration_link_shared"));
+    assert.ok(html.includes("armDoneIdleReset"));
+    assert.equal(/window\.open\s*\(/.test(html), false);
+    assert.equal(/\balert\s*\(/.test(html), false);
+    assert.equal(/\bconfirm\s*\(/.test(html), false);
     assert.equal(/mode\s*===\s*["']own_phone["']\s*\?\s*["']Own phone/.test(html), false);
+  });
+  it("shop-public and register events APIs exist for kiosk / next person", () => {
+    assert.ok(fs.existsSync(path.join(root, "functions/api/register/shop-public.js")));
+    assert.ok(fs.existsSync(path.join(root, "functions/api/register/events.js")));
+    const pub = fs.readFileSync(path.join(root, "functions/api/register/shop-public.js"), "utf8");
+    assert.ok(pub.includes("kiosk_done_idle_sec"));
+    assert.ok(pub.includes("allow_device_multi_reg"));
+    const invite = fs.readFileSync(path.join(root, "functions/api/register/invite-adult.js"), "utf8");
+    assert.ok(invite.includes("registrationUrl"));
+    assert.ok(invite.includes('set("fresh"') || invite.includes("fresh=1"));
+    assert.equal(invite.includes("inviteNonce"), false);
   });
   it("admin CRM has Party view wiring", () => {
     const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");

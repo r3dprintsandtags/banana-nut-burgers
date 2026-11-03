@@ -1,9 +1,10 @@
 /** POST /api/register/participants/:id/packet — open/reuse SSI packet for one participant */
-import { json, str } from "../../../../_shared.js";
+import { json, str, ensureSchema } from "../../../../_shared.js";
 import { loadRegByRefToken, openParticipantPacket } from "../../../../_lib/forms/party.js";
 
 export async function onRequestPost({ request, env, params }) {
   if (!env.DB) return json({ error: "Not configured" }, 503);
+  await ensureSchema(env);
   let b;
   try { b = await request.json(); } catch { return json({ error: "Bad request" }, 400); }
   const ref = str(b.ref, 20);

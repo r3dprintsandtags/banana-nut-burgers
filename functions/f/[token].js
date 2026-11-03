@@ -28,23 +28,15 @@ export async function onRequestGet({ params }) {
 <title>Forms · Banana Nut Burgers</title>
 <link rel="icon" href="/img/bnb-logo.png" type="image/png">
 <style>
-:root,html[data-theme="light"]{
+:root{
   --bg:#fff8e6;--surface:#ffffff;--text:#0a2533;--muted:#3d5160;--border:#8a7348;
   --primary:#075a78;--primary-text:#ffffff;--danger:#9b1c1c;--paper:#ffffff;--paper-text:#0a2533;
-  --filled:#08315c;--on-photo:#f4fbff;--photo:#06161f;--disabled:#d5dee4;--disabled-text:#0a2533;
-}
-html[data-theme="dark"]{
-  --bg:#06161f;--surface:#123041;--text:#f5fbff;--muted:#d5e4ee;--border:#8eb4c8;
-  --primary:#8fd4f0;--primary-text:#06202b;--danger:#ffb4b4;--paper:#ffffff;--paper-text:#0a2533;
-  --filled:#08315c;--on-photo:#f4fbff;--photo:#06161f;--disabled:#2c4a5c;--disabled-text:#f5fbff;
+  --filled:#08315c;--disabled:#d5dee4;--disabled-text:#0a2533;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif;padding:16px 16px 48px}
-html[data-theme="dark"] body{background:var(--photo) url(/img/deep-blue.jpg) center/cover fixed no-repeat}
-html[data-theme="dark"] body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:#06161f}
-html[data-theme="dark"] .wrap{position:relative;z-index:1}
+html,body{margin:0;min-height:100%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+body{background:var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px))}
 h1{font-size:22px;margin:8px 0;color:var(--text)}
-html[data-theme="dark"] h1,html[data-theme="dark"] .brand{color:var(--on-photo)}
 h2{font-size:18px;margin:0 0 8px;color:var(--text)}
 .wrap{max-width:640px;margin:0 auto}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -65,7 +57,6 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 .ban{background:var(--primary);color:var(--primary-text)}
 .err{color:var(--danger);font-weight:700}
 .ok{color:#0d6b3d;font-weight:700}
-html[data-theme="dark"] .ok{color:#b6f0cf}
 .hide{display:none}
 .notice{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:12px;color:var(--text)}
 .note{margin-top:10px;font-size:14px;color:var(--muted)}
@@ -84,18 +75,19 @@ html[data-theme="dark"] .ok{color:#b6f0cf}
 #docLightbox .lbscroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;background:#fff;border-radius:12px;padding:12px;-webkit-user-select:none;user-select:none}
 #docLightbox .lbscroll img,#docLightbox .lbscroll canvas{width:100%;height:auto;display:block;margin:0 0 8px}
 .sigblock{margin-top:12px;padding-top:8px;border-top:1px solid #c5b89a}
-.stepper{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.stepbtn{flex:1 1 140px;display:flex;flex-direction:column;align-items:flex-start;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left}
-.stepbtn .ss{color:var(--muted);font-size:12px;font-weight:800}
+.stepper{display:flex;flex-direction:column;flex-wrap:nowrap;gap:8px;margin:12px 0;overflow:visible}
+.stepbtn{width:100%;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left;padding:10px 12px}
+.stepbtn .nm{font-weight:700}
+.stepbtn .ss{color:var(--muted);font-size:12px;font-weight:800;margin-left:auto;text-transform:uppercase;letter-spacing:.4px}
 .stepbtn[aria-current="step"]{outline:3px solid var(--primary)}
 .stepbtn.attention{box-shadow:inset 8px 0 0 var(--danger)}
 .stepbtn.locked{background:var(--disabled);color:var(--disabled-text)}
 .stepbtn.complete .ss{color:#0d6b3d}
-html[data-theme="dark"] .stepbtn.complete .ss{color:#b6f0cf}
 .doclist{list-style:none;padding:0;margin:8px 0}
 .doclist button{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--border);margin-top:6px;text-align:left}
 .actions{display:flex;gap:8px;margin-top:16px}
 .actions button{flex:1}
+.actions.sticky{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--border);max-width:640px;margin-left:auto;margin-right:auto}
 button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);cursor:not-allowed}
 #retry,#missing{background:var(--surface);color:var(--text);border:1px solid var(--danger);border-radius:12px;padding:12px;margin-top:12px}
 #missing .miss{display:block;width:100%;margin-top:8px;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left}
@@ -105,9 +97,8 @@ button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);
 <body>
 <div class="wrap">
   <div class="bar">
-    <a class="brand" href="/" aria-label="Banana Nut Burgers home"><img src="/img/bnb-logo.png" width="64" height="64" alt="Banana Nut Burgers Dive Shop"><span>Forms</span></a>
+    <a class="brand" href="/" aria-label="Banana Nut Burgers home"><img src="/img/bnb-logo.png" width="64" height="64" alt="Banana Nut Burgers Dive Shop"><span>Banana Nut Burgers</span></a>
     <span id="saved" class="mut"></span>
-    <button type="button" class="ghost" id="themeBtn">Dark</button>
     <button type="button" class="ghost" id="langBtn">ES</button>
   </div>
   <h1 id="title">Loading…</h1>

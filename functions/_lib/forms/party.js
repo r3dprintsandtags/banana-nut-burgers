@@ -357,7 +357,22 @@ export async function removeParticipant(env, reg, participantId, reason = "") {
 }
 
 export async function openParticipantPacket(env, reg, participant, requestUrl) {
-  const customer = await env.DB.prepare("SELECT * FROM customers WHERE id=?").bind(participant.contact_id).first();
+  let customer = participant.contact_id
+    ? await env.DB.prepare("SELECT * FROM customers WHERE id=?").bind(participant.contact_id).first()
+    : null;
+  if (!customer) {
+    // Recover orphaned participants so Start forms is never blocked by a missing contact row.
+    const contactId = await findOrCreateContact(env, {
+      firstName: participant.first_name || "Guest",
+      lastName: participant.last_name || "Diver",
+      phone: participant.phone || "",
+      email: participant.email || "",
+      dob: participant.dob || "",
+    });
+    await env.DB.prepare("UPDATE participants SET contact_id=?, updated_at=? WHERE id=?")
+      .bind(contactId, Date.now(), participant.id).run();
+    customer = await env.DB.prepare("SELECT * FROM customers WHERE id=?").bind(contactId).first();
+  }
   if (!customer) throw Object.assign(new Error("Contact missing"), { status: 500 });
 
   let data = {};
@@ -483,19 +498,18 @@ export async function syncParticipantAfterSubmit(env, participantId, { needsPhys
   const now = Date.now();
   let status = "complete";
   if (needsPhysician) status = "needs_medical_review";
+  // Minors who finished the packet still need the paper Youth Addendum for staff —
+  // but forms themselves are done, so progress / Continue must not block.
   if (p.is_minor && p.youth_addendum_status === "waiting") status = "waiting_youth_addendum";
   // Recreational waiver validity: one year from signing
   const validUntil = now + 365 * 86400000;
   await env.DB.prepare("UPDATE participants SET status=?, valid_until=?, updated_at=? WHERE id=?")
     .bind(status, validUntil, now, participantId).run();
 
-  // party complete?
-  const open = await env.DB.prepare(
-    "SELECT COUNT(*) AS c FROM participants WHERE registration_id=? AND status<>'removed' AND status<>'complete' AND status<>'needs_medical_review'"
-  ).bind(p.registration_id).first();
-  // needs_medical_review still counts as forms done for party progress; youth waiting blocks
+  // Forms-complete statuses (staff follow-ups do not block Continue):
+  // complete | needs_medical_review | waiting_youth_addendum
   const blocked = await env.DB.prepare(
-    "SELECT COUNT(*) AS c FROM participants WHERE registration_id=? AND status IN ('not_started','in_progress','waiting_youth_addendum','waiting_guardian')"
+    "SELECT COUNT(*) AS c FROM participants WHERE registration_id=? AND status IN ('not_started','in_progress','waiting_guardian')"
   ).bind(p.registration_id).first();
   await env.DB.prepare("UPDATE registrations SET party_complete=?, updated_at=? WHERE id=?")
     .bind(blocked?.c ? 0 : 1, now, p.registration_id).run();
@@ -586,16 +600,27 @@ export async function partyDashboard(env, reg, { staff = false } = {}) {
   const people = [];
   for (const row of rows) {
     const sub = await env.DB.prepare(
-      `SELECT s.needs_physician, s.signed_pdf_r2_keys, s.registration_number, s.id AS submission_id
+      `SELECT s.needs_physician, s.signed_pdf_r2_keys, s.registration_number, s.id AS submission_id, r.status AS request_status
        FROM form_requests r
        LEFT JOIN form_submissions s ON s.request_id = r.id
        WHERE r.participant_id=?
        ORDER BY r.id DESC, s.id DESC LIMIT 1`
     ).bind(row.id).first();
+    // Heal stuck in_progress rows when the packet already completed (prior sync swallow).
+    if (sub && sub.request_status === "completed" && (row.status === "in_progress" || row.status === "not_started")) {
+      try {
+        await syncParticipantAfterSubmit(env, row.id, { needsPhysician: !!sub.needs_physician });
+        row.status = sub.needs_physician ? "needs_medical_review"
+          : (row.is_minor && row.youth_addendum_status === "waiting" ? "waiting_youth_addendum" : "complete");
+      } catch (_) {}
+    }
     people.push(participantPublic(row, { includeMedical: staff, submission: sub }));
   }
   const total = people.length;
-  const done = people.filter((p) => p.status === "complete" || p.status === "needs_medical_review").length;
+  // waiting_youth_addendum = packet signed; paper addendum is staff follow-up only
+  const done = people.filter((p) =>
+    p.status === "complete" || p.status === "needs_medical_review" || p.status === "waiting_youth_addendum"
+  ).length;
   let sharedAddress = {};
   let sharedEmergency = {};
   try { sharedAddress = JSON.parse(reg.shared_address_json || "{}"); } catch { sharedAddress = {}; }
