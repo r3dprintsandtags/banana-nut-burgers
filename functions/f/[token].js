@@ -72,9 +72,17 @@ html[data-theme="dark"] .ok{color:#b6f0cf}
 .boxhead{margin-top:16px;font-weight:800;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-weight:700;color:var(--text)}
 .chk input{width:22px;height:22px;min-height:22px;flex:none}
-.doc,.paper{max-height:52vh;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap}
+.doc,.paper{max-height:min(70vh,640px);overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;cursor:zoom-in}
+.doc canvas,.paper canvas{width:100%!important;height:auto!important;border:0!important;border-radius:0!important;touch-action:pan-y!important;pointer-events:none}
 .paper .filled{color:#08315c!important;font-weight:800;border-bottom:1px solid #08315c}
 .paper .cap,.paper .blank{color:#3d5160!important}
+.doc-enlarge{width:100%;margin:8px 0 0;background:var(--surface);color:var(--text);border:1px solid var(--border)}
+#docLightbox{position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;background:rgba(6,22,31,.94);padding:env(safe-area-inset-top,12px) 12px env(safe-area-inset-bottom,12px)}
+#docLightbox.open{display:flex}
+#docLightbox .lbbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex:none}
+#docLightbox .lbbar b{color:#f5fbff}
+#docLightbox .lbscroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;background:#fff;border-radius:12px;padding:12px;-webkit-user-select:none;user-select:none}
+#docLightbox .lbscroll img,#docLightbox .lbscroll canvas{width:100%;height:auto;display:block;margin:0 0 8px}
 .sigblock{margin-top:12px;padding-top:8px;border-top:1px solid #c5b89a}
 .stepper{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .stepbtn{flex:1 1 140px;display:flex;flex-direction:column;align-items:flex-start;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left}
@@ -91,7 +99,7 @@ html[data-theme="dark"] .stepbtn.complete .ss{color:#b6f0cf}
 button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);cursor:not-allowed}
 #retry,#missing{background:var(--surface);color:var(--text);border:1px solid var(--danger);border-radius:12px;padding:12px;margin-top:12px}
 #missing .miss{display:block;width:100%;margin-top:8px;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left}
-canvas{width:100%;height:160px;border:2px solid var(--primary);border-radius:12px;background:#fff;touch-action:none}
+#pad,#gpad,canvas.sigpad{width:100%;height:160px;border:2px solid var(--primary);border-radius:12px;background:#fff;touch-action:none}
 </style>
 </head>
 <body>

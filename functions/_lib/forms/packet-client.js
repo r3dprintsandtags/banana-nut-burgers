@@ -470,9 +470,18 @@ function renderDocuments(){
     paper.appendChild(wait);
   }
   card.appendChild(paper);
+  const enlarge=document.createElement("button");
+  enlarge.type="button"; enlarge.className="doc-enlarge"; enlarge.id="docEnlarge";
+  enlarge.textContent=L==="es"?"Toca para ampliar y desplazarte":"Tap to enlarge and scroll";
+  enlarge.onclick=()=>openDocLightbox(paper);
+  paper.addEventListener("click",(ev)=>{
+    if(ev.target.closest("button,a,input,label")) return;
+    openDocLightbox(paper);
+  });
+  card.appendChild(enlarge);
   const hint=document.createElement("p");
   hint.className="mut"; hint.id="scrollHint";
-  hint.textContent=L==="es"?"Llega al final del documento para aceptar.":"Reach the end of the document to agree.";
+  hint.textContent=L==="es"?"Desplázate hasta el final del documento para aceptar. Toca el formulario para ampliarlo.":"Scroll to the end of the document to agree. Tap the form to enlarge it.";
   const agreeLab=document.createElement("label");
   agreeLab.className="chk";
   const agree=document.createElement("input");
@@ -499,7 +508,7 @@ function renderDocuments(){
   const sigLab=document.createElement("label");
   sigLab.textContent=L==="es"?"Firma":"Signature";
   const pad=document.createElement("canvas");
-  pad.id="pad"; pad.width=640; pad.height=160;
+  pad.id="pad"; pad.className="sigpad"; pad.width=640; pad.height=160;
   const clear=document.createElement("button");
   clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
   card.append(hint, agreeLab, why);
@@ -517,7 +526,7 @@ function renderDocuments(){
     const gl=document.createElement("label");
     gl.textContent=L==="es"?"Firma del tutor":"Guardian signature";
     gpad=document.createElement("canvas");
-    gpad.id="gpad"; gpad.width=640; gpad.height=140;
+    gpad.id="gpad"; gpad.className="sigpad"; gpad.width=640; gpad.height=140;
     card.append(gl, gpad);
   }
   const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||(docIndex===0&&answers.__signatures._reuse));
@@ -800,14 +809,16 @@ async function paintPdf(host, bytes){
   host.innerHTML="";
   for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
-    const viewport=page.getViewport({ scale: 1.15 });
+    const viewport=page.getViewport({ scale: 1.35 });
     const canvas=document.createElement("canvas");
+    canvas.className="pdfpage";
     canvas.width=viewport.width;
     canvas.height=viewport.height;
     canvas.style.width="100%";
     canvas.style.height="auto";
     canvas.style.display="block";
     canvas.style.margin="0 0 8px";
+    canvas.style.touchAction="pan-y";
     host.appendChild(canvas);
     await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
   }
@@ -816,6 +827,56 @@ async function paintPdf(host, bytes){
   end.setAttribute("data-doc-end","1");
   end.style.height="32px";
   host.appendChild(end);
+}
+function closeDocLightbox(){
+  const box=document.getElementById("docLightbox");
+  if(!box) return;
+  box.classList.remove("open");
+  document.body.style.overflow="";
+}
+function openDocLightbox(sourcePaper){
+  if(!sourcePaper) return;
+  let box=document.getElementById("docLightbox");
+  if(!box){
+    box=document.createElement("div");
+    box.id="docLightbox";
+    box.innerHTML='<div class="lbbar"><b></b><button type="button" class="ghost" id="docLightboxClose"></button></div><div class="lbscroll" id="docLightboxScroll"></div>';
+    document.body.appendChild(box);
+    box.querySelector("#docLightboxClose").onclick=closeDocLightbox;
+    box.addEventListener("click",(ev)=>{ if(ev.target===box) closeDocLightbox(); });
+  }
+  box.querySelector(".lbbar b").textContent=L==="es"?"Documento ampliado":"Enlarged document";
+  box.querySelector("#docLightboxClose").textContent=L==="es"?"Cerrar":"Close";
+  const scroll=box.querySelector("#docLightboxScroll");
+  scroll.innerHTML="";
+  const canvases=sourcePaper.querySelectorAll("canvas.pdfpage, canvas");
+  if(canvases.length){
+    canvases.forEach((c)=>{
+      if(c.id==="pad"||c.id==="gpad"||c.classList.contains("sigpad")) return;
+      try{
+        const img=document.createElement("img");
+        img.src=c.toDataURL("image/png");
+        img.alt="";
+        scroll.appendChild(img);
+      }catch(e){
+        const clone=c.cloneNode(true);
+        scroll.appendChild(clone);
+      }
+    });
+  } else {
+    const clone=sourcePaper.cloneNode(true);
+    clone.removeAttribute("id");
+    clone.style.maxHeight="none";
+    clone.style.overflow="visible";
+    clone.style.cursor="default";
+    scroll.appendChild(clone);
+  }
+  const end=document.createElement("div");
+  end.style.height="48px";
+  scroll.appendChild(end);
+  box.classList.add("open");
+  document.body.style.overflow="hidden";
+  try{ scroll.scrollTop=0; }catch(e){}
 }
 function pdfFileName(key){
   const clean=(s)=>String(s||"Form").replace(/[^\\p{L}\\p{N}._-]+/gu,"_").replace(/_+/g,"_").slice(0,40);
