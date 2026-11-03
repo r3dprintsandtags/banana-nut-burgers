@@ -48,7 +48,7 @@ html[data-theme="dark"] h1,html[data-theme="dark"] .brand{color:var(--on-photo)}
 h2{font-size:18px;margin:0 0 8px;color:var(--text)}
 .wrap{max-width:640px;margin:0 auto}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.brand{display:inline-flex;align-items:center;gap:10px;color:var(--text);font-weight:800;text-decoration:none}.brand:hover{opacity:.9}.brand img{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block}
+.brand{display:inline-flex;align-items:center;gap:10px;color:var(--text);font-weight:800;text-decoration:none}.brand:hover{opacity:.9}.brand img{width:64px;height:64px;border-radius:50%;object-fit:cover;display:block}
 .card{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
 .card p,.card li,.card label,.card h2,.card h3,.card span{color:var(--text)}
 .mut{color:var(--muted);font-size:14px}
@@ -97,7 +97,7 @@ canvas{width:100%;height:160px;border:2px solid var(--primary);border-radius:12p
 <body>
 <div class="wrap">
   <div class="bar">
-    <a class="brand" href="/" aria-label="Banana Nut Burgers home"><img src="/img/bnb-logo.png" width="40" height="40" alt="Banana Nut Burgers Dive Shop"><span>Forms</span></a>
+    <a class="brand" href="/" aria-label="Banana Nut Burgers home"><img src="/img/bnb-logo.png" width="64" height="64" alt="Banana Nut Burgers Dive Shop"><span>Forms</span></a>
     <span id="saved" class="mut"></span>
     <button type="button" class="ghost" id="themeBtn">Dark</button>
     <button type="button" class="ghost" id="langBtn">ES</button>

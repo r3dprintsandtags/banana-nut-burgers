@@ -907,19 +907,37 @@ function showDone(out){
   const back=document.createElement("button");
   back.type="button"; back.className="ban"; back.style.width="100%"; back.style.marginTop="8px";
   back.textContent=L==="es"?"Volver al registro":"Back to registration";
-  back.onclick=()=>{
-    const msg={type:"bnb_packet_done",registrationNumber:out.registrationNumber||"",needsPhysician:!!(out.needsPhysician||out.needsStaffReview),needsStaffReview:!!(out.needsPhysician||out.needsStaffReview),staffReviewStatus:out.staffReviewStatus||""};
-    if(window.parent&&window.parent!==window) window.parent.postMessage(msg, location.origin);
-    else location.href="/register";
-  };
+  back.onclick=()=>goBackAfterPacket(out);
   card.append(email, note, back);
   app.appendChild(card);
+  // Auto-return to registration (full-page or iframe parent) so "Done" / complete finishes the flow.
+  goBackAfterPacket(out, { auto: true });
+  paintStepper();
+}
+function packetReturnUrl(){
+  try{
+    const ret=new URLSearchParams(location.search).get("return");
+    if(!ret) return "";
+    const u=new URL(ret, location.origin);
+    if(u.origin!==location.origin) return "";
+    if(!u.searchParams.has("fromPacket")) u.searchParams.set("fromPacket","1");
+    if(!u.searchParams.has("packetDone")) u.searchParams.set("packetDone","1");
+    return u.pathname+u.search+u.hash;
+  }catch(e){ return ""; }
+}
+function goBackAfterPacket(out, opts){
+  opts=opts||{};
+  const msg={type:"bnb_packet_done",registrationNumber:out&&out.registrationNumber||"",needsPhysician:!!(out&&(out.needsPhysician||out.needsStaffReview)),needsStaffReview:!!(out&&(out.needsPhysician||out.needsStaffReview)),staffReviewStatus:(out&&out.staffReviewStatus)||""};
+  const ret=packetReturnUrl();
   try{
     if(window.parent&&window.parent!==window){
-      window.parent.postMessage({type:"bnb_packet_done",registrationNumber:out.registrationNumber||"",needsPhysician:!!(out.needsPhysician||out.needsStaffReview),needsStaffReview:!!(out.needsPhysician||out.needsStaffReview),staffReviewStatus:out.staffReviewStatus||""}, location.origin);
+      window.parent.postMessage(msg, location.origin);
+      if(opts.auto) return;
     }
   }catch(e){}
-  paintStepper();
+  if(ret){ location.href=ret; return; }
+  if(opts.auto) return;
+  location.href="/register.html?fromPacket=1&packetDone=1";
 }
 function render(){
   syncLangBtn();

@@ -14,7 +14,7 @@ body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 .wrap{max-width:760px;margin:0 auto;padding:0 16px}
 .top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0;max-width:760px;margin:0 auto}
 .top button{background:rgba(255,255,255,.88);backdrop-filter:blur(10px);color:var(--ink);border:1px solid rgba(255,255,255,.4);border-radius:99px;min-height:40px;padding:8px 14px;font-weight:700;cursor:pointer}
-.brand{display:inline-flex;align-items:center;text-decoration:none;line-height:0}.brand:hover{opacity:.92}.brand img{width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
+.brand{display:inline-flex;align-items:center;text-decoration:none;line-height:0}.brand:hover{opacity:.92}.brand img{width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
 h1{font-size:28px;margin:14px 0 4px;color:#f5fbff;text-shadow:0 2px 14px rgba(0,0,0,.5)}h2{font-size:20px;margin:0 0 8px}
 .wrap > .mut,.wrap > #stepLabel{color:#d7eef8!important;text-shadow:0 1px 8px rgba(0,0,0,.4)}
 .card{background:#fff!important;color:#0a2533!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:16px;padding:18px;margin-top:14px;box-shadow:0 16px 48px rgba(0,0,0,.22)}
@@ -66,7 +66,7 @@ canvas.sigpad{width:100%;height:180px;border:1.5px dashed var(--pri);border-radi
 <body>
 <div class="top">
   <a class="brand" href="/" aria-label="Banana Nut Burgers home">
-    <img src="/img/bnb-logo.png" width="52" height="52" alt="Banana Nut Burgers Dive Shop">
+    <img src="/img/bnb-logo.png" width="88" height="88" alt="Banana Nut Burgers Dive Shop">
   </a>
   <button id="langBtn" type="button">ES</button>
 </div>
@@ -1202,48 +1202,52 @@ async function openPersonPacket(id){
     $("err3").textContent = T[L].packetFail || "Could not start packet forms";
     return;
   }
-  // Hide the party cards so Start forms clearly opens the packet (esp. on mobile).
-  setPartyFormsFocus(true);
-  $("packetBox").classList.remove("hide");
+  if ($("err3")) $("err3").textContent = T[L].packetWait || "Opening forms…";
   try {
     const r = await fetch(`/api/register/participants/${pid}/packet`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ref: draft.ref, token: draft.token }) });
     const out = await r.json().catch(() => ({}));
     if (!r.ok) {
-      setPartyFormsFocus(false);
-      $("packetBox").classList.add("hide");
-      $("err3").textContent = out.error || T[L].packetFail;
+      $("err3").textContent = out.error || T[L].packetFail || "Could not start packet forms";
       return;
     }
     const person = (party.participants || []).find(p => Number(p.id) === pid);
     packetMeta = { packetKey: out.packetKey, registrationNumber: out.registrationNumber, status: out.status, formLink: out.formLink || null, participantId: pid };
-    if ($("packetName")) $("packetName").textContent = `${person ? person.firstName + " " + person.lastName : ""} · ${out.packetKey || ""}`;
-    if ($("packetReg")) $("packetReg").textContent = out.registrationNumber ? `${T[L].regNumLabel || "Reg #"}: ${out.registrationNumber}` : "";
     if (out.alreadyCompleted || out.status === "completed") {
-      if ($("packetStatus")) $("packetStatus").textContent = T[L].packetDone;
-      if ($("packetFrameWrap")) $("packetFrameWrap").classList.add("hide");
-      if ($("packetBox")) $("packetBox").classList.add("hide");
-      setPartyFormsFocus(false);
+      if ($("err3")) $("err3").textContent = "";
       activeParticipantId = null;
       await refreshParty();
       return;
     }
-    if (out.formLink && $("packetFrame") && $("packetFrameWrap")) {
-      const langQ = (out.formLink.includes("?") ? "&" : "?") + "lang=" + encodeURIComponent(L);
-      $("packetFrame").src = out.formLink + langQ;
+    if (!out.formLink) {
+      $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+      return;
+    }
+    // Full-page forms (not iframe): Turnstile + Done work reliably on phones.
+    // Kiosk keeps the embedded frame so the device can stay on one register session.
+    draft.returnStep = 3;
+    draft.activeParticipantId = pid;
+    saveLocal();
+    const ret = `${location.origin}/register.html?fromPacket=1`;
+    const join = out.formLink.includes("?") ? "&" : "?";
+    const url = out.formLink + join + "lang=" + encodeURIComponent(L) + "&return=" + encodeURIComponent(ret)
+      + (kioskMode ? "&kiosk=1" : "");
+    if (kioskMode && $("packetFrame") && $("packetFrameWrap")) {
+      setPartyFormsFocus(true);
+      $("packetBox").classList.remove("hide");
+      $("packetFrame").src = url;
       $("packetFrameWrap").classList.remove("hide");
+      if ($("packetName")) $("packetName").textContent = `${person ? person.firstName + " " + person.lastName : ""} · ${out.packetKey || ""}`;
+      if ($("packetReg")) $("packetReg").textContent = out.registrationNumber ? `${T[L].regNumLabel || "Reg #"}: ${out.registrationNumber}` : "";
       if ($("packetStatus")) $("packetStatus").textContent = T[L].packetWait;
       startPacketPoll();
+      paintPacketUI();
+      tracker();
       try { $("packetBox").scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
-    } else {
-      setPartyFormsFocus(false);
-      $("err3").textContent = T[L].packetFail || "Could not start packet forms";
+      return;
     }
-    paintPacketUI();
-    tracker();
+    location.assign(url);
   } catch (e) {
-    setPartyFormsFocus(false);
-    $("packetBox").classList.add("hide");
     $("err3").textContent = T[L].packetFail || "Could not start packet forms";
   }
 }
@@ -1265,8 +1269,10 @@ async function loadForms(){
   if ($("sharedEmgPhone") && !$("sharedEmgPhone").value) $("sharedEmgPhone").value = d.emergencyPhone || "";
   if ($("packetBox")) $("packetBox").classList.add("hide");
   if ($("handoffBox")) $("handoffBox").classList.add("hide");
-  // Solo registration: open your forms immediately — no "add a person" gate.
-  if (!packetCompleted && partyHeadcount() <= 1) {
+  // Solo registration: open your forms immediately — unless we just returned from the packet.
+  const backFromPacket = new URLSearchParams(location.search).get("fromPacket") === "1"
+    || new URLSearchParams(location.search).get("packetDone") === "1";
+  if (!backFromPacket && !packetCompleted && partyHeadcount() <= 1) {
     const primary = (party.participants || []).find(p => p.role === "primary") || (party.participants || [])[0];
     if (primary && primary.status !== "complete" && primary.status !== "needs_medical_review") {
       await startPersonForms(primary.id);
@@ -1457,6 +1463,18 @@ window.addEventListener("message", async (ev) => {
 $("toWaivers").onclick = async () => {
   await refreshParty();
   if (!packetCompleted) {
+    const nextPerson = (party.participants || []).find(p =>
+      p.status !== "complete" && p.status !== "needs_medical_review"
+    );
+    if (nextPerson) {
+      $("err3").textContent = T[L].needPacket || "Finish the SSI forms first.";
+      await startPersonForms(nextPerson.id);
+      return;
+    }
+    if (!(party.participants || []).length) {
+      await ensureAndStartPrimary();
+      return;
+    }
     $("err3").textContent = T[L].needPacket;
     return;
   }
@@ -2018,6 +2036,22 @@ if (actQ && ACTS.includes(actQ)) { $("act").value = actQ; }
         return;
       }
     } catch (e) {}
+  }
+  // Returning from full-page SSI packet (Start forms / Done).
+  if ((params.get("fromPacket") === "1" || params.get("packetDone") === "1") && draft.ref && draft.token) {
+    try {
+      const r = await fetch("/api/register/draft?ref=" + encodeURIComponent(draft.ref) + "&token=" + encodeURIComponent(draft.token));
+      const out = await r.json().catch(() => ({}));
+      if (r.ok && out.data) fill(out.data);
+    } catch (e) {}
+    go(3);
+    await refreshParty();
+    setPartyFormsFocus(false);
+    paintParty();
+    paintPacketUI();
+    tracker();
+    try { history.replaceState({}, "", location.pathname); } catch (e) {}
+    return;
   }
   if (draft.ref) { /* same-device resume is one tap away */ }
   if (location.hash === "#resume") $("resumeOpen").click();
