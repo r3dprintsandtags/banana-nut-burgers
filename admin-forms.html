@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Form PDF mapper · Banana Nut Burgers</title>
+<link rel="icon" href="/img/bnb-logo.png" type="image/png">
 <style>
 :root{--bg:#06161f;--card:#fff;--ink:#0a2533;--pri:#0a86b0;--ban:#ffc928;--line:#c5b89a;--mut:#5a6e78;--red:#d64545}
 *{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,sans-serif;color:#0a2533;background:#06161f url(img/deep-blue.jpg) center/cover fixed;min-height:100vh}
 body:before{content:"";position:fixed;inset:0;background:rgba(6,22,31,.75);z-index:0}
 .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:16px}
-h1{color:#f5fbff;margin:0 0 8px;font-size:22px}
+h1{color:#f5fbff;margin:0 0 8px;font-size:22px;display:flex;align-items:center;gap:10px}
+h1 img{width:40px;height:40px;border-radius:50%;object-fit:cover}
 .wrap > div > div > .mut,.page-mut{color:#c5dce8!important;text-shadow:0 1px 6px rgba(0,0,0,.35)}
 .card{background:#fff!important;color:#0a2533!important;backdrop-filter:blur(12px);border-radius:14px;padding:14px;margin-top:12px;border:1px solid rgba(255,255,255,.35)}
 .card label,.card h2,.card b{color:#0a2533!important}
@@ -38,7 +40,7 @@ label{display:block;font-weight:600;margin-top:10px;font-size:13px;color:#0a2533
 <body>
 <div class="wrap">
   <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
-    <div><h1>PDF field mapper</h1><p class="mut page-mut">Click the PDF to place shared fields. Drag pins. Save mapping · preview sample fill.</p></div>
+    <div><h1><a href="/" aria-label="Banana Nut Burgers home" style="display:inline-flex;align-items:center;gap:10px;color:inherit;text-decoration:none"><img src="/img/bnb-logo.png" width="40" height="40" alt=""><span>PDF field mapper</span></a></h1><p class="mut page-mut">Click the PDF to place shared fields. Drag pins. Save mapping · preview sample fill.</p></div>
     <div><a class="ghost" href="admin.html" style="display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;text-decoration:none;border:1px solid #eadfc2;color:#42c8f2;font-weight:700">← CRM</a></div>
   </div>
 

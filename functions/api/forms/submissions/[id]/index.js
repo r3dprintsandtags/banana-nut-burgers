@@ -1,6 +1,7 @@
 import { json, isAuthed, hashIP } from "../../../../_shared.js";
 import { decryptJson } from "../../../../_lib/forms/crypto.js";
 import { formAudit } from "../../../../_lib/forms/submit.js";
+import { deleteFormSubmission } from "../../../../_lib/purge.js";
 
 /**
  * GET /api/forms/submissions/:id — admin view of a completed packet submission
@@ -54,4 +55,13 @@ export async function onRequestGet({ request, env, params }) {
       download: `/api/forms/submissions/${id}/pdf?key=${encodeURIComponent(p.template_key || "")}`,
     })),
   });
+}
+
+/** DELETE /api/forms/submissions/:id — remove a signed packet submission (+ PDFs) */
+export async function onRequestDelete({ request, env, params }) {
+  if (!env.DB) return json({ error: "Not configured" }, 503);
+  if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
+  const out = await deleteFormSubmission(env, params.id);
+  if (!out.ok) return json({ error: out.error }, out.status || 400);
+  return json(out);
 }

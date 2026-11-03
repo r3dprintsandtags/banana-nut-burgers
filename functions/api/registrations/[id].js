@@ -1,4 +1,5 @@
 import { json, isAuthed, str, audit, ensureSchema } from "../../_shared.js";
+import { deleteRegistration } from "../../_lib/purge.js";
 
 async function loadReg(env, id) {
   return env.DB.prepare(
@@ -114,4 +115,14 @@ export async function onRequestPatch({ request, env, params }) {
   await audit(env, "admin", "registration.review", "registration", reg.ref,
     `status:${reg.status}->${next}${note ? " note:" + note : ""}`);
   return json({ ok: true, status: next, archived: !!archived });
+}
+
+// DELETE /api/registrations/:id — remove registration + forms + orphan customer
+export async function onRequestDelete({ request, env, params }) {
+  if (!env.DB) return json({ error: "Database not configured" }, 503);
+  if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
+  await ensureSchema(env);
+  const out = await deleteRegistration(env, params.id);
+  if (!out.ok) return json({ error: out.error }, out.status || 400);
+  return json(out);
 }

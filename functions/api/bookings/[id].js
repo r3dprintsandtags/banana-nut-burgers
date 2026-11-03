@@ -1,4 +1,5 @@
 import { json, isAuthed, str } from "../../_shared.js";
+import { deleteBooking } from "../../_lib/purge.js";
 
 // PATCH /api/bookings/:id  {status}  (admin only)
 export async function onRequestPatch({ request, env, params }) {
@@ -16,6 +17,7 @@ export async function onRequestPatch({ request, env, params }) {
 export async function onRequestDelete({ request, env, params }) {
   if (!env.DB) return json({ error: "Database not configured" }, 503);
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
-  const res = await env.DB.prepare("DELETE FROM bookings WHERE id=?").bind(Number(params.id)).run();
-  return json({ ok: true, changed: res.meta.changes });
+  const out = await deleteBooking(env, params.id);
+  if (!out.ok) return json({ error: out.error }, out.status || 400);
+  return json(out);
 }

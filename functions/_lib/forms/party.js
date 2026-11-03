@@ -128,13 +128,23 @@ export async function ensurePrimaryParticipant(env, reg, customer, data = {}) {
   ).bind(reg.id).first();
   if (existing) return existing;
 
-  const first = String(data.firstName || data.first_name || customer.first_name || "").trim();
-  const last = String(data.lastName || data.last_name || customer.last_name || "").trim();
+  const cust = customer || {};
+  const first = String(data.firstName || data.first_name || cust.first_name || "").trim();
+  const last = String(data.lastName || data.last_name || cust.last_name || "").trim();
   const dob = String(data.dob || "").trim();
-  const isMinor = computeIsMinor(dob);
+  if (dob && computeIsMinor(dob)) {
+    throw Object.assign(
+      new Error("A parent or guardian needs to register first. Please ask them to open this link."),
+      { status: 422, code: "GUARDIAN_REQUIRED" }
+    );
+  }
+  const isMinor = 0;
   const now = Date.now();
+  const contactId = cust.id || reg.customer_id || null;
   let regNum = "";
-  try { regNum = await ensureRegistrationNumber(env, customer.id); } catch (_) {}
+  if (contactId) {
+    try { regNum = await ensureRegistrationNumber(env, contactId); } catch (_) {}
+  }
 
   const r = await env.DB.prepare(
     `INSERT INTO participants (
@@ -142,8 +152,8 @@ export async function ensurePrimaryParticipant(env, reg, customer, data = {}) {
       email, phone, status, registration_number, youth_addendum_status, sort_order, created_at, updated_at
     ) VALUES (?,?,?,?,?,?, 'self', 'here', 'primary', ?, ?, 'not_started', ?, ?, 0, ?, ?)`
   ).bind(
-    reg.id, customer.id, first, last, dob, isMinor,
-    customer.email || data.email || "", customer.phone || data.phone || "",
+    reg.id, contactId, first || "Guest", last || "Diver", dob, isMinor,
+    cust.email || data.email || "", cust.phone || data.phone || "",
     regNum, isMinor ? "waiting" : "n/a", now, now
   ).run();
 
@@ -185,28 +195,43 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
     throw Object.assign(new Error("firstName, lastName, and dob (YYYY-MM-DD) are required"), { status: 422 });
   }
   const isMinor = computeIsMinor(dob);
-  const mode = isMinor ? "here" : (payload.mode === "own_phone" ? "own_phone" : "here");
-  const relationship = String(payload.relationship || "guest").slice(0, 40);
+  // One adult per registration: guests must be minors. Adults complete their own registration via invite.
+  if (!isMinor) {
+    const existing = id
+      ? await env.DB.prepare("SELECT role FROM participants WHERE id=? AND registration_id=?").bind(id, reg.id).first()
+      : null;
+    if (!existing || existing.role !== "primary") {
+      throw Object.assign(
+        new Error("Each adult completes their own registration. Invite another adult instead of adding them here."),
+        { status: 422, code: "ADULT_NEEDS_OWN_REGISTRATION" }
+      );
+    }
+  }
+  const mode = "here"; // minors always fill with the guardian on this device
+  const relationship = String(payload.relationship || (isMinor ? "child" : "self")).slice(0, 40);
   const email = String(payload.email || "").trim().slice(0, 120);
   const phone = String(payload.phone || "").replace(/[^\d+]/g, "").slice(0, 32);
   const now = Date.now();
 
-  let guardianParticipantId = payload.guardianParticipantId ? Number(payload.guardianParticipantId) : null;
+  // Guardian is always the primary registrant — no adult-to-adult guardian picker.
+  let guardianParticipantId = null;
   let guardianJson = "{}";
   if (isMinor) {
-    if (!guardianParticipantId) {
-      const primary = await env.DB.prepare(
-        "SELECT id FROM participants WHERE registration_id=? AND role='primary' AND status<>'removed' LIMIT 1"
-      ).bind(reg.id).first();
-      guardianParticipantId = primary?.id || null;
+    const primary = await env.DB.prepare(
+      "SELECT id, first_name, last_name, email, phone FROM participants WHERE registration_id=? AND role='primary' AND status<>'removed' LIMIT 1"
+    ).bind(reg.id).first();
+    if (!primary) {
+      throw Object.assign(new Error("Add the adult registrant before adding minors"), { status: 422 });
     }
-    if (payload.guardian && typeof payload.guardian === "object") {
-      guardianJson = JSON.stringify({
-        name: String(payload.guardian.name || "").slice(0, 120),
-        email: String(payload.guardian.email || "").slice(0, 120),
-        phone: String(payload.guardian.phone || "").slice(0, 32),
-      });
+    if (computeIsMinor(primary.dob || "")) {
+      throw Object.assign(new Error("A parent or guardian needs to register first"), { status: 422, code: "GUARDIAN_REQUIRED" });
     }
+    guardianParticipantId = primary.id;
+    guardianJson = JSON.stringify({
+      name: `${primary.first_name || ""} ${primary.last_name || ""}`.trim(),
+      email: primary.email || "",
+      phone: primary.phone || "",
+    });
   }
 
   // Soft duplicate warning (same name + DOB already on this party) — still allow if forceDuplicate
@@ -235,11 +260,17 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
     if (!row || row.status === "removed") throw Object.assign(new Error("Participant not found"), { status: 404 });
     const addressJson = addressJsonWithGear(row.address_json, payload);
     if (row.role === "primary") {
+      if (isMinor) {
+        throw Object.assign(
+          new Error("A parent or guardian needs to register first. Please ask them to open this link."),
+          { status: 422, code: "GUARDIAN_REQUIRED" }
+        );
+      }
       // primary: allow contact field updates but keep role/mode rules
       await env.DB.prepare(
-        `UPDATE participants SET first_name=?, last_name=?, dob=?, is_minor=?, email=?, phone=?, contact_id=?,
-         registration_number=COALESCE(NULLIF(registration_number,''),?), youth_addendum_status=?, address_json=?, updated_at=? WHERE id=?`
-      ).bind(first, last, dob, isMinor, email, phone, contactId, regNum, isMinor ? (row.youth_addendum_status === "received" ? "received" : "waiting") : "n/a", addressJson, now, id).run();
+        `UPDATE participants SET first_name=?, last_name=?, dob=?, is_minor=0, email=?, phone=?, contact_id=?,
+         registration_number=COALESCE(NULLIF(registration_number,''),?), youth_addendum_status='n/a', address_json=?, updated_at=? WHERE id=?`
+      ).bind(first, last, dob, email, phone, contactId, regNum, addressJson, now, id).run();
     } else {
       await env.DB.prepare(
         `UPDATE participants SET first_name=?, last_name=?, dob=?, is_minor=?, relationship=?, mode=?,
@@ -481,6 +512,8 @@ export async function suggestPastPeople(env, reg, { phone = "", email = "" } = {
   const out = [];
 
   const pushRow = (row) => {
+    // Returning picker is minors-only — adults use Invite another adult.
+    if (!computeIsMinor(row.dob)) return;
     const key = `${String(row.first_name || "").toLowerCase()}|${String(row.last_name || "").toLowerCase()}|${row.dob || ""}`;
     if (seen.has(key)) return;
     seen.add(key);
@@ -488,14 +521,13 @@ export async function suggestPastPeople(env, reg, { phone = "", email = "" } = {
     let address = {};
     try { emergency = JSON.parse(row.emergency_json || "{}"); } catch { emergency = {}; }
     try { address = JSON.parse(row.address_json || "{}"); } catch { address = {}; }
-    // Also try registration data emergency if participant emergency empty
     out.push({
       firstName: row.first_name || "",
       lastName: row.last_name || "",
       dob: row.dob || "",
       email: row.email || "",
       phone: row.phone || "",
-      relationship: row.relationship || "other",
+      relationship: row.relationship || "child",
       emergency: {
         name: emergency.name || emergency.emergencyName || "",
         relationship: emergency.relationship || emergency.emergencyRelationship || "",

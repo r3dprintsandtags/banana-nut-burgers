@@ -26,7 +26,7 @@ export async function onRequestGet({ request, env }) {
   let data = {};
   try { data = JSON.parse(loaded.reg.data || "{}"); } catch { data = {}; }
   try {
-    await ensurePrimaryParticipant(env, loaded.reg, customer, data);
+    await ensurePrimaryParticipant(env, loaded.reg, customer || {}, data);
   } catch (_) { /* migration may not be applied yet */ }
 
   try {

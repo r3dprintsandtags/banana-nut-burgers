@@ -355,12 +355,17 @@ export async function submitFormRequest(env, request, reqRow, answersIn, { signe
   }
 
   // Sync party participant status (youth addendum / medical review gates)
-  if (reqRow.participant_id) {
-    try {
-      const { syncParticipantAfterSubmit } = await import("./party.js");
-      await syncParticipantAfterSubmit(env, reqRow.participant_id, { needsPhysician });
-    } catch (_) { /* non-fatal until migration applied */ }
-  }
+  try {
+    const { syncParticipantAfterSubmit } = await import("./party.js");
+    let pid = reqRow.participant_id || null;
+    if (!pid && reqRow.registration_id) {
+      const primary = await env.DB.prepare(
+        "SELECT id FROM participants WHERE registration_id=? AND role='primary' AND status<>'removed' LIMIT 1"
+      ).bind(reqRow.registration_id).first();
+      pid = primary?.id || null;
+    }
+    if (pid) await syncParticipantAfterSubmit(env, pid, { needsPhysician });
+  } catch (_) { /* non-fatal until migration applied */ }
 
   return {
     ok: true,

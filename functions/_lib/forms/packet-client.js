@@ -630,6 +630,21 @@ function finishLastDocument(doc, agree, pad, gpad, reuse){
   }
   submitPacket();
 }
+function ensureTurnstile(){
+  if(!payload||!payload.turnstileSiteKey) return Promise.resolve();
+  if(window.turnstile) return Promise.resolve();
+  return new Promise((resolve)=>{
+    const existing=document.querySelector('script[data-bnb-turnstile]');
+    if(existing){ existing.addEventListener("load", ()=>resolve()); return; }
+    const s=document.createElement("script");
+    s.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async=true;
+    s.dataset.bnbTurnstile="1";
+    s.onload=()=>resolve();
+    s.onerror=()=>resolve();
+    document.head.appendChild(s);
+  });
+}
 function acceptDoc(doc, agree, pad, gpad, reuse, opts){
   opts=opts||{};
   if(agree.disabled || !agree.checked){
@@ -693,7 +708,6 @@ function renderReview(){
     card.appendChild(cf);
   }
   const row=actions(()=>go("documents", Math.max((flow.docs||[]).length-1,0)), ()=>submitPacket(), L==="es"?"Listo":"Done");
-  const finishBtn=row.querySelector("#nextBtn");
   if(items.length){
     const why=document.createElement("p");
     why.className="err";
@@ -702,8 +716,15 @@ function renderReview(){
     card.appendChild(why);
   }
   card.appendChild(row);
-  if(payload&&payload.turnstileSiteKey&&window.turnstile){
-    setTimeout(()=>{ try{ window.turnstile.render("#cf",{sitekey:payload.turnstileSiteKey}); }catch(e){} }, 0);
+  if(payload&&payload.turnstileSiteKey){
+    ensureTurnstile().then(()=>{
+      try{
+        if(window.turnstile && $("cf") && !$("cf").dataset.rendered){
+          window.turnstile.render("#cf",{sitekey:payload.turnstileSiteKey});
+          $("cf").dataset.rendered="1";
+        }
+      }catch(e){}
+    });
   }
   return card;
 }
@@ -716,7 +737,14 @@ async function submitPacket(){
   answers.full_name_print=((answers.first_name||"")+" "+(answers.last_name||"")).trim();
   const first=(flow.docs&&flow.docs[0]&&flow.docs[0].key)||"";
   const sig=(answers.__signatures&&(answers.__signatures[first]||answers.__signatures._reuse))||"";
+  if(payload&&payload.turnstileSiteKey) await ensureTurnstile();
   const turnstileToken=document.querySelector("[name=cf-turnstile-response]")?.value||"";
+  if(payload&&payload.turnstileSiteKey && !turnstileToken){
+    if(btn){ btn.disabled=false; btn.textContent=L==="es"?"Listo":"Done"; }
+    $("err").textContent=L==="es"?"Completa la verificación de seguridad.":"Complete the security check, then tap Done.";
+    go("review");
+    return;
+  }
   let r, out;
   try{
     r=await fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
@@ -880,7 +908,8 @@ function showDone(out){
   back.type="button"; back.className="ban"; back.style.width="100%"; back.style.marginTop="8px";
   back.textContent=L==="es"?"Volver al registro":"Back to registration";
   back.onclick=()=>{
-    if(window.parent&&window.parent!==window) window.parent.postMessage({type:"bnb_packet_done",registrationNumber:out.registrationNumber||""}, location.origin);
+    const msg={type:"bnb_packet_done",registrationNumber:out.registrationNumber||"",needsPhysician:!!(out.needsPhysician||out.needsStaffReview),needsStaffReview:!!(out.needsPhysician||out.needsStaffReview),staffReviewStatus:out.staffReviewStatus||""};
+    if(window.parent&&window.parent!==window) window.parent.postMessage(msg, location.origin);
     else location.href="/register";
   };
   card.append(email, note, back);

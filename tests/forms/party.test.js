@@ -141,14 +141,51 @@ describe("customer flow: no new-tab / popup / dialog APIs", () => {
   });
 });
 
-describe("own-phone adults cannot be opened via party packet API", () => {
-  it("packet route enforces OWN_PHONE_ONLY", () => {
+describe("legacy own-phone adults cannot be opened via party packet API", () => {
+  it("packet route still enforces OWN_PHONE_ONLY for old rows", () => {
     const src = fs.readFileSync(
       path.join(root, "functions/api/register/participants/[id]/packet.js"),
       "utf8"
     );
     assert.ok(src.includes("OWN_PHONE_ONLY"));
     assert.ok(src.includes("own_phone"));
+  });
+});
+
+describe("one adult per registration", () => {
+  it("API rejects adding a second adult", () => {
+    const src = fs.readFileSync(path.join(root, "functions/_lib/forms/party.js"), "utf8");
+    assert.ok(src.includes("ADULT_NEEDS_OWN_REGISTRATION"));
+    assert.ok(src.includes('const mode = "here"'));
+    assert.ok(src.includes("GUARDIAN_REQUIRED"));
+  });
+  it("suggestPastPeople filters to minors only", () => {
+    const src = fs.readFileSync(path.join(root, "functions/_lib/forms/party.js"), "utf8");
+    assert.ok(src.includes("Returning picker is minors-only") || src.includes("!computeIsMinor(row.dob)"));
+  });
+  it("invite-adult and booking party APIs exist", () => {
+    assert.ok(fs.existsSync(path.join(root, "functions/api/register/invite-adult.js")));
+    assert.ok(fs.existsSync(path.join(root, "functions/api/bookings/[id]/party.js")));
+    assert.ok(fs.existsSync(path.join(root, "functions/api/bookings/[id]/invite-context.js")));
+    const invite = fs.readFileSync(path.join(root, "functions/api/register/invite-adult.js"), "utf8");
+    assert.ok(invite.includes("fresh=1"));
+    assert.ok(invite.includes("booking="));
+  });
+  it("register.html has invite + minors Yes/No and no adult guest modes", () => {
+    const html = fs.readFileSync(path.join(root, "register.html"), "utf8");
+    assert.ok(html.includes("inviteAdultBtn"));
+    assert.ok(html.includes("passDeviceGo"));
+    assert.ok(html.includes("hasMinorsYes"));
+    assert.equal(/mode\s*===\s*["']own_phone["']\s*\?\s*["']Own phone/.test(html), false);
+  });
+  it("admin CRM has Party view wiring", () => {
+    const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");
+    assert.ok(html.includes("paintBookingParty"));
+    assert.ok(html.includes('data-act="party"'));
+    assert.ok(html.includes("/api/bookings/") && html.includes("/party"));
+  });
+  it("migration dry-run script exists", () => {
+    assert.ok(fs.existsSync(path.join(root, "scripts/migrate-one-adult-dry-run.mjs")));
   });
 });
 
