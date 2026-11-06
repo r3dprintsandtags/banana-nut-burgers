@@ -87,3 +87,5 @@ npx wrangler pages deploy . --project-name banana-nut-burgers
 - Text (English and Spanish): the `T` object at the top of the script.
 - Service cards: the `svc` lists in `T`. Photos are base64 inside the file; replace them with image files and update the `src` values if you prefer.
 - Share-form link: automatic (the page's own address plus `#book`).
+
+<!-- pages build retry -->
