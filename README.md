@@ -24,7 +24,8 @@ npx wrangler pages deploy . --project-name banana-nut-burgers
 **Option B — Cloudflare dashboard + Git:**
 1. Push this repo to GitHub.
 2. Cloudflare Dashboard > Workers & Pages > Create > Pages > Connect to Git, pick this repo.
-3. Build settings: Framework preset `None`, Build command *(leave empty)*, Build output directory `/`.
+3. Build settings: Framework preset `None`, Build command `npm ci`, Build output directory `/`.
+   `npm ci` is required. With an empty build command the Pages function bundler cannot resolve `pdf-lib` or `@pdf-lib/fontkit`. The output directory stays `/` (the site root). Do not set it to `node_modules`.
 4. Every push to `main` then auto-deploys. For banananutburgers.com, add it under the project's Custom domains tab and create the DNS record Cloudflare lists.
 
 ## Bookings CRM / backend (Cloudflare D1)

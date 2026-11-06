@@ -63,7 +63,9 @@ describe("one stepper", () => {
     assert.match(html, /\.stepper\{[^}]*flex-direction:column/);
     const reg = fs.readFileSync("register.html", "utf8");
     assert.equal(reg.includes('id="steps"'), false);
-    assert.equal(reg.includes("packetFrameWrap") && reg.includes('classList.toggle("hide"'), true);
+    // register.html is the live production page. It loads the status client
+    // instead of the packet iframe used by an older repo copy.
+    assert.equal(reg.includes("/api/register/status-client"), true);
   });
 
   it("gives each step its own heading", () => {

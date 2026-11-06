@@ -57,11 +57,19 @@ export async function onRequestGet({ request, env }) {
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
   await ensureSchema(env);
   const url = new URL(request.url);
-  const status = ["new", "confirmed", "done"].includes(url.searchParams.get("status")) ? url.searchParams.get("status") : "";
+  const status = str(url.searchParams.get("status"), 20);
   const q = str(url.searchParams.get("q"), 80).toLowerCase();
+  const today = await shopToday(env);
 
   let sql = "SELECT * FROM bookings", where = [], bind = [];
-  if (status) { where.push("status=?"); bind.push(status); }
+  // Live CRM tabs. Archived rows stay on the Archive tab. Counts below are global.
+  if (status === "archive") where.push("ifnull(archived,0)=1");
+  else if (status === "complete") { where.push("ifnull(dive_done,0)=1"); where.push("ifnull(archived,0)=0"); }
+  else if (status === "today") { where.push("date=?"); where.push("ifnull(archived,0)=0"); bind.push(today); }
+  else if (status === "newtoday") { where.push("date=?"); where.push("status='new'"); where.push("ifnull(archived,0)=0"); bind.push(today); }
+  else if (status === "done") { where.push("status='done'"); where.push("ifnull(dive_done,0)=0"); where.push("ifnull(archived,0)=0"); }
+  else if (status === "new" || status === "confirmed") { where.push("status=?"); where.push("ifnull(archived,0)=0"); bind.push(status); }
+  else where.push("ifnull(archived,0)=0");
   if (q) { where.push("(lower(name) LIKE ? OR lower(contact) LIKE ? OR lower(email) LIKE ? OR lower(service) LIKE ?)"); bind.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
   if (where.length) sql += " WHERE " + where.join(" AND ");
   sql += " ORDER BY created_at DESC LIMIT 200";
@@ -139,7 +147,43 @@ export async function onRequestGet({ request, env }) {
   }
 
   const statsRow = await env.DB.prepare(
-    "SELECT COUNT(*) total, SUM(status='new') fresh, SUM(status='confirmed') confirmed, SUM(status='done') done FROM bookings"
-  ).first();
-  return json({ bookings: results, stats: statsRow || { total: 0, fresh: 0, confirmed: 0, done: 0 } });
+    `SELECT COUNT(*) total,
+            SUM(status='new') fresh,
+            SUM(status='confirmed') confirmed,
+            SUM(status='done') done,
+            SUM(date=? AND ifnull(archived,0)=0) daily,
+            SUM(date=? AND status='new' AND ifnull(archived,0)=0) newToday,
+            SUM(status='done' AND ifnull(dive_done,0)=0 AND ifnull(archived,0)=0) inBoat,
+            SUM(ifnull(dive_done,0)=1 AND ifnull(archived,0)=0) complete,
+            SUM(ifnull(archived,0)=1) archive
+     FROM bookings`
+  ).bind(today, today).first();
+  const stats = statsRow || {};
+  return json({
+    bookings: results,
+    stats: {
+      total: stats.total || 0,
+      fresh: stats.fresh || 0,
+      confirmed: stats.confirmed || 0,
+      done: stats.done || 0,
+      daily: stats.daily || 0,
+      newToday: stats.newToday || 0,
+      inBoat: stats.inBoat || 0,
+      complete: stats.complete || 0,
+      archive: stats.archive || 0,
+    },
+  });
+}
+
+async function shopToday(env) {
+  let tz = "America/Tegucigalpa";
+  try {
+    const row = await env.DB.prepare("SELECT value FROM shop_settings WHERE key='timezone'").first();
+    if (row?.value) tz = String(row.value);
+  } catch (_) {}
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  } catch (_) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Tegucigalpa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  }
 }

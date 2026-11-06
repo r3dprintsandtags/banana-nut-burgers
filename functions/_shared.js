@@ -180,6 +180,22 @@ export async function ensureSchema(env) {
       await env.DB.prepare("ALTER TABLE form_submissions ADD COLUMN participant_id INTEGER").run();
     }
   } catch (_) {}
+  try {
+    const bk = await env.DB.prepare("PRAGMA table_info(bookings)").all();
+    const bkNames = new Set((bk.results || []).map((c) => c.name));
+    if (!bkNames.has("archived")) {
+      await env.DB.prepare("ALTER TABLE bookings ADD COLUMN archived INTEGER NOT NULL DEFAULT 0").run();
+    }
+    if (!bkNames.has("dive_done")) {
+      await env.DB.prepare("ALTER TABLE bookings ADD COLUMN dive_done INTEGER NOT NULL DEFAULT 0").run();
+    }
+  } catch (_) { /* bookings table is created by migration 0001 */ }
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS shop_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT ''
+    )`
+  ).run();
   schemaReady = true;
 }
 
