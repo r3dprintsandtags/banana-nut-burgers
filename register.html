@@ -267,7 +267,10 @@ button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not
           <option value="other" data-i="relOther"></option>
         </select>
         <p class="err" id="partyAddErr" aria-live="polite"></p>
-        <p><button type="button" class="ban wide" id="partySavePerson" data-i="addChild"></button></p>
+        <div class="acts" style="margin-top:10px">
+          <button type="button" class="ban" id="partySavePerson" data-i="addChild"></button>
+          <button type="button" class="ghost" id="partyCancelAdd" data-i="remove"></button>
+        </div>
       </div>
       <p><button type="button" class="ghost wide hide" id="addAnotherBtn" data-i="addAnother"></button></p>
       <p><button type="button" class="ghost wide" id="partyPastBtn" data-i="partyPast"></button></p>
@@ -405,7 +408,7 @@ const T = {
     bH:"Your details",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",dob:"Date of birth *",addr:"Street address",city:"City *",state:"State / Province",zip:"ZIP / Postal code",ownGear:"Do you have your own gear? *",yes:"Yes",no:"No",gearSize:"What size do you need? *",gearNote:"Size notes (boots, BCD, etc.)",gearNotePh:"e.g. boots 9, BCD medium",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgH:"Emergency contact",emgName:"Emergency contact name *",emgRel:"Relationship",emgPhone:"Emergency contact phone *",notes:"Notes (optional)",sel:"Select…",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",
     back:"Back",
     fixFirst:"Still needed: ",needAct:"Activity",needDate:"Date and time",needFirst:"First name",needLast:"Last name",needPhone:"Phone",needDob:"Date of birth",needCity:"City",needGear:"Own gear (yes or no)",needGearSize:"Gear size",needEmgName:"Emergency contact name",needEmgPhone:"Emergency contact phone",needDecl:"Accuracy declaration",needPriv:"Privacy acknowledgement",needGuardianFirst:"You must be 18 or older to register. A parent or guardian registers first and adds you.",futureDob:"Date of birth cannot be in the future.",
-    minorsQ:"Is anyone under 18 coming with you?",noJustMe:"No, just me",minorsLine:"Children under 12 have their own options and restrictions and need a parent or guardian with them at all times. You answer their health questions and sign for them.",
+    minorsQ:"Is anyone under 18 coming with you?",noJustMe:"No",minorsLine:"Children under 12 have their own options and restrictions and need a parent or guardian with them at all times. You answer their health questions and sign for them.",
     addChildH:"Add a child",addChild:"Add child",addAnother:"Add another child",partyRel:"Relationship to you (optional)",relChild:"Child",relGrand:"Grandchild",relRelative:"Other relative",relOther:"Other",
     childAdult:"This person is 18 or older and needs their own registration.",childNeedName:"Enter their first and last name.",childNeedDob:"Enter their date of birth.",childDup:"{name} is already on this registration.",addAnyway:"Add anyway",
     sameLine:"Children use the same address and emergency contact as yours.",sameFor:"Same address and emergency contact as yours.",ownFor:"Own address or emergency contact.",editFor:"Edit for {name}",useMine:"Use mine again",saveFor:"Save for {name}",
@@ -437,7 +440,7 @@ const T = {
     bH:"Tus datos",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",dob:"Fecha de nacimiento *",addr:"Dirección",city:"Ciudad *",state:"Estado / Provincia",zip:"Código postal",ownGear:"¿Traes tu propio equipo? *",yes:"Sí",no:"No",gearSize:"¿Qué talla necesitas? *",gearNote:"Notas de talla (botas, BCD, etc.)",gearNotePh:"ej. botas 9, BCD mediano",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgH:"Contacto de emergencia",emgName:"Nombre del contacto de emergencia *",emgRel:"Parentesco",emgPhone:"Teléfono de emergencia *",notes:"Notas (opcional)",sel:"Seleccionar…",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",
     back:"Atrás",
     fixFirst:"Falta: ",needAct:"Actividad",needDate:"Fecha y hora",needFirst:"Nombre",needLast:"Apellido",needPhone:"Teléfono",needDob:"Fecha de nacimiento",needCity:"Ciudad",needGear:"Equipo propio (sí o no)",needGearSize:"Talla de equipo",needEmgName:"Nombre del contacto de emergencia",needEmgPhone:"Teléfono de emergencia",needDecl:"Declaración de exactitud",needPriv:"Reconocimiento de privacidad",needGuardianFirst:"Debes tener 18 años o más para registrarte. Un padre, madre o tutor se registra primero y te agrega.",futureDob:"La fecha de nacimiento no puede ser futura.",
-    minorsQ:"¿Viene alguien menor de 18 contigo?",noJustMe:"No, solo yo",minorsLine:"Los menores de 12 años tienen sus propias opciones y restricciones y necesitan un padre o tutor con ellos en todo momento. Tú respondes sus preguntas de salud y firmas por ellos.",
+    minorsQ:"¿Viene alguien menor de 18 contigo?",noJustMe:"No",minorsLine:"Los menores de 12 años tienen sus propias opciones y restricciones y necesitan un padre o tutor con ellos en todo momento. Tú respondes sus preguntas de salud y firmas por ellos.",
     addChildH:"Agregar un menor",addChild:"Agregar menor",addAnother:"Agregar otro menor",partyRel:"Parentesco contigo (opcional)",relChild:"Hijo/a",relGrand:"Nieto/a",relRelative:"Otro familiar",relOther:"Otro",
     childAdult:"Esta persona tiene 18 años o más y necesita su propio registro.",childNeedName:"Escribe su nombre y apellido.",childNeedDob:"Escribe su fecha de nacimiento.",childDup:"{name} ya está en este registro.",addAnyway:"Agregar de todos modos",
     sameLine:"Los menores usan tu misma dirección y contacto de emergencia.",sameFor:"Misma dirección y contacto de emergencia que tú.",ownFor:"Dirección o contacto de emergencia propios.",editFor:"Editar para {name}",useMine:"Usar los míos otra vez",saveFor:"Guardar para {name}",
@@ -816,8 +819,13 @@ async function continueFromMinors(){
   if (!ok) { $("errMinors").textContent = t().notSaved; return; }
   await refreshStatus();
   const n = status && status.nextRequiredTask;
+  // After "No", status must leave the minors question. Never stay stuck on it.
+  if (n && n.step === "minors" && !n.personId && draft.hasMinors === false) {
+    go("health", defaultPerson("health") || (status && status.primaryId) || null);
+    return;
+  }
   if (n && n.step && !(n.step === "minors" && !n.personId)) go(n.step, n.personId || defaultPerson(n.step));
-  else go("health", defaultPerson("health"));
+  else go("health", defaultPerson("health") || (status && status.primaryId) || null);
 }
 async function setHasMinors(v){
   if (v === false && minorsOnParty().length) {
@@ -963,6 +971,16 @@ function checkChildDob(){
 $("pDob").addEventListener("change", checkChildDob);
 $("pDob").addEventListener("input", checkChildDob);
 $("addAnotherBtn").onclick = () => { draft.addingChild = true; saveLocal(); paintMinors(); $("pFirst").focus(); };
+if ($("partyCancelAdd")) $("partyCancelAdd").onclick = () => {
+  ["pFirst", "pLast", "pDob"].forEach((id) => { if ($(id)) $(id).value = ""; });
+  if ($("pRel")) $("pRel").value = "child";
+  if ($("pDobErr")) $("pDobErr").textContent = "";
+  if ($("partyAddErr")) $("partyAddErr").textContent = "";
+  dupForce = false;
+  draft.addingChild = false; saveLocal();
+  if (!minorsOnParty().length) return setHasMinors(false);
+  paintMinors();
+};
 async function addChild(){
   const x = t();
   $("partyAddErr").textContent = "";
