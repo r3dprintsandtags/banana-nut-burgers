@@ -179,3 +179,7 @@ PRAGMA foreign_keys=ON;
 -- 0016: in-person shop registrations (forms and data collected on paper)
 ALTER TABLE registrations ADD COLUMN manual_shop INTEGER NOT NULL DEFAULT 0;
 
+-- 0017: booking archive + dive-completed flags (today's counts). New columns only.
+ALTER TABLE bookings ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN dive_done INTEGER NOT NULL DEFAULT 0;
+
