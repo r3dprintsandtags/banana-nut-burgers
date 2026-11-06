@@ -2,6 +2,7 @@
 import { ageFromDob } from "./shared.js";
 import { ensureRegistrationNumber } from "./regnum.js";
 import { createRequestForRegistration, packetKeyForActivity, fromRegistrationData } from "./submit.js";
+import { getRegistrationStatus } from "./reg-status.js";
 import { sha256 } from "../../_shared.js";
 
 export function gearFromAddress(address = {}) {
@@ -625,6 +626,7 @@ export async function partyDashboard(env, reg, { staff = false } = {}) {
   let sharedEmergency = {};
   try { sharedAddress = JSON.parse(reg.shared_address_json || "{}"); } catch { sharedAddress = {}; }
   try { sharedEmergency = JSON.parse(reg.shared_emergency_json || "{}"); } catch { sharedEmergency = {}; }
+  const status = getRegistrationStatus(reg, people);
   return {
     registrationId: reg.id,
     ref: reg.ref,
@@ -636,5 +638,6 @@ export async function partyDashboard(env, reg, { staff = false } = {}) {
     sharedEmergency,
     progress: { done, total, label: `${done} of ${total} complete` },
     participants: people,
+    status,
   };
 }
