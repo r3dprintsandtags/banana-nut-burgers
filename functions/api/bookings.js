@@ -1,4 +1,4 @@
-import { json, isAuthed, hashIP, str } from "../_shared.js";
+import { json, isAuthed, hashIP, str, ensureSchema } from "../_shared.js";
 
 // POST /api/bookings  (public) — save a booking request
 export async function onRequestPost({ request, env, waitUntil }) {
@@ -55,6 +55,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 export async function onRequestGet({ request, env }) {
   if (!env.DB) return json({ error: "Database not configured" }, 503);
   if (!(await isAuthed(request, env))) return json({ error: "Unauthorized" }, 401);
+  await ensureSchema(env);
   const url = new URL(request.url);
   const status = ["new", "confirmed", "done"].includes(url.searchParams.get("status")) ? url.searchParams.get("status") : "";
   const q = str(url.searchParams.get("q"), 80).toLowerCase();
@@ -70,7 +71,7 @@ export async function onRequestGet({ request, env }) {
   // Attach linked check-in so Bookings tab shows dive-shop essentials without hunting Registrations.
   for (const b of results || []) {
     let reg = await env.DB.prepare(
-      `SELECT r.id, r.ref, r.status, r.data, r.activity, r.planned_date, r.participants, r.booking_ref,
+      `SELECT r.id, r.ref, r.status, r.data, r.activity, r.planned_date, r.participants, r.booking_ref, r.manual_shop,
               c.registration_number, c.first_name, c.last_name, c.phone, c.email
        FROM registrations r JOIN customers c ON c.id = r.customer_id
        WHERE r.booking_ref=? AND r.status<>'draft'
@@ -80,7 +81,7 @@ export async function onRequestGet({ request, env }) {
       const m = String(b.note).match(/BNB-\d{4}-[A-Z0-9]+/i);
       if (m) {
         reg = await env.DB.prepare(
-          `SELECT r.id, r.ref, r.status, r.data, r.activity, r.planned_date, r.participants, r.booking_ref,
+          `SELECT r.id, r.ref, r.status, r.data, r.activity, r.planned_date, r.participants, r.booking_ref, r.manual_shop,
                   c.registration_number, c.first_name, c.last_name, c.phone, c.email
            FROM registrations r JOIN customers c ON c.id = r.customer_id
            WHERE upper(r.ref)=? LIMIT 1`
@@ -127,6 +128,7 @@ export async function onRequestGet({ request, env }) {
       packetCompleted: !!(data.packetCompleted),
       packetNeedsPhysician: !!(data.packetNeedsPhysician),
       medFlag: !!medFlag,
+      manualShop: !!(data.manualShop || data.collectedInPerson || Number(reg.manual_shop) === 1),
       plannedDate: data.plannedDate || reg.planned_date || b.date || "",
       plannedTime: data.plannedTime || b.time || "",
       activity: data.activity || reg.activity || b.service || "",
