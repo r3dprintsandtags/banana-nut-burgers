@@ -57,6 +57,7 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:#eef5f8;color:#0a2533;border:1px solid #d0e0e8}
 .chip.warn{background:#fff3cd;border-color:#ecd97a;color:#6b5300}
 .chip.ok{background:#e5f6ea;border-color:#b7e0c2;color:#14532d}
+.chip.shop{background:#fff4d6;border-color:#e6c56a;color:#6b4e00}
 .chip.mut{background:#f3f1ea;border-color:#e0d8c4;color:#5a6e78;font-weight:600}
 .sec{margin-top:12px}.sec h3{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#5a6e78!important}
 .kv{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;font-size:14px}
@@ -64,6 +65,25 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
 @media(max-width:520px){.kv{grid-template-columns:1fr}.kv dt{font-size:12px}}
 #view-pending > .page-mut{color:#e8f4fa!important;text-shadow:0 1px 6px rgba(0,0,0,.35)}
 @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.bar > button{min-height:48px}
+#view-bookings .bar{display:grid;grid-template-columns:minmax(0,1fr) auto}
+#view-regs > .bar{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(160px,240px) auto auto}
+#pendingList > h2{color:#f5fbff!important;text-shadow:0 1px 6px rgba(0,0,0,.45);margin:16px 0 8px}
+#rlist > .mut,#clist > .mut,#alist > .mut,#pendingList > .mut,#plist > .mut{color:#e8f4fa!important;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.bkhead > div:first-child{min-width:0;flex:1 1 220px}
+.bkhead .mut,.bkhead b{overflow-wrap:anywhere}
+.acts{align-items:center}
+@media(max-width:720px){
+  #view-regs > .bar{grid-template-columns:1fr 1fr}
+  #view-regs > .bar input,#view-regs > .bar select{grid-column:1 / -1}
+}
+@media(max-width:560px){
+  #view-bookings .bar{grid-template-columns:1fr}
+  #staffBox .row{grid-template-columns:1fr!important}
+  .acts > button,.acts > a.btn{flex:1 1 calc(50% - 8px);justify-content:center;text-align:center}
+  #viewTabs,#tabs{display:grid;grid-template-columns:1fr 1fr}
+  #viewTabs .tab,#tabs .tab{width:100%;text-align:center}
+}
 </style>
 </head>
 <body>
@@ -125,8 +145,9 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
     <div id="view-regs" class="hide">
       <div class="bar"><input id="rq" data-ph="regSearchPh" placeholder="Search name, phone, email, ref, or registration # (BNB-2610-0007)">
       <select id="rstatus">
-        <option value="" data-i="allStatuses">All statuses</option><option>draft</option><option>submitted</option><option>under_review</option><option>approved</option>
-        <option>rejected</option><option>flagged</option><option>corrections_requested</option><option>complete</option></select>
+        <option value="" data-i="allStatuses">All statuses</option><option value="manual" data-i="manualFilter">In person at shop</option>
+        <option value="draft">draft</option><option value="submitted">submitted</option><option value="under_review">under_review</option><option value="approved">approved</option>
+        <option value="rejected">rejected</option><option value="flagged">flagged</option><option value="corrections_requested">corrections_requested</option><option value="complete">complete</option></select>
       <button class="ghost" id="rRefresh" data-i="rRefresh">Refresh</button>
       <button class="ghost" id="staffRegBtn" data-i="staffReg"></button></div>
       <div id="staffBox" class="card hide">
@@ -137,7 +158,16 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
         </div>
         <label data-i="phone"></label><input id="sfPhone" type="tel">
         <label data-i="email"></label><input id="sfEmail" type="email">
-        <p class="mut" data-i="linkNote"></p>
+        <div id="sfManualBox" style="margin-top:14px;padding:12px 14px;border:1px solid #e6c56a;border-radius:12px;background:#fff8e8">
+          <label style="display:flex;gap:10px;align-items:flex-start;margin:0">
+            <input type="checkbox" id="sfManual" style="width:22px;height:22px;min-height:22px;margin-top:2px">
+            <span>
+              <b data-i="manualShop"></b>
+              <span class="mut" data-i="manualShopNote" style="display:block;margin-top:4px;font-weight:500"></span>
+            </span>
+          </label>
+        </div>
+        <p class="mut" id="sfLinkNote"></p>
         <div class="acts"><button type="button" id="sfSave" data-i="saveClose"></button></div>
         <p class="err" id="sfErr"></p>
         <div id="sfLink" class="hide"></div>
@@ -147,12 +177,12 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
     </div>
 
     <div id="view-corr" class="hide">
-      <div class="bar"><button class="ghost" id="cRefresh">Refresh</button></div>
+      <div class="bar"><button class="ghost" id="cRefresh" data-i="refresh">Refresh</button></div>
       <div id="clist"></div>
     </div>
 
     <div id="view-audit" class="hide">
-      <div class="bar"><button class="ghost" id="aRefresh">Refresh</button></div>
+      <div class="bar"><button class="ghost" id="aRefresh" data-i="refresh">Refresh</button></div>
       <div id="alist" style="font-size:14px"></div>
     </div>
 
@@ -211,8 +241,8 @@ a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px
 
 <script>
 const T = {
-  en:{title:"Bookings CRM",loginSub:"Owner login for Banana Nut Burgers Dive Shop.",password:"Password",login:"Log in",logout:"Log out",total:"Total",new:"New",confirmed:"Confirmed",done:"IN THE BOAT",all:"All",searchPh:"Search name, contact, email, service…",csv:"Export CSV",refresh:"Refresh",empty:"No bookings yet. New requests from the website will appear here automatically.",wrong:"Wrong password.",updated:"Updated",guests:"guests",confirm:"Confirm",reopen:"Reopen",del:"Delete",delSure:"Delete this booking?",delReg:"Delete registration",delRegSure:"Delete this registration, its forms, and signed files? This cannot be undone.",delForm:"Delete forms",delFormSure:"Delete this signed form packet?",clearAll:"Delete all customer data",clearAllSure:"This permanently deletes ALL bookings, registrations, customers, and form packets. Type DELETE ALL to confirm.",clearAllPh:"DELETE ALL",clearAllDone:"All customer data deleted.",clearAllKeep:"Form templates and promotions are kept.",details:"Details",hide:"Hide",submitted:"Submitted",divers:"Divers",cruise:"Cruise",note:"Notes",wa:"WhatsApp guest",tabBookings:"Booked",tabRegs:"Registrations",tabCorr:"Corrections",tabAudit:"Audit",tabPending:"Pending",tabPromos:"Promotions",promoSub:"Deals on the homepage. Active ones show as a top banner and a special card.",promoAdd:"Add a promotion",promoActive:"Show on website",promoSave:"Save promotion",promoEmpty:"No promotions yet.",promoOn:"Live",promoOff:"Hidden",promoHide:"Hide",promoShow:"Show",promoDel:"Delete",promoDelSure:"Delete this promotion?",promoTitleEn:"Title (EN)",promoTitleEs:"Title (ES)",promoBlurbEn:"Blurb (EN)",promoBlurbEs:"Blurb (ES)",promoTitlePh:"Discover Scuba · 2 for $180",promoTitleEsPh:"Descubre el buceo · 2 por $180",promoBlurbPh:"Pool + shallow reef intro for two. Includes gear.",promoBlurbEsPh:"Intro en piscina y arrecife poco profundo para dos. Incluye equipo.",promoBadgePh:"Badge (THIS WEEK'S SPECIAL)",promoEndsTitle:"Ends on",promoEndsPh:"Ends label (ENDS OCT 31)",promoCtaPh:"Button (BOOK THIS DEAL)",promoUrlPh:"Link (register.html?start=1&activity=Scuba)",promoOrderPh:"Order",promoSend:"Send",promoSendH:"Send this deal",promoSendEmail:"Email opted-in customers",promoSendWa:"WhatsApp opted-in customers",promoSendNote:"Only people who checked the marketing box are included. Medical answers are never sent.",promoSendGo:"Send now",promoSendCancel:"Cancel",promoSendSure:"Send this promotion to opted-in customers?",promoSendAudience:"opted-in customers",promoSendPhones:"with phone",promoSendEmails:"with email",promoSendDone:"Blast finished",promoSendOpenWa:"Open WhatsApp",promoSendCopy:"Copy message",promoSendNone:"No marketing-opted customers yet.",review:"Review check-in",hideReview:"Hide check-in",rRefresh:"Refresh",allStatuses:"All statuses",regSearchPh:"Search name, phone, email, ref, or registration # (BNB-2610-0007)",trip:"Trip",diver:"Diver",gear:"Gear & experience",emergency:"Emergency",medical:"Medical",checkin:"Check-in",noCheckin:"No linked check-in yet.",regNum:"Reg #",dob:"DOB",age:"Age",cert:"Cert",ownGear:"Own gear",rental:"Needs rental",lang:"Language",phone:"Phone",email:"Email",name:"Name",preferred:"Preferred",relationship:"Relationship",heart:"Heart / circulation",lung:"Lungs / breathing",otherMed:"Other medical",detail:"Detail",physician:"Pending staff review",staffReview:"Staff review",cleared:"Cleared",packet:"SSI packet",fromPacket:"From SSI medical packet",yes:"Yes",no:"No",na:"—",openReg:"Open in Registrations",saveClose:"Save and Close",pendingH:"Pending Review",pendingSub:"Registrations and bookings waiting for staff action.",pendingEmpty:"Nothing waiting for review.",pendingRegs:"Registrations",pendingBookings:"New bookings",pendingSched:"Schedule changes",reviewNow:"Review",staffReg:"Register a Diver",needsReview:"Needs Review",minorsTag:"Minors",age:"Age",courseQ:"Are you interested in any course?",sendLink:"Send a link",linkEmail:"Email",linkSms:"SMS",linkWa:"WhatsApp",staffSaved:"Registration saved. Send the link so they can finish and sign the forms.",staffNeed:"First name, last name, and a valid phone are required.",linkNote:"The link opens their forms. The signed forms attach to this same registration.",openRec:"Review",showPw:"Show password",hidePw:"Hide password",loading:"Loading…",partyView:"Party",hideParty:"Hide party",partyHeadcount:"Headcount",partyRegistered:"Registered",partyAdult:"Adult",partyMinors:"Minors",partyNoRegs:"No registrations linked to this booking yet.",partyInviteHint:"Each adult is a separate registration. Minors nest under their guardian."},
-  es:{title:"CRM de reservas",loginSub:"Acceso del dueño de Banana Nut Burgers Dive Shop.",password:"Contraseña",login:"Entrar",logout:"Salir",total:"Total",new:"Nuevas",confirmed:"Confirmadas",done:"EN EL BOTE",all:"Todas",searchPh:"Buscar nombre, contacto, correo, servicio…",csv:"Exportar CSV",refresh:"Actualizar",empty:"Aún no hay reservas. Las solicitudes del sitio aparecerán aquí automáticamente.",wrong:"Contraseña incorrecta.",updated:"Actualizado",guests:"personas",confirm:"Confirmar",reopen:"Reabrir",del:"Borrar",delSure:"¿Borrar esta reserva?",delReg:"Borrar registro",delRegSure:"¿Borrar este registro, sus formularios y archivos firmados? No se puede deshacer.",delForm:"Borrar formularios",delFormSure:"¿Borrar este paquete de formularios firmados?",clearAll:"Borrar todos los datos de clientes",clearAllSure:"Esto borra PERMANENTEMENTE todas las reservas, registros, clientes y paquetes. Escribe DELETE ALL para confirmar.",clearAllPh:"DELETE ALL",clearAllDone:"Todos los datos de clientes borrados.",clearAllKeep:"Se conservan plantillas de formularios y promociones.",details:"Detalles",hide:"Ocultar",submitted:"Enviado",divers:"Buzos",cruise:"Crucero",note:"Notas",wa:"WhatsApp al cliente",tabBookings:"Reservado",tabRegs:"Registros",tabCorr:"Correcciones",tabAudit:"Auditoría",tabPending:"Pendientes",tabPromos:"Promociones",promoSub:"Ofertas en la página de inicio. Las activas salen como banner y tarjeta.",promoAdd:"Agregar promoción",promoActive:"Mostrar en el sitio",promoSave:"Guardar promoción",promoEmpty:"Aún no hay promociones.",promoOn:"Activa",promoOff:"Oculta",promoHide:"Ocultar",promoShow:"Mostrar",promoDel:"Borrar",promoDelSure:"¿Borrar esta promoción?",promoTitleEn:"Título (EN)",promoTitleEs:"Título (ES)",promoBlurbEn:"Texto (EN)",promoBlurbEs:"Texto (ES)",promoTitlePh:"Discover Scuba · 2 for $180",promoTitleEsPh:"Descubre el buceo · 2 por $180",promoBlurbPh:"Pool + shallow reef intro for two. Includes gear.",promoBlurbEsPh:"Intro en piscina y arrecife poco profundo para dos. Incluye equipo.",promoBadgePh:"Insignia (ESPECIAL DE LA SEMANA)",promoEndsTitle:"Termina el",promoEndsPh:"Etiqueta de fin (TERMINA 31 OCT)",promoCtaPh:"Botón (RESERVAR OFERTA)",promoUrlPh:"Enlace (register.html?start=1&activity=Scuba)",promoOrderPh:"Orden",promoSend:"Enviar",promoSendH:"Enviar esta oferta",promoSendEmail:"Correo a clientes que aceptaron",promoSendWa:"WhatsApp a clientes que aceptaron",promoSendNote:"Solo se incluyen quienes marcaron el consentimiento de marketing. Nunca se envían respuestas médicas.",promoSendGo:"Enviar ahora",promoSendCancel:"Cancelar",promoSendSure:"¿Enviar esta promoción a los clientes que aceptaron marketing?",promoSendAudience:"clientes con marketing",promoSendPhones:"con teléfono",promoSendEmails:"con correo",promoSendDone:"Envío listo",promoSendOpenWa:"Abrir WhatsApp",promoSendCopy:"Copiar mensaje",promoSendNone:"Aún no hay clientes con marketing aceptado.",review:"Revisar check-in",hideReview:"Ocultar check-in",rRefresh:"Actualizar",allStatuses:"Todos los estados",regSearchPh:"Buscar nombre, teléfono, correo, ref. o # de registro (BNB-2610-0007)",trip:"Viaje",diver:"Buzo",gear:"Equipo y experiencia",emergency:"Emergencia",medical:"Médico",checkin:"Check-in",noCheckin:"Sin check-in vinculado.",regNum:"Reg #",dob:"Nac.",age:"Edad",cert:"Cert",ownGear:"Equipo propio",rental:"Necesita renta",lang:"Idioma",phone:"Teléfono",email:"Correo",name:"Nombre",preferred:"Preferido",relationship:"Relación",heart:"Corazón / circulación",lung:"Pulmones / respiración",otherMed:"Otro médico",detail:"Detalle",physician:"Pendiente revisión del personal",staffReview:"Revisión del personal",cleared:"Despejado",packet:"Paquete SSI",fromPacket:"Del paquete médico SSI",yes:"Sí",no:"No",na:"—",openReg:"Abrir en Registros",saveClose:"Guardar y Cerrar",pendingH:"Pendiente de Revision",pendingSub:"Registros y reservas que esperan accion del personal.",pendingEmpty:"Nada pendiente de revision.",pendingRegs:"Registros",pendingBookings:"Reservas nuevas",pendingSched:"Cambios de agenda",reviewNow:"Revisar",staffReg:"Registrar un Buzo",needsReview:"Pendiente de Revision",minorsTag:"Menores",age:"Edad",courseQ:"Le interesa algun curso?",sendLink:"Enviar un enlace",linkEmail:"Correo",linkSms:"SMS",linkWa:"WhatsApp",staffSaved:"Registro guardado. Envía el enlace para que complete y firme los formularios.",staffNeed:"Nombre, apellido y un teléfono válido son obligatorios.",linkNote:"El enlace abre sus formularios. Lo firmado queda en este mismo registro.",openRec:"Revisar",showPw:"Mostrar contraseña",hidePw:"Ocultar contraseña",loading:"Cargando…",partyView:"Grupo",hideParty:"Ocultar grupo",partyHeadcount:"Personas",partyRegistered:"Registrados",partyAdult:"Adulto",partyMinors:"Menores",partyNoRegs:"Aún no hay registros vinculados a esta reserva.",partyInviteHint:"Cada adulto es un registro aparte. Los menores quedan bajo su tutor."}
+  en:{title:"Bookings CRM",loginSub:"Owner login for Banana Nut Burgers Dive Shop.",password:"Password",login:"Log in",logout:"Log out",total:"Total",new:"New",confirmed:"Confirmed",done:"IN THE BOAT",all:"All",searchPh:"Search name, contact, email, service…",csv:"Export CSV",refresh:"Refresh",empty:"No bookings yet. New requests from the website will appear here automatically.",wrong:"Wrong password.",updated:"Updated",guests:"guests",confirm:"Confirm",reopen:"Reopen",del:"Delete",delSure:"Delete this booking?",delReg:"Delete registration",delRegSure:"Delete this registration, its forms, and signed files? This cannot be undone.",delForm:"Delete forms",delFormSure:"Delete this signed form packet?",clearAll:"Delete all customer data",clearAllSure:"This permanently deletes ALL bookings, registrations, customers, and form packets. Type DELETE ALL to confirm.",clearAllPh:"DELETE ALL",clearAllDone:"All customer data deleted.",clearAllKeep:"Form templates and promotions are kept.",details:"Details",hide:"Hide",submitted:"Submitted",divers:"Divers",cruise:"Cruise",note:"Notes",wa:"WhatsApp guest",tabBookings:"Booked",tabRegs:"Registrations",tabCorr:"Corrections",tabAudit:"Audit",tabPending:"Pending",tabPromos:"Promotions",promoSub:"Deals on the homepage. Active ones show as a top banner and a special card.",promoAdd:"Add a promotion",promoActive:"Show on website",promoSave:"Save promotion",promoEmpty:"No promotions yet.",promoOn:"Live",promoOff:"Hidden",promoHide:"Hide",promoShow:"Show",promoDel:"Delete",promoDelSure:"Delete this promotion?",promoTitleEn:"Title (EN)",promoTitleEs:"Title (ES)",promoBlurbEn:"Blurb (EN)",promoBlurbEs:"Blurb (ES)",promoTitlePh:"Discover Scuba · 2 for $180",promoTitleEsPh:"Descubre el buceo · 2 por $180",promoBlurbPh:"Pool + shallow reef intro for two. Includes gear.",promoBlurbEsPh:"Intro en piscina y arrecife poco profundo para dos. Incluye equipo.",promoBadgePh:"Badge (THIS WEEK'S SPECIAL)",promoEndsTitle:"Ends on",promoEndsPh:"Ends label (ENDS OCT 31)",promoCtaPh:"Button (BOOK THIS DEAL)",promoUrlPh:"Link (register.html?start=1&activity=Scuba)",promoOrderPh:"Order",promoSend:"Send",promoSendH:"Send this deal",promoSendEmail:"Email opted-in customers",promoSendWa:"WhatsApp opted-in customers",promoSendNote:"Only people who checked the marketing box are included. Medical answers are never sent.",promoSendGo:"Send now",promoSendCancel:"Cancel",promoSendSure:"Send this promotion to opted-in customers?",promoSendAudience:"opted-in customers",promoSendPhones:"with phone",promoSendEmails:"with email",promoSendDone:"Blast finished",promoSendOpenWa:"Open WhatsApp",promoSendCopy:"Copy message",promoSendNone:"No marketing-opted customers yet.",review:"Review check-in",hideReview:"Hide check-in",rRefresh:"Refresh",allStatuses:"All statuses",regSearchPh:"Search name, phone, email, ref, or registration # (BNB-2610-0007)",trip:"Trip",diver:"Diver",gear:"Gear & experience",emergency:"Emergency",medical:"Medical",checkin:"Check-in",noCheckin:"No linked check-in yet.",regNum:"Reg #",dob:"DOB",age:"Age",cert:"Cert",ownGear:"Own gear",rental:"Needs rental",lang:"Language",phone:"Phone",email:"Email",name:"Name",preferred:"Preferred",relationship:"Relationship",heart:"Heart / circulation",lung:"Lungs / breathing",otherMed:"Other medical",detail:"Detail",physician:"Pending staff review",staffReview:"Staff review",cleared:"Cleared",packet:"SSI packet",fromPacket:"From SSI medical packet",yes:"Yes",no:"No",na:"—",openReg:"Open in Registrations",saveClose:"Save and Close",resolve:"Resolve",pendingH:"Pending Review",pendingSub:"Registrations and bookings waiting for staff action.",pendingEmpty:"Nothing waiting for review.",pendingRegs:"Registrations",pendingBookings:"New bookings",pendingSched:"Schedule changes",reviewNow:"Review",staffReg:"Register a Diver",manualShop:"Registered manually at the shop",manualShopNote:"Check this when every form and the diver's data were collected in person. Saving marks the registration complete on paper. No form link is sent.",manualShopOn:"No link is needed. Saving marks this registration complete — forms and data were collected at the shop.",staffSavedManual:"Saved. This diver is marked as registered in person at the shop. Forms and data were collected on paper.",manualChip:"In person at shop",manualFilter:"In person at shop",manualDetail:"All forms and data were collected in person at the dive shop.",close:"Close",needsReview:"Needs Review",minorsTag:"Minors",age:"Age",courseQ:"Are you interested in any course?",sendLink:"Send a link",linkEmail:"Email",linkSms:"SMS",linkWa:"WhatsApp",staffSaved:"Registration saved. Send the link so they can finish and sign the forms.",staffNeed:"First name, last name, and a valid phone are required.",linkNote:"The link opens their forms. The signed forms attach to this same registration.",openRec:"Review",showPw:"Show password",hidePw:"Hide password",loading:"Loading…",partyView:"Party",hideParty:"Hide party",partyHeadcount:"Headcount",partyRegistered:"Registered",partyAdult:"Adult",partyMinors:"Minors",partyNoRegs:"No registrations linked to this booking yet.",partyInviteHint:"Each adult is a separate registration. Minors nest under their guardian."},
+  es:{title:"CRM de reservas",loginSub:"Acceso del dueño de Banana Nut Burgers Dive Shop.",password:"Contraseña",login:"Entrar",logout:"Salir",total:"Total",new:"Nuevas",confirmed:"Confirmadas",done:"EN EL BOTE",all:"Todas",searchPh:"Buscar nombre, contacto, correo, servicio…",csv:"Exportar CSV",refresh:"Actualizar",empty:"Aún no hay reservas. Las solicitudes del sitio aparecerán aquí automáticamente.",wrong:"Contraseña incorrecta.",updated:"Actualizado",guests:"personas",confirm:"Confirmar",reopen:"Reabrir",del:"Borrar",delSure:"¿Borrar esta reserva?",delReg:"Borrar registro",delRegSure:"¿Borrar este registro, sus formularios y archivos firmados? No se puede deshacer.",delForm:"Borrar formularios",delFormSure:"¿Borrar este paquete de formularios firmados?",clearAll:"Borrar todos los datos de clientes",clearAllSure:"Esto borra PERMANENTEMENTE todas las reservas, registros, clientes y paquetes. Escribe DELETE ALL para confirmar.",clearAllPh:"DELETE ALL",clearAllDone:"Todos los datos de clientes borrados.",clearAllKeep:"Se conservan plantillas de formularios y promociones.",details:"Detalles",hide:"Ocultar",submitted:"Enviado",divers:"Buzos",cruise:"Crucero",note:"Notas",wa:"WhatsApp al cliente",tabBookings:"Reservado",tabRegs:"Registros",tabCorr:"Correcciones",tabAudit:"Auditoría",tabPending:"Pendientes",tabPromos:"Promociones",promoSub:"Ofertas en la página de inicio. Las activas salen como banner y tarjeta.",promoAdd:"Agregar promoción",promoActive:"Mostrar en el sitio",promoSave:"Guardar promoción",promoEmpty:"Aún no hay promociones.",promoOn:"Activa",promoOff:"Oculta",promoHide:"Ocultar",promoShow:"Mostrar",promoDel:"Borrar",promoDelSure:"¿Borrar esta promoción?",promoTitleEn:"Título (EN)",promoTitleEs:"Título (ES)",promoBlurbEn:"Texto (EN)",promoBlurbEs:"Texto (ES)",promoTitlePh:"Discover Scuba · 2 for $180",promoTitleEsPh:"Descubre el buceo · 2 por $180",promoBlurbPh:"Pool + shallow reef intro for two. Includes gear.",promoBlurbEsPh:"Intro en piscina y arrecife poco profundo para dos. Incluye equipo.",promoBadgePh:"Insignia (ESPECIAL DE LA SEMANA)",promoEndsTitle:"Termina el",promoEndsPh:"Etiqueta de fin (TERMINA 31 OCT)",promoCtaPh:"Botón (RESERVAR OFERTA)",promoUrlPh:"Enlace (register.html?start=1&activity=Scuba)",promoOrderPh:"Orden",promoSend:"Enviar",promoSendH:"Enviar esta oferta",promoSendEmail:"Correo a clientes que aceptaron",promoSendWa:"WhatsApp a clientes que aceptaron",promoSendNote:"Solo se incluyen quienes marcaron el consentimiento de marketing. Nunca se envían respuestas médicas.",promoSendGo:"Enviar ahora",promoSendCancel:"Cancelar",promoSendSure:"¿Enviar esta promoción a los clientes que aceptaron marketing?",promoSendAudience:"clientes con marketing",promoSendPhones:"con teléfono",promoSendEmails:"con correo",promoSendDone:"Envío listo",promoSendOpenWa:"Abrir WhatsApp",promoSendCopy:"Copiar mensaje",promoSendNone:"Aún no hay clientes con marketing aceptado.",review:"Revisar check-in",hideReview:"Ocultar check-in",rRefresh:"Actualizar",allStatuses:"Todos los estados",regSearchPh:"Buscar nombre, teléfono, correo, ref. o # de registro (BNB-2610-0007)",trip:"Viaje",diver:"Buzo",gear:"Equipo y experiencia",emergency:"Emergencia",medical:"Médico",checkin:"Check-in",noCheckin:"Sin check-in vinculado.",regNum:"Reg #",dob:"Nac.",age:"Edad",cert:"Cert",ownGear:"Equipo propio",rental:"Necesita renta",lang:"Idioma",phone:"Teléfono",email:"Correo",name:"Nombre",preferred:"Preferido",relationship:"Relación",heart:"Corazón / circulación",lung:"Pulmones / respiración",otherMed:"Otro médico",detail:"Detalle",physician:"Pendiente revisión del personal",staffReview:"Revisión del personal",cleared:"Despejado",packet:"Paquete SSI",fromPacket:"Del paquete médico SSI",yes:"Sí",no:"No",na:"—",openReg:"Abrir en Registros",saveClose:"Guardar y Cerrar",resolve:"Resolver",pendingH:"Pendiente de Revision",pendingSub:"Registros y reservas que esperan accion del personal.",pendingEmpty:"Nada pendiente de revision.",pendingRegs:"Registros",pendingBookings:"Reservas nuevas",pendingSched:"Cambios de agenda",reviewNow:"Revisar",staffReg:"Registrar un Buzo",manualShop:"Registrado manualmente en la tienda",manualShopNote:"Márcalo cuando todos los formularios y los datos del buzo se recogieron en persona. Al guardar, el registro queda completo en papel. No se envía un enlace.",manualShopOn:"No hace falta un enlace. Al guardar, este registro queda completo: formularios y datos recogidos en la tienda.",staffSavedManual:"Guardado. Este buzo quedó registrado en persona en la tienda. Los formularios y los datos se recogieron en papel.",manualChip:"En persona en la tienda",manualFilter:"En persona en la tienda",manualDetail:"Todos los formularios y los datos se recogieron en persona en el centro de buceo.",close:"Cerrar",needsReview:"Pendiente de Revision",minorsTag:"Menores",age:"Edad",courseQ:"Le interesa algun curso?",sendLink:"Enviar un enlace",linkEmail:"Correo",linkSms:"SMS",linkWa:"WhatsApp",staffSaved:"Registro guardado. Envía el enlace para que complete y firme los formularios.",staffNeed:"Nombre, apellido y un teléfono válido son obligatorios.",linkNote:"El enlace abre sus formularios. Lo firmado queda en este mismo registro.",openRec:"Revisar",showPw:"Mostrar contraseña",hidePw:"Ocultar contraseña",loading:"Cargando…",partyView:"Grupo",hideParty:"Ocultar grupo",partyHeadcount:"Personas",partyRegistered:"Registrados",partyAdult:"Adulto",partyMinors:"Menores",partyNoRegs:"Aún no hay registros vinculados a esta reserva.",partyInviteHint:"Cada adulto es un registro aparte. Los menores quedan bajo su tutor."}
 };
 
 let L = localStorage.getItem("bnb_lang") || localStorage.getItem("bnb_admin_lang") || ((navigator.language||"en").startsWith("es") ? "es" : "en");
@@ -293,6 +323,16 @@ function applyLang(){
   if (v === "audit" && !$("view-audit").classList.contains("hide")) loadAudit();
   if (v === "pending" && !$("view-pending").classList.contains("hide")) loadPending();
   if (v === "promos" && !$("view-promos").classList.contains("hide")) renderPromos();
+  if (typeof paintStaffNote === "function") paintStaffNote();
+  if (typeof paintStatusFilter === "function") paintStatusFilter();
+}
+function paintStatusFilter(){
+  const sel = $("rstatus");
+  if (!sel) return;
+  [...sel.options].forEach((opt) => {
+    if (!opt.value || opt.dataset.i) return;
+    opt.textContent = statusLabel(opt.value);
+  });
 }
 
 async function api(path, opts = {}){
@@ -342,6 +382,18 @@ async function load(){
     loadPending();
   } catch(e) { /* login view already shown */ }
 }
+function checkLabel(key){
+  const es = L === "es";
+  const names = {
+    activity: es ? "Actividad" : "Activity",
+    diverInfo: es ? "Buzo" : "Diver",
+    forms: es ? "Formularios" : "Forms",
+    waivers: es ? "Exenciones" : "Waivers",
+    safety: es ? "Seguridad" : "Safety",
+    review: es ? "Revisión" : "Review",
+  };
+  return names[key] || key;
+}
 function statusLabel(s){
   const t = T[L];
   if (s === "under_review") return t.needsReview || t.pendingH;
@@ -351,6 +403,7 @@ function statusLabel(s){
   if (s === "flagged") return t.flagged || (L === "es" ? "Marcado" : "Flagged");
   if (s === "corrections_requested") return t.corrections_requested || (L === "es" ? "Pedir correcciones" : "Needs info");
   if (s === "complete") return t.complete || (L === "es" ? "Completo" : "Complete");
+  if (s === "draft") return t.draft || (L === "es" ? "Borrador" : "Draft");
   return t[s] || s;
 }
 async function setRegStatus(id, status, reviewNote){
@@ -435,7 +488,7 @@ function renderPending(){
         <div class="bkhead"><div><b>${esc(x.full_name)}</b><br>
         <span class="mut">${esc(x.kind === "reschedule" ? t.reschedOpt || x.kind : t.cancelOpt || x.kind)} · ${esc(x.reservation_number)} · ${esc(x.phone)}${x.preferred_date ? " · " + esc(x.preferred_date) : ""}</span></div>
         <span class="pill new">${esc(x.status)}</span></div>
-        <div class="acts"><button type="button" class="ghost" data-resolve-sched="${x.id}">${esc(t.saveClose)}</button></div>
+        <div class="acts"><button type="button" class="ghost" data-resolve-sched="${x.id}">${esc(t.resolve || t.saveClose)}</button></div>
       </div>`);
     });
   }
@@ -532,6 +585,7 @@ function checkinChips(c, t){
   if (c.medFlag || c.packetNeedsPhysician || c.staffReviewStatus === "PENDING_STAFF_REVIEW") chips.push(`<span class="chip warn">⚠️ ${esc(t.physician)}</span>`);
   else if (c.packetCompleted || c.medicalFromPacket) chips.push(`<span class="chip ok">${esc(t.cleared || t.packet)}</span>`);
   if (c.preferredLanguage) chips.push(`<span class="chip mut">${esc(String(c.preferredLanguage).toUpperCase())}</span>`);
+  if (c.manualShop) chips.push(`<span class="chip shop">${esc(t.manualChip || "In person at shop")}</span>`);
   return chips.length ? `<div class="chips">${chips.join("")}</div>` : "";
 }
 function checkinSummaryHtml(c, t){
@@ -563,6 +617,7 @@ function checkinSummaryHtml(c, t){
     ])),
     sec(t.checkin, kv([
       [t.regNum, c.registrationNumber], ["Ref", c.ref], [L === "es" ? "Estado" : "Status", c.status],
+      [t.manualShop || "Registered manually at the shop", c.manualShop ? (t.manualDetail || "") : ""],
     ])),
   ].join("");
 }
@@ -625,7 +680,6 @@ function render(){
       <button class="ghost" data-act="toggle" data-id="${b.id}">${openId === b.id ? t.hide : t.details}</button>
       ${partyBtn}
       ${reviewBtn}
-      ${openId === b.id || reviewId === b.id || partyId === b.id ? `<button data-act="close" data-id="${b.id}">${t.saveClose}</button>` : ""}
       <button class="danger" data-act="del" data-id="${b.id}">${t.del}</button></div>
       ${openId === b.id ? `<div class="det">${details(b)}</div>` : ""}
       ${reviewId === b.id ? `<div class="det" id="bkReview-${b.id}">${bookingReview && bookingReview._bookingId === b.id ? "" : `<p class="mut">${t.loading}</p>`}</div>` : ""}
@@ -673,8 +727,7 @@ async function act(action, id){
   }
   if (action === "close") { openId = null; reviewId = null; bookingReview = null; partyId = null; partyView = null; render(); return; }
   if (action === "del") { if (!confirm(T[L].delSure)) return; await api("/api/bookings/" + id, { method: "DELETE" }); load(); return; }
-  const saved = action === "confirmed" ? "done" : action;
-  await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ status: saved }) });
+  await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ status: action }) });
   openId = null; reviewId = null; partyId = null; partyView = null;
   load();
 }
@@ -947,33 +1000,62 @@ let regs = [], openReg = null, regDetail = null;
 const RSTAT = ["submitted","under_review","approved","rejected","flagged","corrections_requested"];
 let rDeb; $("rq").addEventListener("input", () => { clearTimeout(rDeb); rDeb = setTimeout(loadRegs, 250); });
 $("rstatus").onchange = loadRegs; $("rRefresh").onclick = loadRegs;
+function paintStaffNote(){
+  const on = !!$("sfManual")?.checked;
+  const note = $("sfLinkNote");
+  if (note) note.textContent = on ? T[L].manualShopOn : T[L].linkNote;
+  const box = $("sfManualBox");
+  if (box) {
+    box.style.background = on ? "#e5f6ea" : "#fff8e8";
+    box.style.borderColor = on ? "#b7e0c2" : "#e6c56a";
+  }
+}
+function resetStaffForm(){
+  ["sfFirst","sfLast","sfPhone","sfEmail"].forEach(id => { if ($(id)) $(id).value = ""; });
+  if ($("sfManual")) $("sfManual").checked = false;
+  if ($("sfLink")) { $("sfLink").classList.add("hide"); $("sfLink").innerHTML = ""; }
+  if ($("sfErr")) $("sfErr").textContent = "";
+  paintStaffNote();
+}
 if ($("staffRegBtn")) $("staffRegBtn").onclick = () => $("staffBox").classList.toggle("hide");
+if ($("sfManual")) $("sfManual").onchange = paintStaffNote;
 if ($("sfSave")) $("sfSave").onclick = async () => {
   $("sfErr").textContent = "";
-  const body = { firstName: $("sfFirst").value.trim(), lastName: $("sfLast").value.trim(), phone: $("sfPhone").value.trim(), email: $("sfEmail").value.trim() };
+  const manualShop = !!$("sfManual")?.checked;
+  const body = { firstName: $("sfFirst").value.trim(), lastName: $("sfLast").value.trim(), phone: $("sfPhone").value.trim(), email: $("sfEmail").value.trim(), manualShop };
   const res = await api("/api/registrations/staff", { method: "POST", body: JSON.stringify(body) });
   const d = await res.json().catch(() => ({}));
   if (!res.ok) { $("sfErr").textContent = d.error || T[L].staffNeed; return; }
-  const link = d.url;
-  const phone = body.phone.replace(/\D/g, "");
   $("sfLink").classList.remove("hide");
-  $("sfLink").innerHTML = `<p class="okmsg">${esc(T[L].staffSaved)}</p><input readonly value="${esc(link)}"><div class="acts">
-    <a class="btn" href="mailto:${encodeURIComponent(body.email)}?subject=${encodeURIComponent(T[L].staffReg)}&body=${encodeURIComponent(link)}">${esc(T[L].linkEmail)}</a>
-    <a class="btn" href="sms:${phone}?&body=${encodeURIComponent(link)}">${esc(T[L].linkSms)}</a>
-    <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${phone}?text=${encodeURIComponent(link)}">${esc(T[L].linkWa)}</a>
-    <button type="button" class="ghost" id="sfClose">${esc(T[L].saveClose)}</button></div>`;
-  $("sfClose").onclick = () => { $("staffBox").classList.add("hide"); openReg = null; loadRegs(); };
+  if (d.manualShop) {
+    const refLine = [d.ref, d.registrationNumber].filter(Boolean).join(" · ");
+    $("sfLink").innerHTML = `<p class="okmsg">${esc(T[L].staffSavedManual)}</p><p><span class="chip shop">${esc(T[L].manualChip)}</span></p><input readonly value="${esc(refLine)}"><div class="acts">
+      <button type="button" class="ghost" id="sfClose">${esc(T[L].close)}</button></div>`;
+  } else {
+    const link = d.url;
+    const phone = body.phone.replace(/\D/g, "");
+    $("sfLink").innerHTML = `<p class="okmsg">${esc(T[L].staffSaved)}</p><input readonly value="${esc(link)}"><div class="acts">
+      <a class="btn" href="mailto:${encodeURIComponent(body.email)}?subject=${encodeURIComponent(T[L].staffReg)}&body=${encodeURIComponent(link)}">${esc(T[L].linkEmail)}</a>
+      <a class="btn" href="sms:${phone}?&body=${encodeURIComponent(link)}">${esc(T[L].linkSms)}</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${phone}?text=${encodeURIComponent(link)}">${esc(T[L].linkWa)}</a>
+      <button type="button" class="ghost" id="sfClose">${esc(T[L].saveClose)}</button></div>`;
+  }
+  $("sfClose").onclick = () => { resetStaffForm(); $("staffBox").classList.add("hide"); openReg = null; loadRegs(); };
 };
 
 async function loadRegs(){
   try {
     const p = new URLSearchParams();
     if ($("rq").value.trim()) p.set("q", $("rq").value.trim());
-    if ($("rstatus").value) p.set("status", $("rstatus").value);
+    if ($("rstatus").value === "manual") p.set("manual", "1");
+    else if ($("rstatus").value) p.set("status", $("rstatus").value);
     const d = await (await api("/api/registrations?" + p)).json();
     regs = d.registrations || [];
     const s = d.stats || {};
-    $("rStats").textContent = `Total ${s.total||0} · Drafts ${s.drafts||0} · Submitted ${s.submitted||0} · Under review ${s.under_review||0} · Approved ${s.approved||0} · Flagged ${s.flagged||0} · Corrections ${s.corrections||0}`;
+    const inPerson = s.manual || 0;
+    $("rStats").textContent = L === "es"
+      ? `Total ${s.total||0} · Borradores ${s.drafts||0} · Enviados ${s.submitted||0} · En revisión ${s.under_review||0} · Aprobados ${s.approved||0} · Marcados ${s.flagged||0} · Correcciones ${s.corrections||0} · En persona ${inPerson}`
+      : `Total ${s.total||0} · Drafts ${s.drafts||0} · Submitted ${s.submitted||0} · Under review ${s.under_review||0} · Approved ${s.approved||0} · Flagged ${s.flagged||0} · Corrections ${s.corrections||0} · In person ${inPerson}`;
     renderRegs();
   } catch(e) {}
 }
@@ -981,12 +1063,13 @@ function renderRegs(){
   $("rlist").innerHTML = regs.length ? regs.map(r => {
     let data = {};
     try { data = JSON.parse(r.data || "{}"); } catch (e) {}
-    const tags = `${data.hasMinors ? `<span class="chip warn">${esc(T[L].minorsTag)}</span>` : ""}${data.courseInterest ? `<span class="chip">${esc(T[L].courseQ)}: ${esc(data.courseInterest === "yes" ? T[L].yes : T[L].no)}</span>` : ""}`;
+    const manual = !!(r.manual_shop) || data.manualShop === true || data.collectedInPerson === true;
+    const tags = `${manual ? `<span class="chip shop">${esc(T[L].manualChip)}</span>` : ""}${data.hasMinors ? `<span class="chip warn">${esc(T[L].minorsTag)}</span>` : ""}${data.courseInterest ? `<span class="chip">${esc(T[L].courseQ)}: ${esc(data.courseInterest === "yes" ? T[L].yes : T[L].no)}</span>` : ""}`;
     return `<div class="bk ${r.status==="submitted"?"fresh":""} ${openReg === r.id ? "sel" : ""}">
     <div class="bkhead"><div><b>${esc(r.first_name)} ${esc(r.last_name)}</b> · <span class="mut">${esc(r.ref)}</span>${r.registration_number ? ` · <b>${esc(r.registration_number)}</b>` : ""}${r.is_duplicate ? ' <span class="pill new">duplicate?</span>' : ""}${tags ? `<div class="chips">${tags}</div>` : ""}<br>
     <span class="mut">${esc(r.phone)}${r.email ? " · " + esc(r.email) : ""} · ${new Date(r.created_at).toLocaleString()}</span></div>
     <span class="pill ${r.status==="approved"?"confirmed":r.status==="submitted"?"new":""}">${esc(statusLabel(r.status))}</span></div>
-    ${r.checklist ? `<p class="mut" style="margin:8px 0 0">${Object.entries(r.checklist).map(([k, v]) => `${v === "complete" ? "✅" : v === "pending_approved_form" ? "🩺" : "⚠️"} ${esc(k)}`).join(" · ")}</p>` : ""}
+    ${r.checklist ? `<p class="mut" style="margin:8px 0 0">${Object.entries(r.checklist).map(([k, v]) => `${v === "complete" ? "✅" : v === "pending_approved_form" ? "🩺" : "⚠️"} ${esc(checkLabel(k))}`).join(" · ")}</p>` : ""}
     <div class="acts">
       <button class="ghost" data-r="${r.id}">${openReg === r.id ? T[L].hideReview : T[L].review}</button>
       <button class="danger" data-del-reg="${r.id}">${T[L].delReg || T[L].del}</button>
@@ -1045,6 +1128,7 @@ function paintRegDetail(){
       medicalFromPacket: data.medicalFromPacket, packetCompleted: data.packetCompleted, packetNeedsPhysician: data.packetNeedsPhysician,
       staffReviewStatus: data.staffReviewStatus,
       medFlag: data.medNeedsReview === 1 || data.packetNeedsPhysician === true || data.packetNeedsPhysician === 1 || data.staffReviewStatus === "PENDING_STAFF_REVIEW",
+      manualShop: !!(data.manualShop || data.collectedInPerson || Number(r.manual_shop) === 1),
     };
     const formsBlock = (regDetail.formSubmissions || []).length
       ? (regDetail.formSubmissions || []).map(s => {
@@ -1053,7 +1137,9 @@ function paintRegDetail(){
           return `<div style="margin:8px 0"><b>#${s.id}</b> · ${esc(s.registration_number || "")} · ${s.needs_physician ? "⚠️ Pending staff review" : "Cleared"} · ${s.signed_at ? new Date(s.signed_at).toLocaleString(L === "es" ? "es" : "en") : ""}
             <div class="acts" style="margin-top:6px">${pdfButtons(s.id, pdfs)} <button type="button" class="ghost" data-view-sub="${s.id}">${viewLbl}</button> <button type="button" class="danger" data-del-sub="${s.id}">${esc(T[L].delForm || T[L].del)}</button></div></div>`;
         }).join("")
-      : `<p class="mut">${L === "es" ? "Sin envíos de paquete aún" : "No packet submissions yet"}</p>`;
+      : (c.manualShop
+        ? `<p class="mut">${esc(t.manualDetail)}</p>`
+        : `<p class="mut">${L === "es" ? "Sin envíos de paquete aún" : "No packet submissions yet"}</p>`);
     const partyPeople = regDetail.participants || [];
     const partyBlock = partyPeople.length
       ? `<p class="mut">${partyPeople.length} ${L === "es" ? "personas" : "people"} · ${t.guests}: ${data.participants || r.participants || partyPeople.length}</p>` +
@@ -1173,11 +1259,11 @@ async function loadCorr(){
     const corr = (d.corrections||[]).map(c => `<div class="bk">
       <div class="bkhead"><div><b>${esc(c.ref || "—")}</b> · ${esc(c.name)} <span class="mut">${esc(c.phone)} · ${new Date(c.created_at).toLocaleString()}</span><br>${esc(c.message)}</div>
       <span class="pill ${c.status==="open"?"new":""}">${esc(c.status)}</span></div>
-      <div class="acts"><button class="ghost" data-c="${c.id}" data-s="${c.status==="open"?"resolved":"open"}">${c.status==="open"?T[L].saveClose:T[L].reopen}</button></div></div>`).join("");
+      <div class="acts"><button class="ghost" data-c="${c.id}" data-s="${c.status==="open"?"resolved":"open"}">${c.status==="open"?(T[L].resolve || T[L].saveClose):T[L].reopen}</button></div></div>`).join("");
     const reqs = (sched.requests||[]).map(x => `<div class="bk ${x.status==="open"?"fresh":""}" id="sched-${x.id}">
       <div class="bkhead"><div><b>${esc(x.full_name)}</b> · ${esc(x.kind)} <span class="mut">${esc(x.reservation_number)} · ${esc(x.phone)}${x.preferred_date ? " · " + esc(x.preferred_date) : ""} · ${new Date(x.created_at).toLocaleString()}</span></div>
       <span class="pill ${x.status==="open"?"new":""}">${esc(x.status)}</span></div>
-      <div class="acts"><button class="ghost" data-sched="${x.id}" data-s="${x.status==="open"?"resolved":"open"}">${x.status==="open"?T[L].saveClose:T[L].reopen}</button></div></div>`).join("");
+      <div class="acts"><button class="ghost" data-sched="${x.id}" data-s="${x.status==="open"?"resolved":"open"}">${x.status==="open"?(T[L].resolve || T[L].saveClose):T[L].reopen}</button></div></div>`).join("");
     $("clist").innerHTML = (corr + reqs) || `<p class="mut">${L==="es"?"Sin solicitudes de corrección.":"No correction requests."}</p>`;
     $("clist").querySelectorAll("button[data-c]").forEach(b => b.onclick = async () => { await api("/api/corrections", { method: "PATCH", body: JSON.stringify({ id: Number(b.dataset.c), status: b.dataset.s }) }); loadCorr(); loadPending(); });
     $("clist").querySelectorAll("button[data-sched]").forEach(b => b.onclick = async () => { await api("/api/schedule-requests", { method: "PATCH", body: JSON.stringify({ id: Number(b.dataset.sched), status: b.dataset.s }) }); loadCorr(); loadPending(); });

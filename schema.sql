@@ -176,3 +176,6 @@ VALUES ('registration','Customer Registration','Registro de clientes',
 
 PRAGMA foreign_keys=ON;
 
+-- 0016: in-person shop registrations (forms and data collected on paper)
+ALTER TABLE registrations ADD COLUMN manual_shop INTEGER NOT NULL DEFAULT 0;
+

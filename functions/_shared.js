@@ -67,19 +67,32 @@ export function makeToken() {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// True when staff recorded that forms and data were collected on paper at the shop.
+export function isManualShopRegistration(reg, data = null) {
+  if (!reg) return false;
+  if (Number(reg.manual_shop) === 1 || reg.manual_shop === true) return true;
+  let parsed = data;
+  if (!parsed) {
+    try { parsed = JSON.parse(reg.data || "{}"); } catch (e) { parsed = {}; }
+  }
+  return parsed?.manualShop === true || parsed?.collectedInPerson === true;
+}
+
 // Checklist computed from a registration row (+ signature/consent presence).
-// Never counts an unsigned or unsubmitted item as complete.
+// Never counts an unsigned or unsubmitted digital item as complete.
+// In-person shop registrations are the exception: paper forms were already collected.
 export function checklist(reg, { hasSignature = false, hasDeclaration = false } = {}) {
   let data = {};
   try { data = JSON.parse(reg.data || "{}"); } catch (e) {}
+  const manual = isManualShopRegistration(reg, data);
   const done = (ok) => (ok ? "complete" : "action_required");
   return {
     activity: done(!!(reg.activity || data.activity)),
     diverInfo: done(!!(data.firstName || reg.first_name) && !!(data.phone || reg.phone)),
-    forms: done(reg.status !== "draft" && hasDeclaration),
-    waivers: done(hasSignature && hasDeclaration),
+    forms: done(manual || (reg.status !== "draft" && hasDeclaration)),
+    waivers: done(manual || (hasSignature && hasDeclaration)),
     safety: "pending_approved_form", // no business-approved medical form exists yet — never auto-complete
-    review: reg.status === "draft" ? "not_started" : "complete",
+    review: reg.status === "draft" && !manual ? "not_started" : "complete",
   };
 }
 
@@ -100,6 +113,16 @@ export async function ensureSchema(env) {
   if (!names.has("party_complete")) {
     await env.DB.prepare("ALTER TABLE registrations ADD COLUMN party_complete INTEGER NOT NULL DEFAULT 0").run();
   }
+  if (!names.has("manual_shop")) {
+    await env.DB.prepare("ALTER TABLE registrations ADD COLUMN manual_shop INTEGER NOT NULL DEFAULT 0").run();
+  }
+  try {
+    const cust = await env.DB.prepare("PRAGMA table_info(customers)").all();
+    const custNames = new Set((cust.results || []).map((c) => c.name));
+    if (!custNames.has("registration_number")) {
+      await env.DB.prepare("ALTER TABLE customers ADD COLUMN registration_number TEXT").run();
+    }
+  } catch (_) { /* customers table is created by migration 0002 */ }
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS schedule_requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
