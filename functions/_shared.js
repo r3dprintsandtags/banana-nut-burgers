@@ -116,6 +116,13 @@ export async function ensureSchema(env) {
   if (!names.has("manual_shop")) {
     await env.DB.prepare("ALTER TABLE registrations ADD COLUMN manual_shop INTEGER NOT NULL DEFAULT 0").run();
   }
+  try {
+    const cust = await env.DB.prepare("PRAGMA table_info(customers)").all();
+    const custNames = new Set((cust.results || []).map((c) => c.name));
+    if (!custNames.has("registration_number")) {
+      await env.DB.prepare("ALTER TABLE customers ADD COLUMN registration_number TEXT").run();
+    }
+  } catch (_) { /* customers table is created by migration 0002 */ }
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS schedule_requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
