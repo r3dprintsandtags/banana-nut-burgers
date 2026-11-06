@@ -60,9 +60,12 @@ export function getRegistrationStatus(reg, participants, opts = {}) {
 
   const submitted = reg.status && reg.status !== "draft";
   const aboutDone = aboutComplete(data);
-  const hasMinors = data.hasMinors === true ? true : (data.hasMinors === false ? false : null);
   const guests = (participants || []).filter((p) => p.role !== "primary");
   const primary = (participants || []).find((p) => p.role === "primary") || null;
+  // Children already on the roster count as Yes even if the draft flag lagged behind.
+  const hasMinors = guests.length > 0
+    ? true
+    : (data.hasMinors === true ? true : (data.hasMinors === false ? false : null));
 
   const people = (participants || []).map((p) => {
     const self = p.role === "primary";

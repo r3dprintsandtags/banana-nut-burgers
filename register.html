@@ -266,10 +266,22 @@ button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not
           <option value="relative" data-i="relRelative"></option>
           <option value="other" data-i="relOther"></option>
         </select>
+        <label data-i="ownGear"></label>
+        <div class="yesno">
+          <label><input type="radio" name="pGear" id="pGearYes" value="yes"><span data-i="yes"></span></label>
+          <label><input type="radio" name="pGear" id="pGearNo" value="no"><span data-i="no"></span></label>
+        </div>
+        <div id="pGearSizeWrap" class="hide">
+          <label for="pGearSize" data-i="gearSize"></label>
+          <select id="pGearSize">
+            <option value="" data-i="sel"></option>
+            <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option>
+          </select>
+        </div>
         <p class="err" id="partyAddErr" aria-live="polite"></p>
         <div class="acts" style="margin-top:10px">
           <button type="button" class="ban" id="partySavePerson" data-i="addChild"></button>
-          <button type="button" class="ghost" id="partyCancelAdd" data-i="remove"></button>
+          <button type="button" class="ghost" id="partyCancelAdd" data-i="cancelOpt"></button>
         </div>
       </div>
       <p><button type="button" class="ghost wide hide" id="addAnotherBtn" data-i="addAnother"></button></p>
@@ -833,13 +845,26 @@ async function setHasMinors(v){
     return;
   }
   $("errMinors").textContent = "";
-  draft.hasMinors = v; saveLocal();
+  draft.hasMinors = v;
+  if (v === true) draft.addingChild = true;
+  saveLocal();
   paintMinors();
   if (v === false) return continueFromMinors();
-  saveDraft(false);
+  // Wait for the Yes answer to hit the server so the stepper can leave this question.
+  const ok = await saveDraft(false);
+  if (!ok) { $("errMinors").textContent = t().notSaved; return; }
+  await refreshStatus();
+  if ($("pFirst")) $("pFirst").focus();
 }
 $("hasMinorsYes").onclick = () => setHasMinors(true);
 $("hasMinorsNo").onclick = () => setHasMinors(false);
+function syncChildGearUI(){
+  const g = document.querySelector('input[name="pGear"]:checked');
+  const need = g && g.value === "no";
+  if ($("pGearSizeWrap")) $("pGearSizeWrap").classList.toggle("hide", !need);
+  if (!need && $("pGearSize")) $("pGearSize").value = "";
+}
+document.querySelectorAll('input[name="pGear"]').forEach((el) => el.addEventListener("change", syncChildGearUI));
 function paintMinors(){
   const x = t();
   const minors = minorsOnParty();
@@ -972,14 +997,16 @@ $("pDob").addEventListener("change", checkChildDob);
 $("pDob").addEventListener("input", checkChildDob);
 $("addAnotherBtn").onclick = () => { draft.addingChild = true; saveLocal(); paintMinors(); $("pFirst").focus(); };
 if ($("partyCancelAdd")) $("partyCancelAdd").onclick = () => {
-  ["pFirst", "pLast", "pDob"].forEach((id) => { if ($(id)) $(id).value = ""; });
+  ["pFirst", "pLast", "pDob", "pGearSize"].forEach((id) => { if ($(id)) $(id).value = ""; });
   if ($("pRel")) $("pRel").value = "child";
+  document.querySelectorAll('input[name="pGear"]').forEach((el) => { el.checked = false; });
+  syncChildGearUI();
   if ($("pDobErr")) $("pDobErr").textContent = "";
   if ($("partyAddErr")) $("partyAddErr").textContent = "";
   dupForce = false;
   draft.addingChild = false; saveLocal();
   if (!minorsOnParty().length) return setHasMinors(false);
-  paintMinors();
+  paintMinors(); paintChrome();
 };
 async function addChild(){
   const x = t();
@@ -989,11 +1016,16 @@ async function addChild(){
   const age = ageFromDobStr(dob);
   if (age == null || dob > todayIso()) { $("partyAddErr").textContent = x.childNeedDob; return; }
   if (age >= 18) { $("pDobErr").textContent = x.childAdult; return; }
+  const gearEl = document.querySelector('input[name="pGear"]:checked');
+  const gear = gearEl ? gearEl.value : "";
+  if (gear !== "yes" && gear !== "no") { $("partyAddErr").textContent = x.needGear; return; }
+  if (gear === "no" && !V("pGearSize")) { $("partyAddErr").textContent = x.needGearSize; return; }
   if (!draft.ref || !draft.token) { const ok = await saveDraft(false); if (!ok) { $("partyAddErr").textContent = t().notSaved; return; } }
   $("partySavePerson").disabled = true;
   const r = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
     action: "upsert", ref: draft.ref, token: draft.token, lang: L, firstName: first, lastName: last, dob,
-    relationship: V("pRel") || "child", mode: "here", sameAddress: true, sameEmergency: true, forceDuplicate: dupForce,
+    relationship: V("pRel") || "child", mode: "here", sameAddress: true, sameEmergency: true,
+    ownGear: gear, gearSize: gear === "no" ? V("pGearSize") : "", forceDuplicate: dupForce,
   })});
   const out = await r.json().catch(() => ({}));
   $("partySavePerson").disabled = false;
@@ -1009,12 +1041,18 @@ async function addChild(){
   }
   dupForce = false;
   $("partySavePerson").textContent = x.addChild;
-  ["pFirst", "pLast", "pDob"].forEach(id => { $(id).value = ""; });
+  ["pFirst", "pLast", "pDob", "pGearSize"].forEach(id => { $(id).value = ""; });
   $("pRel").value = "child";
+  document.querySelectorAll('input[name="pGear"]').forEach((el) => { el.checked = false; });
+  syncChildGearUI();
   draft.addingChild = false; draft.hasMinors = true; saveLocal();
   party = out; status = out.status || status;
   paintMinors(); paintChrome();
-  saveDraft(false);
+  await saveDraft(false);
+  await refreshStatus();
+  // One complete child is enough to leave Who's coming — Add another stays available if they go back.
+  const next = status && status.nextRequiredTask;
+  if (!next || next.step !== "minors") return continueFromMinors();
 }
 $("partySavePerson").onclick = addChild;
 async function removePerson(id){
