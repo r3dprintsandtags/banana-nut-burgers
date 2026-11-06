@@ -1,0 +1,1675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Banana Nut Burgers · Bookings CRM</title>
+<link rel="icon" href="/img/bnb-logo.png" type="image/png">
+<style>
+:root{--bg:#fff8e6;--card:#fff;--ink:#0a2533;--mut:#5a6e78;--pri:#0a86b0;--ban:#ffc928;--line:#d9cbb0;--ok:#17a35c;--red:#d64545}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:#06161f url(img/shop-beach.jpg) center/cover fixed no-repeat;color:#0a2533;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,22,31,.5),rgba(6,22,31,.8))}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:12px 16px 60px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:24px;margin:0;color:#f5fbff;text-shadow:0 2px 10px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px}
+h1 .crm-logo{width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+a.crm-brand{display:inline-flex;align-items:center;gap:10px;color:inherit;text-decoration:none}
+a.crm-brand:hover{opacity:.92}
+h2{font-size:18px;margin:0;color:#0a2533}
+.page-mut,#rStats,#updated{color:#e8f4fa!important;text-shadow:0 1px 6px rgba(0,0,0,.4);font-size:14px}
+input,button,select{font:inherit}
+input,select{width:100%;padding:12px;border-radius:12px;border:1.5px solid #c5b89a;background:#fff;color:#0a2533;min-height:48px}
+button{cursor:pointer;border:0;border-radius:12px;padding:10px 16px;background:var(--pri);color:#fff;font-weight:700;min-height:44px}
+.ghost{background:#fff;color:#075a78;border:1.5px solid #c5b89a}
+.danger{background:#fff;color:var(--red);border:1.5px solid #e8b4b4}
+.card,.bk,.stat{background:#fff!important;color:#0a2533!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 10px 32px rgba(0,0,0,.18)}
+.card{border-radius:16px;padding:16px;margin-top:14px}
+.card label,.card h2,.card b,.bk label,.bk b,.stat b{color:#0a2533!important}
+.card .mut,.bk .mut,.stat span{color:#5a6e78!important;text-shadow:none!important}
+#loginView .card label{color:#0a2533!important;font-weight:700}
+.hide{display:none}.mut{color:#5a6e78;font-size:14px}.err{color:var(--red);font-weight:600}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}.bar input,.bar select{flex:1;min-width:180px}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.stat{border-radius:14px;padding:12px;text-align:center;cursor:pointer}
+.stat b{display:block;font-size:26px;color:#0a2533}.stat.on{outline:2px solid var(--pri)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tab{background:#fff;color:#0a2533;border:1.5px solid #c5b89a;border-radius:99px;min-height:40px;padding:8px 16px;font-weight:700}
+.tab.on{background:var(--ban);color:#0a2533;border-color:var(--ban)}
+.bk{border-radius:14px;padding:14px;margin-top:10px}
+.bk.fresh{border-left:6px solid var(--ban)!important}
+.bk.sel{outline:3px solid var(--ban)}
+.bkhead{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.bkhead b{color:#0a2533!important;font-size:16px}
+.pill{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:#eadfc2;color:#0a2533}
+.pill.new{background:var(--ban);color:#0a2533}.pill.confirmed{background:#cdeccd;color:#14532d}.pill.done{background:#eadfc2;color:#5a6e78}.pill.complete{background:#b7e4c7;color:#14532d}.pill.archive{background:#d5dee6;color:#0a2533}
+.when{margin-top:4px}
+.when-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.when-row .mut{min-width:58px;font-weight:800;color:#e8f4fa!important;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.slot{background:#fff;color:#0a2533;border:1.5px solid #c5b89a;border-radius:99px;min-height:36px;padding:6px 12px;font-size:14px;font-weight:700}
+.slot.on{background:var(--ban);color:#0a2533;border-color:var(--ban)}
+.slot-head{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding:10px 14px;background:#fff;color:#0a2533;border:1.5px solid #ecd97a;border-left:6px solid var(--ban);border-radius:12px;text-align:left;font-weight:800}
+.slot-head.on{background:#fff4c2}
+.slot-head b{font-weight:800}
+.slot-count{background:var(--ban);color:#0a2533;border-radius:99px;min-width:28px;text-align:center;padding:2px 8px;font-size:13px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.acts button,.acts a{min-height:40px;padding:8px 12px;font-size:14px}
+.acts .ghost,.bar .ghost{background:#f3f7fa!important;color:#075a78!important;border:1.5px solid #b8c9d4}
+.bk,.bk *{color:#0a2533}
+.bk .mut{color:#5a6e78!important}
+.bk .pill{color:#0a2533!important}
+.bk .pill.confirmed{color:#14532d!important}
+.bk .acts .btn{color:#fff!important}
+a.btn{display:inline-flex;align-items:center;border-radius:12px;padding:8px 12px;background:var(--ok);color:#fff;font-weight:700;text-decoration:none;min-height:40px;font-size:14px}
+.det{margin-top:10px;border-top:1px dashed #d9cbb0;padding-top:10px;font-size:14px;color:#0a2533}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:#eef5f8;color:#0a2533;border:1px solid #d0e0e8}
+.chip.warn{background:#fff3cd;border-color:#ecd97a;color:#6b5300}
+.chip.ok{background:#e5f6ea;border-color:#b7e0c2;color:#14532d}
+.chip.mut{background:#f3f1ea;border-color:#e0d8c4;color:#5a6e78;font-weight:600}
+.sec{margin-top:12px}.sec h3{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#5a6e78!important}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:#5a6e78;margin:0}.kv dd{margin:0;font-weight:600;word-break:break-word}
+@media(max-width:520px){.kv{grid-template-columns:1fr}.kv dt{font-size:12px}}
+#view-pending > .page-mut{color:#e8f4fa!important;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.ask{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(6,22,31,.62)}
+.ask.hide{display:none}
+.ask-card{width:min(440px,100%);background:#fff;color:#0a2533;border-radius:16px;padding:18px 18px 16px;border-left:6px solid var(--ban);box-shadow:0 18px 48px rgba(0,0,0,.35)}
+.ask-kicker{margin:0;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#6b5300}
+.ask-card h2{margin:6px 0 8px;font-size:22px;line-height:1.25}
+.ask-card p{margin:0;color:#0a2533}
+.ask-when{margin-top:10px!important;font-weight:700}
+.ask-card .acts{margin-top:16px}
+.ask-card .acts button{flex:1}
+@media(max-width:420px){.ask-card .acts{flex-direction:column}.ask-card .acts button{width:100%}}
+</style>
+<script src="/api/register/status-client"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1><a class="crm-brand" href="/" aria-label="Banana Nut Burgers home"><img class="crm-logo" src="/img/bnb-logo.png" width="64" height="64" alt=""><span data-i="title"></span></a></h1>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="ghost" id="langBtn" aria-label="Language">ES</button>
+      <button type="button" class="ghost hide" id="logoutBtn" data-i="logout"></button>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div id="loginView">
+    <p class="page-mut" data-i="loginSub"></p>
+    <div class="card">
+      <label for="pw" data-i="password"></label>
+      <div style="position:relative;margin-top:8px">
+        <input id="pw" type="password" autocomplete="current-password" style="margin:0;padding-right:48px;width:100%">
+        <button type="button" id="pwToggle" aria-pressed="false" aria-label="Show password" title="Show password" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;min-height:40px;padding:0;border:0;border-radius:10px;background:transparent;color:#075a78;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"></button>
+      </div>
+      <p><button id="loginBtn" style="width:100%" data-i="login"></button></p>
+      <p class="err" id="loginErr"></p>
+    </div>
+  </div>
+
+  <!-- CRM -->
+  <div id="crmView" class="hide">
+    <div class="tabs" id="viewTabs">
+      <button class="tab on" data-v="bookings">📅 <span data-i="tabBookings">Booked</span></button>
+      <button class="tab" data-v="regs">📋 <span data-i="tabRegs">Registrations</span></button>
+      <button class="tab" data-v="corr">✏️ <span data-i="tabCorr">Corrections</span></button>
+      <button class="tab" data-v="audit">🧾 <span data-i="tabAudit">Audit</span></button>
+      <button class="tab" data-v="pending">⏳ <span data-i="tabPending">Pending</span></button>
+      <button class="tab" data-v="promos">🏷️ <span data-i="tabPromos">Promotions</span></button>
+    </div>
+    <div id="view-bookings">
+    <div class="stats">
+      <div class="stat" data-f="today"><b id="sTotal">0</b><span data-i="dailyTotal"></span></div>
+      <div class="stat" data-f="newtoday"><b id="sNew">0</b><span data-i="newToday"></span></div>
+      <div class="stat" data-f="done"><b id="sDone">0</b><span data-i="done"></span></div>
+      <div class="stat" data-f="complete"><b id="sComplete">0</b><span data-i="diveDone"></span></div>
+      <div class="stat" data-f="archive"><b id="sArchive">0</b><span data-i="archive"></span></div>
+    </div>
+    <div class="bar">
+      <input id="q" data-ph="searchPh">
+      <button class="ghost" id="refreshBtn" data-i="refresh"></button>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-f="" data-i="all"></button>
+      <button class="tab" data-f="newtoday" data-i="newToday"></button>
+      <button class="tab" data-f="done" data-i="done"></button>
+      <button class="tab" data-f="complete" data-i="diveDone"></button>
+      <button class="tab" data-f="archive" data-i="archive"></button>
+    </div>
+    <div id="whenNav" class="when"></div>
+    <p class="page-mut" id="updated"></p>
+    <div id="list"></div>
+    <p class="page-mut hide" id="empty" data-i="empty"></p>
+    </div><!-- /view-bookings -->
+
+    <div id="view-regs" class="hide">
+      <div class="bar"><input id="rq" data-ph="regSearchPh" placeholder="Search name, phone, email, ref, or registration # (BNB-2610-0007)">
+      <select id="rstatus">
+        <option value="" data-i="allStatuses">All statuses</option><option>draft</option><option>submitted</option><option>under_review</option><option>approved</option>
+        <option>rejected</option><option>flagged</option><option>corrections_requested</option><option>complete</option></select>
+      <button class="ghost" id="rRefresh" data-i="rRefresh">Refresh</button>
+      <button class="ghost" id="staffRegBtn" data-i="staffReg"></button></div>
+      <div id="staffBox" class="card hide">
+        <h2 data-i="staffReg"></h2>
+        <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label data-i="name"></label><input id="sfFirst" autocomplete="given-name"></div>
+          <div><label data-i="preferred"></label><input id="sfLast" autocomplete="family-name"></div>
+        </div>
+        <label data-i="phone"></label><input id="sfPhone" type="tel">
+        <label data-i="email"></label><input id="sfEmail" type="email">
+        <p class="mut" data-i="linkNote"></p>
+        <div class="acts"><button type="button" id="sfSave" data-i="saveClose"></button></div>
+        <p class="err" id="sfErr"></p>
+        <div id="sfLink" class="hide"></div>
+      </div>
+      <p class="page-mut" id="rStats"></p>
+      <div id="rlist"></div>
+    </div>
+
+    <div id="view-corr" class="hide">
+      <div class="bar"><button class="ghost" id="cRefresh">Refresh</button></div>
+      <div id="clist"></div>
+    </div>
+
+    <div id="view-audit" class="hide">
+      <div class="bar"><button class="ghost" id="aRefresh">Refresh</button></div>
+      <div id="alist" style="font-size:14px"></div>
+    </div>
+
+    <div id="view-pending" class="hide">
+      <p class="page-mut" data-i="pendingSub">Registrations and bookings waiting for staff action.</p>
+      <div class="bar">
+        <button class="ghost" id="pendingRefresh" data-i="refresh">Refresh</button>
+      </div>
+      <div id="pendingList"></div>
+    </div>
+
+    <div id="view-promos" class="hide">
+      <p class="page-mut" data-i="promoSub">Deals on the homepage. Active ones show as a top banner and a special card.</p>
+      <div class="card hide" id="promoSendBox">
+        <h2 data-i="promoSendH">Send this deal</h2>
+        <p class="mut" id="promoSendMeta"></p>
+        <pre id="promoSendPreview" style="white-space:pre-wrap;background:#f3f7fa;border:1px solid #d0e0e8;border-radius:12px;padding:12px;font:14px/1.45 system-ui;color:#0a2533;max-height:220px;overflow:auto"></pre>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="promoSendEmail" checked style="width:auto;min-height:auto"> <span data-i="promoSendEmail">Email opted-in customers</span></label>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="promoSendWa" checked style="width:auto;min-height:auto"> <span data-i="promoSendWa">WhatsApp opted-in customers</span></label>
+        <p class="mut" data-i="promoSendNote" style="margin-top:8px">Only people who checked the marketing box are included. Medical answers are never sent.</p>
+        <div class="acts">
+          <button id="promoSendGo" data-i="promoSendGo">Send now</button>
+          <button class="ghost" id="promoSendCancel" data-i="promoSendCancel">Cancel</button>
+        </div>
+        <p class="err" id="promoSendErr"></p>
+        <div id="promoSendResult" class="hide" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <h2 data-i="promoAdd">Add a promotion</h2>
+        <label for="pTitle" data-i="promoTitleEn">Title (EN)</label>
+        <input id="pTitle" data-ph="promoTitlePh" placeholder="Discover Scuba · 2 for $180" style="margin-top:6px">
+        <label for="pTitleEs" data-i="promoTitleEs">Title (ES)</label>
+        <input id="pTitleEs" data-ph="promoTitleEsPh" placeholder="Descubre el buceo · 2 por $180" style="margin-top:6px">
+        <label for="pBlurb" data-i="promoBlurbEn">Blurb (EN)</label>
+        <input id="pBlurb" data-ph="promoBlurbPh" placeholder="Pool + shallow reef intro for two. Includes gear." style="margin-top:6px">
+        <label for="pBlurbEs" data-i="promoBlurbEs">Blurb (ES)</label>
+        <input id="pBlurbEs" data-ph="promoBlurbEsPh" placeholder="Intro en piscina y arrecife poco profundo para dos. Incluye equipo." style="margin-top:6px">
+        <div class="bar" style="margin-top:10px">
+          <input id="pBadge" data-ph="promoBadgePh" placeholder="Badge (THIS WEEK'S SPECIAL)">
+          <input id="pEnds" type="date" data-ph-title="promoEndsTitle" title="Ends on">
+          <input id="pEndsLabel" data-ph="promoEndsPh" placeholder="Ends label (ENDS OCT 31)">
+        </div>
+        <div class="bar">
+          <input id="pCta" data-ph="promoCtaPh" placeholder="Button (BOOK THIS DEAL)">
+          <input id="pUrl" data-ph="promoUrlPh" placeholder="Link (register.html?start=1&activity=Scuba)">
+          <input id="pOrder" type="number" data-ph="promoOrderPh" placeholder="Order" style="max-width:110px" value="0">
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="pActive" checked style="width:auto;min-height:auto"> <span data-i="promoActive">Show on website</span></label>
+        <p style="margin-top:12px"><button id="pSave" data-i="promoSave">Save promotion</button></p>
+        <p class="err" id="pErr"></p>
+      </div>
+      <div id="plist"></div>
+    </div>
+    <div id="view-home" class="hide">
+      <p class="page-mut" data-i="homeSub">Photos, trust line, and guest reviews on the public homepage.</p>
+      <p><a href="/" target="_blank" rel="noopener" data-i="homeView">View page</a></p>
+      <div class="card">
+        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="homeHeroOn" checked style="width:auto;min-height:auto"> <span data-i="homeHeroOn">Rotate hero photos</span></label>
+        <label for="homeMs" data-i="homeMs">Seconds between photos (4–12)</label>
+        <input id="homeMs" type="number" min="4" max="12" value="7" style="max-width:120px">
+        <div id="homeSlides"></div>
+        <p><button type="button" id="homeAddSlide" data-i="homeAdd">Add photo</button></p>
+        <label for="homeTrust" data-i="homeTrust">Trust line, one per row: English | Spanish</label>
+        <textarea id="homeTrust" rows="3">Small groups (4-8) | Grupos pequeños (4-8)</textarea>
+        <label for="homeSpecial" data-i="homeSpecial">Special card photo</label>
+        <input id="homeSpecial" placeholder="img/opt/boat.jpg">
+        <label for="homeHours" data-i="homeHours">Hours (EN), leave blank to hide</label>
+        <input id="homeHours">
+        <label for="homeHoursEs" data-i="homeHoursEs">Hours (ES)</label>
+        <input id="homeHoursEs">
+        <h3 data-i="homeReviews">Guest reviews</h3>
+        <p class="mut" data-i="homeReviewsNote">Only reviews you type here are shown. Leave blank to hide the carousel.</p>
+        <div id="homeReviews"></div>
+        <p><button type="button" id="homeAddReview" data-i="homeAddReview">Add review</button></p>
+        <p><button type="button" id="homeSave" data-i="homeSave">Save homepage</button></p>
+        <p class="err" id="homeErr"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="boatAsk" class="ask hide" role="dialog" aria-modal="true" aria-labelledby="boatAskTitle">
+  <div class="ask-card">
+    <p class="ask-kicker" id="boatAskKicker"></p>
+    <h2 id="boatAskTitle"></h2>
+    <p id="boatAskBody"></p>
+    <p class="ask-when" id="boatAskWhen"></p>
+    <div class="acts">
+      <button type="button" id="boatAskYes"></button>
+      <button type="button" class="ghost" id="boatAskNo"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const T = {
+  en:{title:"Bookings CRM",loginSub:"Owner login for Banana Nut Burgers Dive Shop.",password:"Password",login:"Log in",logout:"Log out",total:"Total",dailyTotal:"Daily total",new:"New",newToday:"New today",confirmed:"Confirmed",done:"IN THE BOAT",diveDone:"Dive completed",backOnBoat:"Back on boat",archive:"Archive",toArchive:"Move to archive",restore:"Restore",showAll:"Show all",noOneSlot:"No one went out at this time.",year:"Year",month:"Month",week:"Week",day:"Day",slotTime:"Time",all:"All",searchPh:"Search name, contact, email, service…",csv:"Export CSV",refresh:"Refresh",empty:"No bookings yet. New requests from the website will appear here automatically.",wrong:"Wrong password.",updated:"Updated",guests:"guests",confirm:"Confirm",reopen:"Reopen",del:"Delete",delSure:"Delete this booking?",delReg:"Delete registration",delRegSure:"Delete this registration, its forms, and signed files? This cannot be undone.",delForm:"Delete forms",delFormSure:"Delete this signed form packet?",clearAll:"Delete all customer data",clearAllSure:"This permanently deletes ALL bookings, registrations, customers, and form packets. Type DELETE ALL to confirm.",clearAllPh:"DELETE ALL",clearAllDone:"All customer data deleted.",clearAllKeep:"Form templates and promotions are kept.",details:"Details",hide:"Hide",submitted:"Submitted",divers:"Divers",cruise:"Cruise",note:"Notes",wa:"WhatsApp guest",tabBookings:"Booked",tabRegs:"Registrations",tabCorr:"Corrections",tabAudit:"Audit",tabPending:"Pending",tabPromos:"Promotions",tabHome:"Homepage",homeSub:"Photos, trust line, and guest reviews on the public homepage.",homeView:"View page",homeHeroOn:"Rotate hero photos",homeMs:"Seconds between photos (4–12)",homeAdd:"Add photo",homeTrust:"Trust line, one per row: English | Spanish",homeSpecial:"Special card photo",homeHours:"Hours (EN), leave blank to hide",homeHoursEs:"Hours (ES)",homeReviews:"Guest reviews",homeReviewsNote:"Only reviews you type here are shown. Leave blank to hide the carousel.",homeAddReview:"Add review",homeSave:"Save homepage",homeSaved:"Homepage saved.",promoSub:"Deals on the homepage special card.",promoAdd:"Add a promotion",promoActive:"Show on website",promoSave:"Save promotion",promoEmpty:"No promotions yet.",promoOn:"Live",promoOff:"Hidden",promoHide:"Hide",promoShow:"Show",promoDel:"Delete",promoDelSure:"Delete this promotion?",promoTitleEn:"Title (EN)",promoTitleEs:"Title (ES)",promoBlurbEn:"Blurb (EN)",promoBlurbEs:"Blurb (ES)",promoTitlePh:"Discover Scuba · 2 for $180",promoTitleEsPh:"Descubre el buceo · 2 por $180",promoBlurbPh:"Pool + shallow reef intro for two. Includes gear.",promoBlurbEsPh:"Intro en piscina y arrecife poco profundo para dos. Incluye equipo.",promoBadgePh:"Badge (THIS WEEK'S SPECIAL)",promoEndsTitle:"Ends on",promoEndsPh:"Ends label (ENDS OCT 31)",promoCtaPh:"Button (BOOK THIS DEAL)",promoUrlPh:"Link (register.html?start=1&activity=Scuba)",promoOrderPh:"Order",promoSend:"Send",promoSendH:"Send this deal",promoSendEmail:"Email opted-in customers",promoSendWa:"WhatsApp opted-in customers",promoSendNote:"Only people who checked the marketing box are included. Medical answers are never sent.",promoSendGo:"Send now",promoSendCancel:"Cancel",promoSendSure:"Send this promotion to opted-in customers?",promoSendAudience:"opted-in customers",promoSendPhones:"with phone",promoSendEmails:"with email",promoSendDone:"Blast finished",promoSendOpenWa:"Open WhatsApp",promoSendCopy:"Copy message",promoSendNone:"No marketing-opted customers yet.",review:"Review check-in",hideReview:"Hide check-in",rRefresh:"Refresh",allStatuses:"All statuses",regSearchPh:"Search name, phone, email, ref, or registration # (BNB-2610-0007)",trip:"Trip",diver:"Diver",gear:"Gear & experience",emergency:"Emergency",medical:"Medical",checkin:"Check-in",noCheckin:"No linked check-in yet.",regNum:"Reg #",dob:"DOB",age:"Age",cert:"Cert",ownGear:"Own gear",rental:"Needs rental",lang:"Language",phone:"Phone",email:"Email",name:"Name",preferred:"Preferred",relationship:"Relationship",heart:"Heart / circulation",lung:"Lungs / breathing",otherMed:"Other medical",detail:"Detail",physician:"Pending staff review",staffReview:"Staff review",cleared:"Cleared",packet:"SSI packet",fromPacket:"From SSI medical packet",yes:"Yes",no:"No",na:"—",openReg:"Open in Registrations",saveClose:"Save and Close",pendingH:"Pending Review",pendingSub:"Registrations and bookings waiting for staff action.",pendingEmpty:"Nothing waiting for review.",pendingRegs:"Registrations",pendingBookings:"New bookings",pendingSched:"Schedule changes",reviewNow:"Review",staffReg:"Register a Diver",needsReview:"Needs Review",minorsTag:"Minors",age:"Age",courseQ:"Are you interested in any course?",sendLink:"Send a link",linkEmail:"Email",linkSms:"SMS",linkWa:"WhatsApp",staffSaved:"Registration saved. Send the link so they can finish and sign the forms.",staffNeed:"First name, last name, and a valid phone are required.",linkNote:"The link opens their forms. The signed forms attach to this same registration.",openRec:"Review",showPw:"Show password",hidePw:"Hide password",loading:"Loading…",partyView:"Party",hideParty:"Hide party",partyHeadcount:"Headcount",partyRegistered:"Registered",partyAdult:"Adult",partyMinors:"Minors",partyNoRegs:"No registrations linked to this booking yet.",partyInviteHint:"Each adult is a separate registration. Minors nest under their guardian."},
+  es:{title:"CRM de reservas",loginSub:"Acceso del dueño de Banana Nut Burgers Dive Shop.",password:"Contraseña",login:"Entrar",logout:"Salir",total:"Total",dailyTotal:"Total de hoy",new:"Nuevas",newToday:"Nuevas hoy",confirmed:"Confirmadas",done:"EN EL BOTE",diveDone:"Buceo terminado",backOnBoat:"Volver al bote",archive:"Archivo",toArchive:"Mover al archivo",restore:"Restaurar",showAll:"Ver todo",noOneSlot:"Nadie salió a esta hora.",year:"Año",month:"Mes",week:"Semana",day:"Día",slotTime:"Hora",all:"Todas",searchPh:"Buscar nombre, contacto, correo, servicio…",csv:"Exportar CSV",refresh:"Actualizar",empty:"Aún no hay reservas. Las solicitudes del sitio aparecerán aquí automáticamente.",wrong:"Contraseña incorrecta.",updated:"Actualizado",guests:"personas",confirm:"Confirmar",reopen:"Reabrir",del:"Borrar",delSure:"¿Borrar esta reserva?",delReg:"Borrar registro",delRegSure:"¿Borrar este registro, sus formularios y archivos firmados? No se puede deshacer.",delForm:"Borrar formularios",delFormSure:"¿Borrar este paquete de formularios firmados?",clearAll:"Borrar todos los datos de clientes",clearAllSure:"Esto borra PERMANENTEMENTE todas las reservas, registros, clientes y paquetes. Escribe DELETE ALL para confirmar.",clearAllPh:"DELETE ALL",clearAllDone:"Todos los datos de clientes borrados.",clearAllKeep:"Se conservan plantillas de formularios y promociones.",details:"Detalles",hide:"Ocultar",submitted:"Enviado",divers:"Buzos",cruise:"Crucero",note:"Notas",wa:"WhatsApp al cliente",tabBookings:"Reservado",tabRegs:"Registros",tabCorr:"Correcciones",tabAudit:"Auditoría",tabPending:"Pendientes",tabPromos:"Promociones",tabHome:"Inicio",homeSub:"Fotos, línea de confianza y reseñas en la página pública.",homeView:"Ver página",homeHeroOn:"Rotar fotos del inicio",homeMs:"Segundos entre fotos (4–12)",homeAdd:"Agregar foto",homeTrust:"Línea de confianza, una por fila: inglés | español",homeSpecial:"Foto de la oferta",homeHours:"Horario (EN), vacío para ocultar",homeHoursEs:"Horario (ES)",homeReviews:"Reseñas",homeReviewsNote:"Solo se muestran las reseñas que escribas aquí. Vacío oculta el carrusel.",homeAddReview:"Agregar reseña",homeSave:"Guardar inicio",homeSaved:"Inicio guardado.",promoSub:"Ofertas en la tarjeta especial de la página de inicio.",promoAdd:"Agregar promoción",promoActive:"Mostrar en el sitio",promoSave:"Guardar promoción",promoEmpty:"Aún no hay promociones.",promoOn:"Activa",promoOff:"Oculta",promoHide:"Ocultar",promoShow:"Mostrar",promoDel:"Borrar",promoDelSure:"¿Borrar esta promoción?",promoTitleEn:"Título (EN)",promoTitleEs:"Título (ES)",promoBlurbEn:"Texto (EN)",promoBlurbEs:"Texto (ES)",promoTitlePh:"Discover Scuba · 2 for $180",promoTitleEsPh:"Descubre el buceo · 2 por $180",promoBlurbPh:"Pool + shallow reef intro for two. Includes gear.",promoBlurbEsPh:"Intro en piscina y arrecife poco profundo para dos. Incluye equipo.",promoBadgePh:"Insignia (ESPECIAL DE LA SEMANA)",promoEndsTitle:"Termina el",promoEndsPh:"Etiqueta de fin (TERMINA 31 OCT)",promoCtaPh:"Botón (RESERVAR OFERTA)",promoUrlPh:"Enlace (register.html?start=1&activity=Scuba)",promoOrderPh:"Orden",promoSend:"Enviar",promoSendH:"Enviar esta oferta",promoSendEmail:"Correo a clientes que aceptaron",promoSendWa:"WhatsApp a clientes que aceptaron",promoSendNote:"Solo se incluyen quienes marcaron el consentimiento de marketing. Nunca se envían respuestas médicas.",promoSendGo:"Enviar ahora",promoSendCancel:"Cancelar",promoSendSure:"¿Enviar esta promoción a los clientes que aceptaron marketing?",promoSendAudience:"clientes con marketing",promoSendPhones:"con teléfono",promoSendEmails:"con correo",promoSendDone:"Envío listo",promoSendOpenWa:"Abrir WhatsApp",promoSendCopy:"Copiar mensaje",promoSendNone:"Aún no hay clientes con marketing aceptado.",review:"Revisar check-in",hideReview:"Ocultar check-in",rRefresh:"Actualizar",allStatuses:"Todos los estados",regSearchPh:"Buscar nombre, teléfono, correo, ref. o # de registro (BNB-2610-0007)",trip:"Viaje",diver:"Buzo",gear:"Equipo y experiencia",emergency:"Emergencia",medical:"Médico",checkin:"Check-in",noCheckin:"Sin check-in vinculado.",regNum:"Reg #",dob:"Nac.",age:"Edad",cert:"Cert",ownGear:"Equipo propio",rental:"Necesita renta",lang:"Idioma",phone:"Teléfono",email:"Correo",name:"Nombre",preferred:"Preferido",relationship:"Relación",heart:"Corazón / circulación",lung:"Pulmones / respiración",otherMed:"Otro médico",detail:"Detalle",physician:"Pendiente revisión del personal",staffReview:"Revisión del personal",cleared:"Despejado",packet:"Paquete SSI",fromPacket:"Del paquete médico SSI",yes:"Sí",no:"No",na:"—",openReg:"Abrir en Registros",saveClose:"Guardar y Cerrar",pendingH:"Pendiente de Revision",pendingSub:"Registros y reservas que esperan accion del personal.",pendingEmpty:"Nada pendiente de revision.",pendingRegs:"Registros",pendingBookings:"Reservas nuevas",pendingSched:"Cambios de agenda",reviewNow:"Revisar",staffReg:"Registrar un Buzo",needsReview:"Pendiente de Revision",minorsTag:"Menores",age:"Edad",courseQ:"Le interesa algun curso?",sendLink:"Enviar un enlace",linkEmail:"Correo",linkSms:"SMS",linkWa:"WhatsApp",staffSaved:"Registro guardado. Envía el enlace para que complete y firme los formularios.",staffNeed:"Nombre, apellido y un teléfono válido son obligatorios.",linkNote:"El enlace abre sus formularios. Lo firmado queda en este mismo registro.",openRec:"Revisar",showPw:"Mostrar contraseña",hidePw:"Ocultar contraseña",loading:"Cargando…",partyView:"Grupo",hideParty:"Ocultar grupo",partyHeadcount:"Personas",partyRegistered:"Registrados",partyAdult:"Adulto",partyMinors:"Menores",partyNoRegs:"Aún no hay registros vinculados a esta reserva.",partyInviteHint:"Cada adulto es un registro aparte. Los menores quedan bajo su tutor."}
+};
+
+let L = localStorage.getItem("bnb_lang") || localStorage.getItem("bnb_admin_lang") || ((navigator.language||"en").startsWith("es") ? "es" : "en");
+let filter = "", rows = [], openId = null, reviewId = null, bookingReview = null, partyId = null, partyView = null;
+let whenPick = { year: "", month: "", week: "", day: "", time: "" };
+
+const $ = i => document.getElementById(i);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function downloadPdf(url, filename){
+  try {
+    const r = await api(url);
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      alert((L === "es" ? "No se pudo descargar: " : "Download failed: ") + (d.error || d.detail || r.status));
+      return;
+    }
+    const blob = await r.blob();
+    const cd = r.headers.get("Content-Disposition") || "";
+    const m = /filename="([^"]+)"/i.exec(cd);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = m?.[1] || filename || "form.pdf";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (e) {
+    alert((L === "es" ? "No se pudo descargar: " : "Download failed: ") + (e.message || e));
+  }
+}
+function pdfButtons(subId, pdfs){
+  if (!pdfs || !pdfs.length) {
+    return `<button type="button" class="ghost" data-dl-pdf="${subId}">${L === "es" ? "Descargar PDF" : "Download PDF"}</button>`;
+  }
+  return pdfs.map(p => {
+    const key = p.template_key || p.key || "";
+    const label = key || "PDF";
+    return `<button type="button" class="ghost" data-dl-pdf="${subId}" data-dl-key="${esc(key)}">${esc(label)}</button>`;
+  }).join(" ");
+}
+function bindPdfButtons(root){
+  (root || document).querySelectorAll("[data-dl-pdf]").forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.dlPdf;
+      const key = btn.dataset.dlKey || "";
+      const url = `/api/forms/submissions/${id}/pdf${key ? `?key=${encodeURIComponent(key)}` : ""}`;
+      downloadPdf(url, `${key || "form"}-${id}.pdf`);
+    };
+  });
+}
+
+function activeView(){
+  const on = document.querySelector("#viewTabs .tab.on");
+  return on ? on.dataset.v : "bookings";
+}
+function paintPromoPlaceholders(){
+  const t = T[L];
+  document.querySelectorAll("[data-ph]").forEach(e => { if (t[e.dataset.ph]) e.placeholder = t[e.dataset.ph]; });
+  document.querySelectorAll("[data-ph-title]").forEach(e => { if (t[e.dataset.phTitle]) e.title = t[e.dataset.phTitle]; });
+}
+function paintPw(){
+  const shown = $("pw").type === "text";
+  const eye = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eyeOff = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.8 21.8 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  $("pwToggle").innerHTML = shown ? eyeOff : eye;
+  $("pwToggle").setAttribute("aria-pressed", shown ? "true" : "false");
+  $("pwToggle").setAttribute("aria-label", shown ? T[L].hidePw : T[L].showPw);
+  $("pwToggle").title = shown ? T[L].hidePw : T[L].showPw;
+}
+function applyLang(){
+  const t = T[L];
+  document.documentElement.lang = L;
+  document.querySelectorAll("[data-i]").forEach(e => { if (t[e.dataset.i]) e.textContent = t[e.dataset.i]; });
+  paintPromoPlaceholders();
+  paintPw();
+  $("langBtn").textContent = L === "en" ? "ES" : "EN";
+  const v = activeView();
+  if (v === "bookings" || !$("crmView").classList.contains("hide")) render();
+  if (v === "regs" && !$("view-regs").classList.contains("hide")) renderRegs();
+  if (v === "corr" && !$("view-corr").classList.contains("hide")) loadCorr();
+  if (v === "audit" && !$("view-audit").classList.contains("hide")) loadAudit();
+  if (v === "pending" && !$("view-pending").classList.contains("hide")) loadPending();
+  if (v === "promos" && !$("view-promos").classList.contains("hide")) renderPromos();
+}
+
+async function api(path, opts = {}){
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  if (r.status === 401) { showLogin(); throw new Error("unauthorized"); }
+  return r;
+}
+
+function showLogin(){ $("crmView").classList.add("hide"); $("loginView").classList.remove("hide"); $("logoutBtn").classList.add("hide"); }
+function showCRM(){ $("loginView").classList.add("hide"); $("crmView").classList.remove("hide"); $("logoutBtn").classList.remove("hide"); load(); }
+
+$("loginBtn").onclick = async () => {
+  $("loginErr").textContent = "";
+  const r = await fetch("/api/login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ password: $("pw").value }) });
+  if (r.ok) { $("pw").value = ""; $("pw").type = "password"; paintPw(); showCRM(); }
+  else { const d = await r.json().catch(() => ({})); $("loginErr").textContent = d.error === "Wrong password" ? T[L].wrong : (d.error || T[L].wrong); }
+};
+$("pwToggle").onclick = () => { $("pw").type = $("pw").type === "password" ? "text" : "password"; paintPw(); };
+$("pw").addEventListener("keydown", e => { if (e.key === "Enter") $("loginBtn").click(); });
+$("logoutBtn").onclick = async () => { await fetch("/api/login", { method:"DELETE" }); showLogin(); };
+$("langBtn").onclick = () => { L = L === "en" ? "es" : "en"; try { localStorage.setItem("bnb_lang", L); localStorage.setItem("bnb_admin_lang", L); } catch(e) {} applyLang(); };
+
+let debounce;
+$("q").addEventListener("input", () => { clearTimeout(debounce); debounce = setTimeout(load, 250); });
+$("refreshBtn").onclick = load;
+document.querySelectorAll("[data-f]").forEach(el => el.onclick = () => { filter = el.dataset.f; syncTabs(); load(); });
+
+function syncTabs(){
+  document.querySelectorAll("#tabs .tab").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+  document.querySelectorAll(".stat").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+}
+
+async function load(){
+  try {
+    const params = new URLSearchParams();
+    if (filter) params.set("status", filter);
+    if ($("q").value.trim()) params.set("q", $("q").value.trim());
+    const r = await api("/api/bookings?" + params);
+    const d = await r.json();
+    rows = d.bookings || [];
+    $("sTotal").textContent = d.stats.daily || 0;
+    $("sNew").textContent = d.stats.fresh || 0;
+    $("sDone").textContent = d.stats.done || 0;
+    $("sComplete").textContent = d.stats.complete || 0;
+    $("sArchive").textContent = d.stats.archive || 0;
+    $("updated").textContent = T[L].updated + ": " + new Date().toLocaleTimeString();
+    render();
+    loadPending();
+  } catch(e) { /* login view already shown */ }
+}
+function statusLabel(s){
+  const t = T[L];
+  if (s === "under_review") return t.needsReview || t.pendingH;
+  if (s === "submitted") return t.submitted || "Submitted";
+  if (s === "approved") return t.approved || (L === "es" ? "Aprobado" : "Approved");
+  if (s === "rejected") return t.rejected || (L === "es" ? "Rechazado" : "Rejected");
+  if (s === "flagged") return t.flagged || (L === "es" ? "Marcado" : "Flagged");
+  if (s === "corrections_requested") return t.corrections_requested || (L === "es" ? "Pedir correcciones" : "Needs info");
+  if (s === "complete") return t.complete || (L === "es" ? "Completo" : "Complete");
+  return t[s] || s;
+}
+async function setRegStatus(id, status, reviewNote){
+  const res = await api("/api/registrations/" + id, {
+    method: "PATCH",
+    body: JSON.stringify({ status, reviewNote: reviewNote ?? ($("revNote")?.value || "") }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || "Error");
+  openReg = null;
+  regDetail = null;
+  await loadRegs();
+  load();
+  if (!$("view-pending")?.classList.contains("hide")) await loadPending();
+  return body;
+}
+let pendingRegs = [], pendingBookings = [], pendingSched = [];
+async function loadPending(){
+  if (!$("pendingList")) return;
+  try {
+    const [d, s, b] = await Promise.all([
+      (await api("/api/registrations?queue=1")).json(),
+      (await api("/api/schedule-requests")).json().catch(() => ({ requests: [] })),
+      (await api("/api/bookings?status=new")).json().catch(() => ({ bookings: [] })),
+    ]);
+    pendingRegs = d.registrations || [];
+    pendingBookings = (b.bookings || rows || []).filter(x => x.status === "new");
+    pendingSched = (s.requests || []).filter(x => x.status === "open");
+    renderPending();
+    if (openReg && regDetail && pendingRegs.some(r => Number(r.id) === Number(openReg))) paintRegDetail();
+  } catch (e) {
+    $("pendingList").innerHTML = `<p class="err">${esc(e.message || "Error")}</p>`;
+  }
+}
+function renderPending(){
+  if (!$("pendingList")) return;
+  const t = T[L];
+  const bits = [];
+  if (pendingRegs.length) {
+    bits.push(`<h2 style="margin:8px 0 10px;font-size:18px">${esc(t.pendingRegs || t.pendingH)}</h2>`);
+    pendingRegs.forEach(r => {
+      let data = {};
+      try { data = JSON.parse(r.data || "{}"); } catch (e) {}
+      const tag = data.hasMinors ? ` <span class="chip warn">${esc(t.minorsTag)}</span>` : "";
+      const open = Number(openReg) === Number(r.id);
+      const why = [];
+      if (data.packetNeedsPhysician || data.medNeedsReview === 1 || data.staffReviewStatus === "PENDING_STAFF_REVIEW") why.push(t.physician);
+      if (data.hasMinors) why.push(t.minorsTag);
+      if (!(r.has_signature || data.packetCompleted)) why.push(L === "es" ? "Falta firmar / paquetes" : "Forms / signature incomplete");
+      const whyHtml = why.length ? `<div class="chips" style="margin-top:6px">${why.map(w => `<span class="chip warn">${esc(w)}</span>`).join("")}</div>` : "";
+      bits.push(`<div class="bk ${open ? "sel" : "fresh"}" id="pend-reg-${r.id}">
+        <div class="bkhead"><div><b>${esc(r.first_name)} ${esc(r.last_name)}</b>${tag}<br>
+        <span class="mut">${esc(statusLabel(r.status))} · ${esc(r.ref)}${r.registration_number ? " · " + esc(r.registration_number) : ""}</span>${whyHtml}</div>
+        <span class="pill new">${esc(statusLabel(r.status))}</span></div>
+        <div class="acts">
+          <button type="button" data-approve-reg="${r.id}">${esc(t.approveAct || (L === "es" ? "Aprobar" : "Approve"))}</button>
+          <button type="button" class="ghost" data-open-reg="${r.id}">${esc(open ? t.hideReview : (t.reviewNow || t.openRec))}</button>
+          <button type="button" class="ghost" data-needinfo-reg="${r.id}">${esc(t.needInfoAct || (L === "es" ? "Pedir info" : "Need info"))}</button>
+        </div>
+        ${open ? `<div class="det" id="rdet-${r.id}">${regDetail && Number(regDetail.registration?.id) === Number(r.id) ? "" : `<p class="mut">${esc(t.loading)}</p>`}</div>` : ""}
+      </div>`);
+    });
+  }
+  if (pendingBookings.length) {
+    bits.push(`<h2 style="margin:18px 0 10px;font-size:18px">${esc(t.pendingBookings || t.new)}</h2>`);
+    pendingBookings.forEach(bk => {
+      bits.push(`<div class="bk fresh">
+        <div class="bkhead"><div><b>${esc(bk.first_name || "")} ${esc(bk.last_name || bk.name || "")}</b><br>
+        <span class="mut">${esc(bk.service || "")} · ${esc(fmtDate(bk))} · ${esc(bk.guests || 1)} ${esc(t.guests)}${bk.contact ? " · " + esc(bk.contact) : ""}</span></div>
+        <span class="pill new">${esc(t.new)}</span></div>
+        <div class="acts">
+          <button type="button" data-pend-confirm="${bk.id}">${esc(t.confirm)}</button>
+          <button type="button" class="ghost" data-pend-booking="${bk.id}">${esc(t.details)}</button>
+        </div>
+      </div>`);
+    });
+  }
+  if (pendingSched.length) {
+    bits.push(`<h2 style="margin:18px 0 10px;font-size:18px">${esc(t.pendingSched || t.tabCorr)}</h2>`);
+    pendingSched.forEach(x => {
+      bits.push(`<div class="bk" id="pend-sched-${x.id}">
+        <div class="bkhead"><div><b>${esc(x.full_name)}</b><br>
+        <span class="mut">${esc(x.kind === "reschedule" ? t.reschedOpt || x.kind : t.cancelOpt || x.kind)} · ${esc(x.reservation_number)} · ${esc(x.phone)}${x.preferred_date ? " · " + esc(x.preferred_date) : ""}</span></div>
+        <span class="pill new">${esc(x.status)}</span></div>
+        <div class="acts"><button type="button" class="ghost" data-resolve-sched="${x.id}">${esc(t.saveClose)}</button></div>
+      </div>`);
+    });
+  }
+  $("pendingList").innerHTML = bits.join("") || `<p class="mut">${esc(t.pendingEmpty || t.empty)}</p>`;
+  $("pendingList").querySelectorAll("[data-open-reg]").forEach(b => b.onclick = () => openPendingReg(Number(b.dataset.openReg)));
+  $("pendingList").querySelectorAll("[data-approve-reg]").forEach(b => b.onclick = async () => {
+    try { await setRegStatus(Number(b.dataset.approveReg), "approved"); }
+    catch (e) { alert(e.message || "Error"); }
+  });
+  $("pendingList").querySelectorAll("[data-needinfo-reg]").forEach(b => b.onclick = async () => {
+    try { await setRegStatus(Number(b.dataset.needinfoReg), "corrections_requested"); }
+    catch (e) { alert(e.message || "Error"); }
+  });
+  $("pendingList").querySelectorAll("[data-pend-confirm]").forEach(b => b.onclick = async () => {
+    await api("/api/bookings/" + b.dataset.pendConfirm, { method: "PATCH", body: JSON.stringify({ status: "confirmed" }) });
+    await load();
+    loadPending();
+  });
+  $("pendingList").querySelectorAll("[data-pend-booking]").forEach(b => b.onclick = () => {
+    openId = Number(b.dataset.pendBooking);
+    reviewId = null;
+    document.querySelector('#viewTabs .tab[data-v="bookings"]')?.click();
+    render();
+    setTimeout(() => document.querySelector(`#list .bk.sel`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
+  });
+  $("pendingList").querySelectorAll("[data-resolve-sched]").forEach(b => b.onclick = async () => {
+    await api("/api/schedule-requests", { method: "PATCH", body: JSON.stringify({ id: Number(b.dataset.resolveSched), status: "resolved" }) });
+    loadPending();
+  });
+  if (openReg && regDetail) paintRegDetail();
+}
+if (typeof CHIP_CSS !== "undefined") {
+  const st = document.createElement("style");
+  st.textContent = CHIP_CSS.light + ".tasks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.tasks .chip{border:1px solid}.shoprow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0}.reasonTxt{font-size:12px;color:#8f1a1a;margin:2px 0 0}";
+  document.head.appendChild(st);
+}
+function statusWord(k){
+  const w = typeof STATUS_WORDS !== "undefined" ? (STATUS_WORDS[L] || STATUS_WORDS.en) : {};
+  return w[k] || k;
+}
+function statusChip(label, k){
+  const icon = typeof STATUS_ICONS !== "undefined" ? (STATUS_ICONS[k] || "") : "";
+  return `<span class="chip st-${esc(k)}">${icon} ${esc(label)}: ${esc(statusWord(k))}</span>`;
+}
+function overallPill(s){
+  if (!s) return "";
+  const words = {
+    en: { in_progress: "Incomplete", waiting_on_shop: "Customer finished – waiting on shop", complete: "Complete" },
+    es: { in_progress: "Incompleto", waiting_on_shop: "Cliente terminó – esperando a la tienda", complete: "Completo" },
+  };
+  const k = s.overall === "waiting_on_shop" ? "waiting_shop" : (s.overall === "complete" ? "done" : "in_progress");
+  return `<p style="margin:0 0 8px"><span class="chip st-${k}" style="border:1px solid;font-size:13px">${esc((words[L] || words.en)[s.overall] || s.overall)}</span></p>`;
+}
+function personTasksHtml(sp, pid, readOnly){
+  if (!sp) return "";
+  const es = L === "es";
+  const names = { details: es ? "Datos" : "Details", health: es ? "Salud" : "Health" };
+  const tasks = (sp.tasks || []).map(tk => {
+    const k = tk.status === "signed" ? "done" : tk.status === "read" ? "in_progress" : tk.status === "not_read" ? "not_started" : tk.status;
+    return statusChip(tk.kind === "doc" ? tk.name : names[tk.kind] || tk.id, k) +
+      (tk.status === "needs_resign" && tk.reason ? `<span class="reasonTxt">${esc(tk.reason)}</span>` : "");
+  }).join("");
+  const shopNames = {
+    youth_addendum: [es ? "Youth Addendum recibido" : "Youth Addendum received", "youth_received", es ? "Marcar recibido" : "Mark received"],
+    physician: [es ? "Autorización médica" : "Physician clearance", "physician_cleared", es ? "Marcar autorizado" : "Mark cleared"],
+  };
+  const shop = (sp.shopTasks || []).map(st => {
+    const [label, action, btn] = shopNames[st.id] || [st.id, "", ""];
+    const canMark = !readOnly && action && st.status === "waiting_shop";
+    return `<div class="shoprow">${statusChip(label, st.status)}${canMark ? `<button type="button" class="ghost" data-shop="${action}" data-pid="${pid}">${esc(btn)}</button>` : ""}</div>`;
+  }).join("");
+  return `<div class="tasks">${tasks}</div>${shop ? `<div><p class="mut" style="margin:6px 0 0;font-weight:700">${es ? "Pendiente de la tienda" : "Waiting on the shop"}</p>${shop}</div>` : ""}`;
+}
+async function loadRegDetail(id){
+  const res = await api("/api/registrations/" + id + "?lang=" + L);
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok || !d.registration) throw new Error(d.error || (L === "es" ? "No se pudo cargar el registro" : "Could not load registration"));
+  return d;
+}
+function regDetailEl(id = openReg){
+  if (id == null) return null;
+  return document.getElementById("rdet-" + id);
+}
+async function openPendingReg(id){
+  if (Number(openReg) === Number(id)) {
+    openReg = null;
+    regDetail = null;
+    renderPending();
+    return;
+  }
+  openReg = id;
+  regDetail = null;
+  renderPending();
+  try {
+    regDetail = await loadRegDetail(id);
+    if (Number(openReg) !== Number(id)) return;
+    paintRegDetail();
+  } catch (e) {
+    if (Number(openReg) !== Number(id)) return;
+    const el = regDetailEl(id);
+    if (el) el.innerHTML = `<p class="err">${esc(e.message || "Error")}</p>`;
+  }
+}
+
+function bookingTime(b){
+  return (b.time || b.checkin?.plannedTime || "").trim();
+}
+function shopNowParts(){
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Tegucigalpa",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+  }).formatToParts(new Date());
+  const o = {};
+  for (const p of parts) o[p.type] = p.value;
+  if (o.hour === "24") o.hour = "00";
+  return o;
+}
+function parseClock(s){
+  const m = String(s || "").trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const ap = (m[3] || "").toUpperCase();
+  if (ap === "PM" && h < 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
+  if (h > 23) return null;
+  return { h, m: Number(m[2]) };
+}
+function appointmentStillAhead(b){
+  const iso = String(b.date || b.checkin?.plannedDate || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const now = shopNowParts();
+  const today = now.year + now.month + now.day;
+  const clock = parseClock(bookingTime(b));
+  if (!clock) return iso.replace(/-/g, "") > today;
+  const stamp = iso.replace(/-/g, "") + String(clock.h).padStart(2, "0") + String(clock.m).padStart(2, "0");
+  const nowStamp = today + now.hour + now.minute;
+  return stamp > nowStamp;
+}
+let boatAskDone = null;
+function askBoatEarly(name, when){
+  return new Promise((resolve) => {
+    if (boatAskDone) boatAskDone(false);
+    const root = $("boatAsk");
+    const es = L === "es";
+    const finish = (yes) => {
+      if (boatAskDone !== finish) return;
+      boatAskDone = null;
+      root.classList.add("hide");
+      document.removeEventListener("keydown", onKey);
+      resolve(yes);
+    };
+    boatAskDone = finish;
+    $("boatAskKicker").textContent = es ? "Aún no es su cita" : "Not their appointment yet";
+    $("boatAskTitle").textContent = es ? `¿Mover a ${name} al bote?` : `Move ${name} into the boat?`;
+    $("boatAskBody").textContent = es
+      ? `¿Seguro que quieres mover a ${name} al bote? Aún no es su cita programada.`
+      : `Are you sure you want to move ${name} into the boat? It is not their scheduled appointment yet.`;
+    $("boatAskWhen").textContent = when && when !== "—" ? ((es ? "Cita programada: " : "Scheduled appointment: ") + when) : "";
+    $("boatAskYes").textContent = es ? "Sí, mover al bote" : "Yes, move into the boat";
+    $("boatAskNo").textContent = es ? "No, esperar" : "No, wait";
+    const onKey = (e) => { if (e.key === "Escape") finish(false); };
+    document.addEventListener("keydown", onKey);
+    root.onclick = (e) => { if (e.target === root) finish(false); };
+    $("boatAskYes").onclick = () => finish(true);
+    $("boatAskNo").onclick = () => finish(false);
+    root.classList.remove("hide");
+    $("boatAskNo").focus();
+  });
+}
+function fmtDate(b){
+  if (!b.date && !b.checkin?.plannedDate) return "—";
+  const iso = b.date || b.checkin?.plannedDate || "";
+  const d = iso ? new Date(iso + "T12:00:00") : null;
+  const day = d && !isNaN(d) ? d.toLocaleDateString(L === "es" ? "es" : "en", { weekday:"short", month:"short", day:"numeric", year:"numeric" }) : iso;
+  const tm = bookingTime(b);
+  return day + (tm ? " · " + tm : " · " + (L === "es" ? "sin hora" : "no time"));
+}
+function ageFromDob(dob){
+  if (!dob || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) return "";
+  const [y,m,d] = dob.split("-").map(Number);
+  const now = new Date();
+  let age = now.getFullYear() - y;
+  if ((now.getMonth() + 1) * 100 + now.getDate() < m * 100 + d) age--;
+  return age >= 0 && age < 130 ? String(age) : "";
+}
+function yn(v, t){
+  if (v === "yes" || v === true || v === 1) return t.yes;
+  if (v === "no" || v === false || v === 0) return t.no;
+  return t.na;
+}
+function kv(rows){
+  const body = rows.filter(r => r && (r[1] !== undefined && r[1] !== null && r[1] !== "")).map(([k, v]) =>
+    `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  return body ? `<dl class="kv">${body}</dl>` : "";
+}
+function sec(title, inner){
+  if (!inner) return "";
+  return `<div class="sec"><h3>${esc(title)}</h3>${inner}</div>`;
+}
+function checkinChips(c, t){
+  if (!c) return `<div class="chips"><span class="chip mut">${esc(t.noCheckin)}</span></div>`;
+  const chips = [];
+  if (c.registrationNumber) chips.push(`<span class="chip ok">${esc(t.regNum)} ${esc(c.registrationNumber)}</span>`);
+  else if (c.ref) chips.push(`<span class="chip">${esc(c.ref)}</span>`);
+  if (c.dob) chips.push(`<span class="chip">${esc(t.dob)} ${esc(c.dob)}${ageFromDob(c.dob) ? " · " + ageFromDob(c.dob) : ""}</span>`);
+  if (c.cert) chips.push(`<span class="chip">${esc(t.cert)}: ${esc(c.cert)}</span>`);
+  if (c.ownGear === "yes") chips.push(`<span class="chip ok">${esc(L === "es" ? "Equipo propio: Sí" : "Own gear: Yes")}</span>`);
+  else if (c.ownGear === "no") chips.push(`<span class="chip warn">${esc(t.rental)}${c.gearSize ? ": " + esc(c.gearSize) : ""}</span>`);
+  else chips.push(`<span class="chip mut">${esc(L === "es" ? "Equipo: sin respuesta" : "Gear: not answered")}</span>`);
+  if (c.medFlag || c.packetNeedsPhysician || c.staffReviewStatus === "PENDING_STAFF_REVIEW") chips.push(`<span class="chip warn">⚠️ ${esc(t.physician)}</span>`);
+  else if (c.packetCompleted || c.medicalFromPacket) chips.push(`<span class="chip ok">${esc(t.cleared || t.packet)}</span>`);
+  if (c.preferredLanguage) chips.push(`<span class="chip mut">${esc(String(c.preferredLanguage).toUpperCase())}</span>`);
+  return chips.length ? `<div class="chips">${chips.join("")}</div>` : "";
+}
+function checkinSummaryHtml(c, t){
+  if (!c) return `<p class="mut">${esc(t.noCheckin)}</p>`;
+  return [
+    sec(t.diver, kv([
+      [t.name, [c.firstName, c.lastName].filter(Boolean).join(" ")],
+      [t.preferred, c.preferredName],
+      [t.dob, c.dob ? `${c.dob}${ageFromDob(c.dob) ? ` (${t.age} ${ageFromDob(c.dob)})` : ""}` : ""],
+      [t.phone, c.phone], [t.email, c.email],
+      [L === "es" ? "Dirección" : "Address", [c.address, c.city, c.state, c.zip].filter(Boolean).join(", ")],
+      [t.lang, c.preferredLanguage],
+    ])),
+    sec(t.gear, kv([
+      [t.cert, c.cert],
+      [L === "es" ? "¿Trae equipo?" : "Bringing own gear?", c.ownGear === "yes" ? t.yes : (c.ownGear === "no" ? t.no : (L === "es" ? "Sin respuesta" : "Not answered"))],
+      [L === "es" ? "Necesita renta" : "Needs rental", c.ownGear === "no" ? t.yes : (c.ownGear === "yes" ? t.no : "")],
+      [L === "es" ? "Talla" : "Size", c.gearSize], [L === "es" ? "Nota equipo" : "Gear note", c.gearNote],
+      [L === "es" ? "Inmersiones" : "Logged dives", c.loggedDives], [L === "es" ? "Última" : "Last dive", c.lastDive],
+    ])),
+    sec(t.emergency, kv([
+      [t.name, c.emergencyName], [t.relationship, c.emergencyRelationship], [t.phone, c.emergencyPhone],
+      [t.note, c.notes],
+    ])),
+    sec(t.medical, kv([
+      [t.packet, c.packetCompleted || c.medicalFromPacket ? t.fromPacket : ""],
+      [t.staffReview || t.physician, (c.medFlag || c.packetNeedsPhysician || c.staffReviewStatus === "PENDING_STAFF_REVIEW") ? (t.physician) : (c.packetCompleted || c.medicalFromPacket ? (t.cleared || t.no) : "")],
+      [t.detail, c.review_note || c.medOtherDetail || ""],
+    ])),
+    sec(t.checkin, kv([
+      [t.regNum, c.registrationNumber], ["Ref", c.ref], [L === "es" ? "Estado" : "Status", c.status],
+    ])),
+  ].join("");
+}
+function details(b){
+  const t = T[L], c = b.checkin;
+  let extra = "";
+  try {
+    const dv = JSON.parse(b.divers || "[]");
+    if (dv.length) extra += sec(t.divers, `<pre style="margin:0;white-space:pre-wrap;font:inherit">${dv.map((d,i) => `${i+1}. ${esc(d.name||"")} · cert ${esc(d.cert||"-")} · logged ${esc(d.logged||"-")}`).join("\n")}</pre>`);
+    const cr = b.cruise ? JSON.parse(b.cruise) : null;
+    if (cr) extra += sec(t.cruise, kv([["Fun", cr.fun], ["Snorkel", cr.snorkel], ["Try Scuba", cr.tryScuba]]));
+  } catch(e) {}
+  return [
+    sec(t.trip, kv([
+      [L === "es" ? "Actividad" : "Activity", b.service || c?.activity],
+      [L === "es" ? "Fecha" : "Date", (() => {
+        const iso = b.date || c?.plannedDate || "";
+        if (!iso) return "";
+        const d = new Date(iso + "T12:00:00");
+        return !isNaN(d) ? d.toLocaleDateString(L === "es" ? "es" : "en", { weekday:"short", month:"short", day:"numeric", year:"numeric" }) : iso;
+      })()],
+      [L === "es" ? "Hora" : "Time", bookingTime(b) || (L === "es" ? "Sin hora" : "No time set")],
+      [t.guests, String(b.guests || c?.participants || 1)],
+      [t.phone, b.contact], [t.email, b.email],
+      [t.note, b.note],
+      [t.submitted, new Date(b.created_at).toLocaleString(L === "es" ? "es" : "en")],
+    ])),
+    checkinSummaryHtml(c, t),
+    extra,
+  ].join("");
+}
+
+function bookingIso(b){
+  const iso = String(b.date || b.checkin?.plannedDate || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : "";
+}
+function weekStart(iso){
+  const d = new Date(iso + "T12:00:00");
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function isoParts(iso){
+  return { year: iso.slice(0, 4), month: iso.slice(0, 7), week: weekStart(iso), day: iso };
+}
+function timeLabel(b){
+  const c = parseClock(bookingTime(b));
+  if (!c) return "";
+  const ap = c.h >= 12 ? "PM" : "AM";
+  let h = c.h % 12; if (!h) h = 12;
+  return h + ":" + String(c.m).padStart(2, "0") + " " + ap;
+}
+function clockMinutes(label){
+  const c = parseClock(label);
+  return c ? c.h * 60 + c.m : 24 * 60;
+}
+function dateLocale(){ return L === "es" ? "es" : "en"; }
+function prettyMonth(ym){
+  const d = new Date(ym + "-01T12:00:00");
+  return isNaN(d) ? ym : d.toLocaleDateString(dateLocale(), { month: "long", year: "numeric" });
+}
+function prettyWeek(monday){
+  const d = new Date(monday + "T12:00:00");
+  const end = new Date(d); end.setDate(d.getDate() + 6);
+  const a = d.toLocaleDateString(dateLocale(), { month: "short", day: "numeric" });
+  const b = end.toLocaleDateString(dateLocale(), { month: "short", day: "numeric", year: "numeric" });
+  return (L === "es" ? "Semana del " : "Week of ") + a + " – " + b;
+}
+function prettyDay(iso, withYear){
+  const d = new Date(iso + "T12:00:00");
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString(dateLocale(), withYear ? { month: "long", day: "numeric", year: "numeric" } : { month: "long", day: "numeric" });
+}
+function inWhenScope(iso, time, upto){
+  const p = isoParts(iso);
+  const order = ["year", "month", "week", "day", "time"];
+  const stop = upto === "end" ? order.length : order.indexOf(upto);
+  for (let i = 0; i < stop; i++) {
+    const level = order[i];
+    if (!whenPick[level]) continue;
+    if (level === "year" && p.year !== whenPick.year) return false;
+    if (level === "month" && p.month !== whenPick.month) return false;
+    if (level === "week" && p.week !== whenPick.week) return false;
+    if (level === "day" && p.day !== whenPick.day) return false;
+    if (level === "time" && time !== whenPick.time) return false;
+  }
+  return true;
+}
+function matchesWhen(b){
+  const iso = bookingIso(b);
+  const picked = whenPick.year || whenPick.month || whenPick.week || whenPick.day || whenPick.time;
+  if (!iso) return !picked;
+  return inWhenScope(iso, timeLabel(b), "end");
+}
+function slotSort(a, b){
+  const ia = bookingIso(a) || "9999-99-99";
+  const ib = bookingIso(b) || "9999-99-99";
+  if (ia !== ib) return ia < ib ? -1 : 1;
+  const ma = clockMinutes(timeLabel(a));
+  const mb = clockMinutes(timeLabel(b));
+  if (ma !== mb) return ma - mb;
+  return String(a.name || "").localeCompare(String(b.name || ""));
+}
+function setWhen(level, value){
+  if (level === "clear") { whenPick = { year: "", month: "", week: "", day: "", time: "" }; return; }
+  if (whenPick[level] === value) {
+    if (level === "year") whenPick = { year: "", month: "", week: "", day: "", time: "" };
+    else if (level === "month") whenPick.month = whenPick.week = whenPick.day = whenPick.time = "";
+    else if (level === "week") whenPick.week = whenPick.day = whenPick.time = "";
+    else if (level === "day") whenPick.day = whenPick.time = "";
+    else whenPick.time = "";
+    return;
+  }
+  if (level === "year") whenPick = { year: value, month: "", week: "", day: "", time: "" };
+  else if (level === "month") whenPick = { year: value.slice(0, 4), month: value, week: "", day: "", time: "" };
+  else if (level === "week") whenPick = { year: value.slice(0, 4), month: "", week: value, day: "", time: "" };
+  else if (level === "day") {
+    const p = isoParts(value);
+    whenPick = { year: p.year, month: p.month, week: p.week, day: value, time: "" };
+  } else whenPick.time = value;
+}
+function paintWhen(){
+  const nav = $("whenNav");
+  if (!nav) return;
+  const t = T[L];
+  const dated = rows.map(b => ({ iso: bookingIso(b), time: timeLabel(b) })).filter(x => x.iso);
+  if (!dated.length) { nav.innerHTML = ""; return; }
+  const uniq = (upto, keyFn) => {
+    const map = new Map();
+    dated.forEach(x => { if (inWhenScope(x.iso, x.time, upto)) map.set(keyFn(x), true); });
+    return [...map.keys()];
+  };
+  const years = uniq("year", x => isoParts(x.iso).year).sort();
+  const months = uniq("month", x => isoParts(x.iso).month).sort();
+  const weeks = uniq("week", x => isoParts(x.iso).week).sort();
+  const days = uniq("day", x => isoParts(x.iso).day).sort();
+  const times = whenPick.day ? uniq("time", x => x.time).filter(Boolean).sort((a, b) => clockMinutes(a) - clockMinutes(b)) : [];
+  const chip = (level, value, label) => `<button type="button" class="slot${whenPick[level] === value ? " on" : ""}" data-when="${level}" data-value="${esc(value)}">${esc(label)}</button>`;
+  const row = (label, html) => html ? `<div class="when-row"><span class="mut">${esc(label)}</span>${html}</div>` : "";
+  const picked = whenPick.year || whenPick.month || whenPick.week || whenPick.day || whenPick.time;
+  nav.innerHTML = (picked ? `<div class="when-row"><button type="button" class="slot" data-when="clear">${esc(t.showAll)}</button></div>` : "")
+    + row(t.year, years.map(y => chip("year", y, y)).join(""))
+    + row(t.month, months.map(m => chip("month", m, prettyMonth(m))).join(""))
+    + row(t.week, weeks.map(w => chip("week", w, prettyWeek(w))).join(""))
+    + row(t.day, days.map(d => chip("day", d, prettyDay(d, true))).join(""))
+    + row(t.slotTime, times.map(tm => chip("time", tm, tm)).join(""));
+  nav.querySelectorAll("[data-when]").forEach(btn => btn.onclick = () => { setWhen(btn.dataset.when, btn.dataset.value || ""); render(); });
+}
+function render(){
+  const t = T[L], list = $("list");
+  paintWhen();
+  const shown = rows.filter(matchesWhen).slice().sort(slotSort);
+  $("empty").classList.toggle("hide", rows.length > 0);
+  const groups = [];
+  shown.forEach(b => {
+    const iso = bookingIso(b);
+    const time = timeLabel(b);
+    const key = (iso || "none") + "|" + time;
+    let g = groups.find(x => x.key === key);
+    if (!g) { g = { key, iso, time, items: [] }; groups.push(g); }
+    g.items.push(b);
+  });
+  const slotEmpty = rows.length > 0 && !shown.length ? `<p class="page-mut">${esc(t.noOneSlot)}</p>` : "";
+  list.innerHTML = slotEmpty + groups.map(g => {
+    const title = !g.iso
+      ? (L === "es" ? "Sin fecha" : "No date set")
+      : prettyDay(g.iso, true) + " · " + (g.time || (L === "es" ? "sin hora" : "no time"));
+    const selected = g.iso && whenPick.day === g.iso && whenPick.time === g.time;
+    const head = g.iso
+      ? `<button type="button" class="slot-head${selected ? " on" : ""}" data-slot-day="${esc(g.iso)}" data-slot-time="${esc(g.time)}"><b>${esc(title)}</b><span class="slot-count">${g.items.length}</span></button>`
+      : `<div class="slot-head"><b>${esc(title)}</b><span class="slot-count">${g.items.length}</span></div>`;
+    return head + g.items.map(b => {
+    const c = b.checkin;
+    const digits = String(b.contact || c?.phone || "").replace(/\D/g, "");
+    const wa = digits.length >= 7 ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${digits}">${t.wa}</a>` : "";
+    const mail = (b.email || c?.email) ? `<a class="btn" style="background:var(--pri)" href="mailto:${esc(b.email || c.email)}">Email</a>` : "";
+    const finished = Number(b.dive_done) === 1;
+    const archived = Number(b.archived) === 1;
+    const next = archived
+      ? `<button class="ghost" data-act="unarchive" data-id="${b.id}">${t.restore}</button>`
+      : b.status === "new" ? `<button data-act="confirmed" data-id="${b.id}">${t.confirm}</button>`
+      : b.status === "confirmed" ? `<button data-act="done" data-id="${b.id}">${t.done}</button>`
+      : !finished ? `<button data-act="complete" data-id="${b.id}">${t.diveDone}</button>`
+      : `<button class="ghost" data-act="uncomplete" data-id="${b.id}">${t.backOnBoat}</button><button data-act="archive" data-id="${b.id}">${t.toArchive}</button>`;
+    const reviewBtn = c?.registrationId
+      ? `<button class="ghost" data-act="review" data-id="${b.id}">${reviewId === b.id ? t.hideReview : t.review}</button>`
+      : "";
+    const partyBtn = `<button class="ghost" data-act="party" data-id="${b.id}">${partyId === b.id ? (t.hideParty || t.hide) : (t.partyView || "Party")}</button>`;
+    return `<div class="bk ${b.status === "new" ? "fresh" : ""} ${openId === b.id || reviewId === b.id || partyId === b.id ? "sel" : ""}">
+      <div class="bkhead"><div><b>${esc(b.name)}</b> · ${esc(b.service)}<br>
+      <span class="mut">${fmtDate(b)} · ${b.guests} ${t.guests}<br>${esc(b.contact)}${b.email ? " · " + esc(b.email) : ""}</span>
+      ${(() => {
+        const chips = [];
+        const tm = bookingTime(b);
+        if (tm) chips.push(`<span class="chip ok">${esc(L === "es" ? "Hora" : "Time")}: ${esc(tm)}</span>`);
+        else chips.push(`<span class="chip warn">${esc(L === "es" ? "Sin hora" : "No time set")}</span>`);
+        return `<div class="chips">${chips.join("")}</div>` + checkinChips(c, t);
+      })()}</div>
+      <span class="pill ${archived ? "archive" : finished ? "complete" : b.status}">${archived ? t.archive : finished ? t.diveDone : (t[b.status] || b.status)}</span></div>
+      <div class="acts">${wa}${mail}${next}
+      <button class="ghost" data-act="toggle" data-id="${b.id}">${openId === b.id ? t.hide : t.details}</button>
+      ${partyBtn}
+      ${reviewBtn}
+      ${openId === b.id || reviewId === b.id || partyId === b.id ? `<button data-act="close" data-id="${b.id}">${t.saveClose}</button>` : ""}
+      <button class="danger" data-act="del" data-id="${b.id}">${t.del}</button></div>
+      ${openId === b.id ? `<div class="det">${details(b)}</div>` : ""}
+      ${reviewId === b.id ? `<div class="det" id="bkReview-${b.id}">${bookingReview && bookingReview._bookingId === b.id ? "" : `<p class="mut">${t.loading}</p>`}</div>` : ""}
+      ${partyId === b.id ? `<div class="det" id="bkParty-${b.id}">${partyView && partyView.booking?.id === b.id ? "" : `<p class="mut">${t.loading}</p>`}</div>` : ""}
+    </div>`;
+    }).join("");
+  }).join("");
+  list.querySelectorAll("button[data-act]").forEach(btn => btn.onclick = () => act(btn.dataset.act, Number(btn.dataset.id)));
+  list.querySelectorAll("[data-slot-day]").forEach(btn => btn.onclick = () => {
+    const iso = btn.dataset.slotDay;
+    const time = btn.dataset.slotTime || "";
+    if (whenPick.day === iso && whenPick.time === time) setWhen("clear");
+    else { setWhen("day", iso); whenPick.time = time; }
+    render();
+  });
+  if (reviewId && bookingReview && bookingReview._bookingId === reviewId) paintBookingReview();
+  if (partyId && partyView && partyView.booking?.id === partyId) paintBookingParty();
+}
+
+async function act(action, id){
+  if (action === "toggle") {
+    openId = openId === id ? null : id;
+    if (openId) { reviewId = null; partyId = null; }
+    render(); return;
+  }
+  if (action === "party") {
+    if (partyId === id) { partyId = null; partyView = null; render(); return; }
+    openId = null; reviewId = null; partyId = id; partyView = null; render();
+    try {
+      partyView = await (await api("/api/bookings/" + id + "/party?lang=" + L)).json();
+      paintBookingParty();
+    } catch (e) {
+      const el = $("bkParty-" + id);
+      if (el) el.innerHTML = `<p class="err">${esc(e.message || "Error")}</p>`;
+    }
+    return;
+  }
+  if (action === "review") {
+    if (reviewId === id) { reviewId = null; bookingReview = null; render(); return; }
+    openId = null; partyId = null; reviewId = id; bookingReview = null; render();
+    const b = rows.find(x => x.id === id);
+    const regId = b?.checkin?.registrationId;
+    if (!regId) { reviewId = null; render(); return; }
+    try {
+      bookingReview = await loadRegDetail(regId);
+      bookingReview._bookingId = id;
+      paintBookingReview();
+    } catch(e) {
+      const el = $("bkReview-" + id);
+      if (el) el.innerHTML = `<p class="err">${esc(e.message || "Error")}</p>`;
+    }
+    return;
+  }
+  if (action === "close") { openId = null; reviewId = null; bookingReview = null; partyId = null; partyView = null; render(); return; }
+  if (action === "del") { if (!confirm(T[L].delSure)) return; await api("/api/bookings/" + id, { method: "DELETE" }); load(); return; }
+  if (action === "archive" || action === "unarchive") {
+    await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ archived: action === "archive" ? 1 : 0 }) });
+    openId = null; reviewId = null; partyId = null; partyView = null;
+    load();
+    return;
+  }
+  if (action === "complete" || action === "uncomplete") {
+    await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ diveDone: action === "complete" ? 1 : 0 }) });
+    openId = null; reviewId = null; partyId = null; partyView = null;
+    load();
+    return;
+  }
+  if (action === "confirmed" || action === "done") {
+    const person = rows.find(x => x.id === id);
+    if (person && appointmentStillAhead(person)) {
+      const name = person.name || (L === "es" ? "esta persona" : "this guest");
+      const when = fmtDate(person);
+      if (!(await askBoatEarly(name, when))) return;
+    }
+  }
+  const saved = action === "confirmed" ? "done" : action;
+  await api("/api/bookings/" + id, { method: "PATCH", body: JSON.stringify({ status: saved }) });
+  openId = null; reviewId = null; partyId = null; partyView = null;
+  load();
+}
+function paintBookingParty(){
+  const el = $("bkParty-" + partyId); if (!el || !partyView) return;
+  const t = T[L];
+  const regs = partyView.registrations || [];
+  const head = `<p><b>${esc(t.partyHeadcount)}</b>: ${partyView.headcount || "—"} · <b>${esc(t.partyRegistered)}</b>: ${partyView.registeredCount || 0}</p>
+    <p class="mut">${esc(t.partyInviteHint)}</p>`;
+  if (!regs.length) {
+    el.innerHTML = head + `<p class="mut">${esc(t.partyNoRegs)}</p>`;
+    return;
+  }
+  const blocks = regs.map((r) => {
+    const adult = r.adult;
+    const minors = r.minors || [];
+    const statusChip = (s) => `<span class="pill">${esc(s || "—")}</span>`;
+    const personLine = (p, label) => {
+      if (!p) return `<p class="mut">${esc(label)}: —</p>`;
+      const gear = p.ownGear === "yes"
+        ? `<span class="chip ok">${esc(L === "es" ? "Equipo propio" : "Own gear")}</span>`
+        : p.ownGear === "no"
+          ? `<span class="chip warn">${esc(L === "es" ? "Equipo de la tienda" : "Shop gear")}${p.gearSize ? ": " + esc(p.gearSize) : ""}</span>`
+          : "";
+      return `<div style="margin:4px 0 4px 12px"><b>${esc(p.firstName || "")} ${esc(p.lastName || "")}</b>
+        <span class="pill">${esc(label)}${p.age != null ? " · " + p.age : ""}</span>
+        ${statusChip(p.status)}
+        ${p.packetNeedsPhysician ? `<span class="chip warn">⚠️</span>` : ""}
+        <span class="mut">${esc(p.registrationNumber || "")}</span> ${gear}
+        ${personTasksHtml(r.regStatus ? (r.regStatus.people || []).find(x => Number(x.id) === Number(p.id)) : null, p.id)}</div>`;
+    };
+    return `<div data-rid="${r.registrationId}" style="margin:12px 0;padding-top:8px;border-top:1px solid var(--line)">
+      <div><b>${esc(r.ref || ("#" + r.registrationId))}</b>
+        ${statusChip(r.status)}
+        ${r.activity ? `<span class="mut">${esc(r.activity)}</span>` : ""}
+        ${r.plannedDate ? `<span class="mut">· ${esc(r.plannedDate)}</span>` : ""}
+        ${r.regStatus ? "" : (r.partyComplete || r.packetCompleted ? `<span class="chip ok">${esc(L === "es" ? "Listo" : "Complete")}</span>` : "")}
+      </div>
+      ${overallPill(r.regStatus)}
+      ${personLine(adult, t.partyAdult)}
+      ${minors.length
+        ? `<div style="margin-top:4px"><span class="mut">${esc(t.partyMinors)} (${minors.length})</span>${minors.map((m) => personLine(m, L === "es" ? "Menor" : "Minor")).join("")}</div>`
+        : `<p class="mut" style="margin-left:12px">${esc(t.partyMinors)}: —</p>`}
+      <p style="margin-top:6px"><button type="button" class="ghost" data-goto-reg="${r.registrationId}">${esc(t.openReg)}</button></p>
+    </div>`;
+  }).join("");
+  el.innerHTML = head + blocks;
+  el.querySelectorAll("[data-shop]").forEach((btn) => {
+    btn.onclick = async () => {
+      const rid = btn.closest("[data-rid]")?.dataset.rid;
+      if (!rid) return;
+      btn.disabled = true;
+      try {
+        await api("/api/registrations/" + rid + "/participants", {
+          method: "POST",
+          body: JSON.stringify({ action: btn.dataset.shop, id: Number(btn.dataset.pid) }),
+        });
+        const bid = partyId;
+        partyView = await (await api("/api/bookings/" + bid + "/party?lang=" + L)).json();
+        paintBookingParty();
+      } catch (e) { btn.disabled = false; }
+    };
+  });
+  el.querySelectorAll("[data-goto-reg]").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelector('#viewTabs .tab[data-v="regs"]')?.click();
+      openReg = null;
+      openRegDetail(Number(btn.dataset.gotoReg));
+    };
+  });
+}
+function paintBookingReview(){
+  const el = $("bkReview-" + reviewId); if (!el || !bookingReview?.registration) return;
+  const t = T[L], r = bookingReview.registration;
+  let data = {};
+  try { data = JSON.parse(r.data || "{}"); } catch { data = {}; }
+  const c = {
+    registrationNumber: r.registration_number || bookingReview.customer?.registration_number || "",
+    ref: r.ref, status: r.status,
+    firstName: data.firstName || r.first_name, lastName: data.lastName || r.last_name,
+    preferredName: data.preferredName, dob: data.dob, phone: data.phone || r.phone, email: data.email || r.email,
+    address: data.address, city: data.city, state: data.state, zip: data.zip,
+    preferredLanguage: data.preferredLanguage, cert: data.cert, loggedDives: data.loggedDives, lastDive: data.lastDive,
+    ownGear: data.ownGear, gearSize: data.gearSize, gearNote: data.gearNote,
+    emergencyName: data.emergencyName, emergencyRelationship: data.emergencyRelationship, emergencyPhone: data.emergencyPhone,
+    notes: data.notes, medOtherDetail: data.medOtherDetail, review_note: data.review_note,
+    medicalFromPacket: data.medicalFromPacket, packetCompleted: data.packetCompleted, packetNeedsPhysician: data.packetNeedsPhysician,
+    staffReviewStatus: data.staffReviewStatus,
+    medFlag: data.medNeedsReview === 1 || data.packetNeedsPhysician === true || data.packetNeedsPhysician === 1 || data.staffReviewStatus === "PENDING_STAFF_REVIEW",
+  };
+  const formsBlock = (bookingReview.formSubmissions || []).length
+    ? (bookingReview.formSubmissions || []).map(s => {
+        let pdfs = [];
+        try { pdfs = JSON.parse(s.signed_pdf_r2_keys || "[]"); } catch { pdfs = []; }
+        return `<div style="margin:8px 0">#${s.id} · ${esc(s.registration_number || "")} · ${s.needs_physician ? "⚠️ Pending staff review" : "Cleared"}<div class="acts" style="margin-top:6px">${pdfButtons(s.id, pdfs)}</div></div>`;
+      }).join("")
+    : `<p class="mut">${L === "es" ? "Sin envíos de paquete" : "No packet submissions"}</p>`;
+  const partyPeople = bookingReview.participants || [];
+  const partyBlock = partyPeople.length
+    ? overallPill(bookingReview.status) + partyPeople.map(p => {
+        const typeLbl = p.isMinor ? (L === "es" ? "Menor" : "Minor") : (L === "es" ? "Adulto" : "Adult");
+        const sp = bookingReview.status ? (bookingReview.status.people || []).find(x => Number(x.id) === Number(p.id)) : null;
+        return `<div style="margin:6px 0"><b>${esc(p.firstName)} ${esc(p.lastName)}</b>
+          <span class="pill">${esc(typeLbl)}${p.age != null ? " · " + p.age : ""}</span>
+          <span class="pill">${esc(p.status || "—")}</span>
+          ${p.needsPhysician ? `<span class="chip warn">⚠️</span>` : ""}
+          <span class="mut">${esc(p.registrationNumber || "")}</span>
+          ${p.ownGear === "yes" ? `<span class="chip ok">${esc(L === "es" ? "Equipo propio" : "Own gear")}</span>` : ""}
+          ${p.ownGear === "no" ? `<span class="chip warn">${esc(L === "es" ? "Equipo de la tienda" : "Shop gear")}${p.gearSize ? ": " + esc(p.gearSize) : ""}</span>` : ""}
+          ${personTasksHtml(sp, p.id, true)}
+          </div>`;
+      }).join("") +
+      `<p class="mut">${partyPeople.length} / ${c.participants || partyPeople.length} ${L === "es" ? "registrados" : "registered"}</p>`
+    : "";
+  el.innerHTML =
+    checkinSummaryHtml(c, t) +
+    (partyBlock ? sec(L === "es" ? "Participantes" : "Participants", partyBlock) : "") +
+    sec(L === "es" ? "Formularios" : "Forms", formsBlock) +
+    (bookingReview.signature
+      ? sec(L === "es" ? "Firma" : "Signature", `<p>${esc(bookingReview.signature.signer_name)} · ${new Date(bookingReview.signature.created_at).toLocaleString(L === "es" ? "es" : "en")}</p><img src="/api/registrations/${r.id}/signature" alt="" style="max-width:240px;background:#fff;border:1px solid var(--line);border-radius:8px">`)
+      : "") +
+    `<p style="margin-top:12px"><button type="button" class="ghost" id="gotoReg">${t.openReg}</button>
+      <button type="button" class="btn" style="background:var(--pri)" id="dlSignedDoc">${L === "es" ? "Descargar documento firmado" : "Download signed document"}</button></p>`;
+  bindPdfButtons(el);
+  const dlDoc = $("dlSignedDoc");
+  if (dlDoc) dlDoc.onclick = () => downloadPdf(`/api/registrations/${r.id}/document`, `registration-${r.ref || r.id}.html`);
+  const go = $("gotoReg");
+  if (go) go.onclick = () => {
+    document.querySelector('#viewTabs .tab[data-v="regs"]')?.click();
+    openReg = null;
+    openRegDetail(r.id);
+  };
+}
+
+if ($("csvBtn")) $("csvBtn").onclick = () => {
+  const head = ["id","created_at","status","name","first_name","last_name","contact","email","guests","date","time","service","note"];
+  const csv = [head.join(",")].concat(rows.map(b => head.map(h => `"${String(b[h] ?? "").replace(/"/g, '""')}"`).join(","))).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "banana-nut-burgers-bookings.csv"; a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ---- views ----
+document.querySelectorAll("#viewTabs .tab").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#viewTabs .tab").forEach(x => x.classList.toggle("on", x === b));
+  if (b.dataset.v === "home") return;
+  ["bookings","regs","corr","audit","pending","promos"].forEach(v => $("view-" + v).classList.toggle("hide", v !== b.dataset.v));
+  $("view-home").classList.add("hide");
+  if (b.dataset.v === "regs") loadRegs();
+  if (b.dataset.v === "corr") loadCorr();
+  if (b.dataset.v === "audit") loadAudit();
+  if (b.dataset.v === "pending") loadPending();
+  if (b.dataset.v === "promos") loadPromos();
+  if (b.dataset.v === "home") loadHome();
+});
+if ($("pendingRefresh")) $("pendingRefresh").onclick = loadPending;
+
+let promos = [];
+async function loadPromos(){
+  $("pErr").textContent = "";
+  try {
+    const d = await (await api("/api/promotions?all=1")).json();
+    promos = d.promotions || [];
+    renderPromos();
+  } catch (e) {
+    $("plist").innerHTML = `<p class="err">${esc(e.message || "Could not load promotions")}</p>`;
+  }
+}
+let sendPromoId = null;
+function hidePromoSend(){
+  sendPromoId = null;
+  $("promoSendBox").classList.add("hide");
+  $("promoSendResult").classList.add("hide");
+  $("promoSendResult").innerHTML = "";
+  $("promoSendErr").textContent = "";
+}
+async function openPromoSend(id){
+  const t = T[L];
+  sendPromoId = id;
+  $("promoSendErr").textContent = "";
+  $("promoSendResult").classList.add("hide");
+  $("promoSendResult").innerHTML = "";
+  $("promoSendBox").classList.remove("hide");
+  $("promoSendMeta").textContent = t.loading;
+  $("promoSendPreview").textContent = "";
+  try {
+    const r = await api("/api/promotions/" + id + "/send");
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { $("promoSendErr").textContent = d.error || "Error"; return; }
+    $("promoSendMeta").textContent = `${d.audience} ${t.promoSendAudience} · ${d.withPhone || 0} ${t.promoSendPhones} · ${d.withEmail || 0} ${t.promoSendEmails}`;
+    $("promoSendPreview").textContent = d.sampleMessage || "";
+    if (!d.audience) $("promoSendErr").textContent = t.promoSendNone;
+  } catch (e) {
+    $("promoSendErr").textContent = e.message || "Error";
+  }
+  $("promoSendBox").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function renderPromos(){
+  if (!promos.length) {
+    $("plist").innerHTML = `<p class="page-mut">${T[L].promoEmpty}</p>`;
+    return;
+  }
+  $("plist").innerHTML = promos.map((p) => `<div class="bk ${p.active ? "fresh" : ""}">
+    <div class="bkhead"><div><b>${esc(p.title)}</b>${p.titleEs ? ` · <span class="mut">${esc(p.titleEs)}</span>` : ""}<br>
+    <span class="mut">${esc(p.blurb || "")}${p.endsAt ? " · ends " + esc(p.endsAt) : ""}</span></div>
+    <span class="pill ${p.active ? "new" : ""}">${p.active ? T[L].promoOn : T[L].promoOff}</span></div>
+    <div class="acts">
+      <button data-send="${p.id}">${T[L].promoSend}</button>
+      <button class="ghost" data-toggle="${p.id}">${p.active ? T[L].promoHide : T[L].promoShow}</button>
+      <button class="danger" data-del="${p.id}">${T[L].promoDel}</button>
+    </div>
+  </div>`).join("");
+  $("plist").querySelectorAll("[data-send]").forEach((b) => b.onclick = () => openPromoSend(Number(b.dataset.send)));
+  $("plist").querySelectorAll("[data-toggle]").forEach((b) => b.onclick = async () => {
+    const id = Number(b.dataset.toggle);
+    const row = promos.find((x) => x.id === id);
+    if (!row) return;
+    await api("/api/promotions/" + id, { method: "PATCH", body: JSON.stringify({ active: !row.active }) });
+    loadPromos();
+  });
+  $("plist").querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    if (!confirm(T[L].promoDelSure)) return;
+    await api("/api/promotions/" + Number(b.dataset.del), { method: "DELETE" });
+    loadPromos();
+  });
+}
+$("promoSendCancel").onclick = hidePromoSend;
+$("promoSendGo").onclick = async () => {
+  const t = T[L];
+  $("promoSendErr").textContent = "";
+  if (!sendPromoId) return;
+  if (!$("promoSendEmail").checked && !$("promoSendWa").checked) {
+    $("promoSendErr").textContent = L === "es" ? "Elige correo y/o WhatsApp." : "Choose email and/or WhatsApp.";
+    return;
+  }
+  if (!confirm(t.promoSendSure)) return;
+  $("promoSendGo").disabled = true;
+  try {
+    const r = await api("/api/promotions/" + sendPromoId + "/send", {
+      method: "POST",
+      body: JSON.stringify({ email: $("promoSendEmail").checked, whatsapp: $("promoSendWa").checked }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { $("promoSendErr").textContent = d.error || "Send failed"; return; }
+    const wa = (d.waResults || []).filter((x) => x.waLink);
+    let html = `<p class="ok">${t.promoSendDone}: ${d.emailed || 0} email · ${d.whatsapp || 0} WhatsApp</p>`;
+    if (d.note) html += `<p class="mut">${esc(d.note)}</p>`;
+    if (wa.length) {
+      html += `<div class="acts" style="margin-top:8px">${wa.slice(0, 40).map((x) =>
+        `<a class="btn" style="background:#1fa855" target="_blank" rel="noopener" href="${esc(x.waLink)}">${t.promoSendOpenWa} · ${esc(x.name || x.phone)}</a>`
+      ).join("")}</div>`;
+    }
+    $("promoSendResult").innerHTML = html;
+    $("promoSendResult").classList.remove("hide");
+  } catch (e) {
+    $("promoSendErr").textContent = e.message || "Send failed";
+  } finally {
+    $("promoSendGo").disabled = false;
+  }
+};
+$("pSave").onclick = async () => {
+  $("pErr").textContent = "";
+  const title = $("pTitle").value.trim();
+  if (!title) { $("pErr").textContent = L === "es" ? "El título es obligatorio." : "Title is required."; return; }
+  try {
+    const r = await api("/api/promotions", {
+      method: "POST",
+      body: JSON.stringify({
+        title,
+        titleEs: $("pTitleEs").value.trim(),
+        blurb: $("pBlurb").value.trim(),
+        blurbEs: $("pBlurbEs").value.trim(),
+        badge: $("pBadge").value.trim() || "THIS WEEK'S SPECIAL",
+        endsAt: $("pEnds").value || "",
+        endsLabel: $("pEndsLabel").value.trim(),
+        ctaLabel: $("pCta").value.trim() || "BOOK THIS DEAL",
+        ctaUrl: $("pUrl").value.trim() || "register.html?start=1",
+        sortOrder: Number($("pOrder").value) || 0,
+        active: $("pActive").checked,
+      }),
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) { $("pErr").textContent = out.error || "Save failed"; return; }
+    ["pTitle","pTitleEs","pBlurb","pBlurbEs","pBadge","pEnds","pEndsLabel","pCta","pUrl"].forEach((id) => $(id).value = "");
+    $("pOrder").value = "0";
+    $("pActive").checked = true;
+    loadPromos();
+  } catch (e) { $("pErr").textContent = e.message || "Save failed"; }
+};
+
+// ---- registrations CRM ----
+let regs = [], openReg = null, regDetail = null;
+const RSTAT = ["submitted","under_review","approved","rejected","flagged","corrections_requested"];
+let rDeb; $("rq").addEventListener("input", () => { clearTimeout(rDeb); rDeb = setTimeout(loadRegs, 250); });
+$("rstatus").onchange = loadRegs; $("rRefresh").onclick = loadRegs;
+if ($("staffRegBtn")) $("staffRegBtn").onclick = () => $("staffBox").classList.toggle("hide");
+if ($("sfSave")) $("sfSave").onclick = async () => {
+  $("sfErr").textContent = "";
+  const body = { firstName: $("sfFirst").value.trim(), lastName: $("sfLast").value.trim(), phone: $("sfPhone").value.trim(), email: $("sfEmail").value.trim() };
+  const res = await api("/api/registrations/staff", { method: "POST", body: JSON.stringify(body) });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) { $("sfErr").textContent = d.error || T[L].staffNeed; return; }
+  const link = d.url;
+  const phone = body.phone.replace(/\D/g, "");
+  $("sfLink").classList.remove("hide");
+  $("sfLink").innerHTML = `<p class="okmsg">${esc(T[L].staffSaved)}</p><input readonly value="${esc(link)}"><div class="acts">
+    <a class="btn" href="mailto:${encodeURIComponent(body.email)}?subject=${encodeURIComponent(T[L].staffReg)}&body=${encodeURIComponent(link)}">${esc(T[L].linkEmail)}</a>
+    <a class="btn" href="sms:${phone}?&body=${encodeURIComponent(link)}">${esc(T[L].linkSms)}</a>
+    <a class="btn" target="_blank" rel="noopener" href="https://wa.me/${phone}?text=${encodeURIComponent(link)}">${esc(T[L].linkWa)}</a>
+    <button type="button" class="ghost" id="sfClose">${esc(T[L].saveClose)}</button></div>`;
+  $("sfClose").onclick = () => { $("staffBox").classList.add("hide"); openReg = null; loadRegs(); };
+};
+
+async function loadRegs(){
+  try {
+    const p = new URLSearchParams();
+    if ($("rq").value.trim()) p.set("q", $("rq").value.trim());
+    if ($("rstatus").value) p.set("status", $("rstatus").value);
+    const d = await (await api("/api/registrations?" + p)).json();
+    regs = d.registrations || [];
+    const s = d.stats || {};
+    $("rStats").textContent = `Total ${s.total||0} · Drafts ${s.drafts||0} · Submitted ${s.submitted||0} · Under review ${s.under_review||0} · Approved ${s.approved||0} · Flagged ${s.flagged||0} · Corrections ${s.corrections||0}`;
+    renderRegs();
+  } catch(e) {}
+}
+function renderRegs(){
+  $("rlist").innerHTML = regs.length ? regs.map(r => {
+    let data = {};
+    try { data = JSON.parse(r.data || "{}"); } catch (e) {}
+    const tags = `${data.hasMinors ? `<span class="chip warn">${esc(T[L].minorsTag)}</span>` : ""}${data.courseInterest ? `<span class="chip">${esc(T[L].courseQ)}: ${esc(data.courseInterest === "yes" ? T[L].yes : T[L].no)}</span>` : ""}`;
+    return `<div class="bk ${r.status==="submitted"?"fresh":""} ${openReg === r.id ? "sel" : ""}">
+    <div class="bkhead"><div><b>${esc(r.first_name)} ${esc(r.last_name)}</b> · <span class="mut">${esc(r.ref)}</span>${r.registration_number ? ` · <b>${esc(r.registration_number)}</b>` : ""}${r.is_duplicate ? ' <span class="pill new">duplicate?</span>' : ""}${tags ? `<div class="chips">${tags}</div>` : ""}<br>
+    <span class="mut">${esc(r.phone)}${r.email ? " · " + esc(r.email) : ""} · ${new Date(r.created_at).toLocaleString()}</span></div>
+    <span class="pill ${r.status==="approved"?"confirmed":r.status==="submitted"?"new":""}">${esc(statusLabel(r.status))}</span></div>
+    ${r.checklist ? `<p class="mut" style="margin:8px 0 0">${Object.entries(r.checklist).map(([k, v]) => `${v === "complete" ? "✅" : v === "pending_approved_form" ? "🩺" : "⚠️"} ${esc(k)}`).join(" · ")}</p>` : ""}
+    <div class="acts">
+      <button class="ghost" data-r="${r.id}">${openReg === r.id ? T[L].hideReview : T[L].review}</button>
+      <button class="danger" data-del-reg="${r.id}">${T[L].delReg || T[L].del}</button>
+    </div>
+    ${Number(openReg) === Number(r.id) ? `<div class="det" id="rdet-${r.id}">${regDetail && Number(regDetail.registration?.id) === Number(r.id) ? "" : `<p class="mut">${esc(T[L].loading)}</p>`}</div>` : ""}
+  </div>`;
+  }).join("") : `<p class="mut">${L==="es"?"Sin registros.":"No registrations found."}</p>`;
+  $("rlist").querySelectorAll("button[data-r]").forEach(b => b.onclick = () => openRegDetail(Number(b.dataset.r)));
+  $("rlist").querySelectorAll("button[data-del-reg]").forEach(b => b.onclick = () => deleteReg(Number(b.dataset.delReg)));
+  if (openReg && regDetail) paintRegDetail();
+}
+async function deleteReg(id){
+  if (!confirm(T[L].delRegSure || T[L].delSure)) return;
+  try {
+    await api("/api/registrations/" + id, { method: "DELETE" });
+    if (openReg === id) { openReg = null; regDetail = null; }
+    await loadRegs();
+    try { await load(); } catch (_) {}
+  } catch (e) { alert(e.message || "Error"); }
+}
+async function deleteFormSub(id){
+  if (!confirm(T[L].delFormSure || T[L].delSure)) return;
+  try {
+    await api("/api/forms/submissions/" + id, { method: "DELETE" });
+    if (openReg) {
+      regDetail = await loadRegDetail(openReg);
+      paintRegDetail();
+    }
+  } catch (e) { alert(e.message || "Error"); }
+}
+async function openRegDetail(id){
+  openReg = Number(openReg) === Number(id) ? null : id;
+  if (!openReg) { regDetail = null; renderRegs(); return; }
+  regDetail = null; renderRegs();
+  try {
+    regDetail = await loadRegDetail(id);
+    if (Number(openReg) !== Number(id)) return;
+    paintRegDetail();
+  } catch (e) {
+    if (Number(openReg) !== Number(id)) return;
+    const el = regDetailEl(id);
+    if (el) el.innerHTML = `<p class="err">${esc(e.message || "Error")}</p>`;
+  }
+}
+function paintRegDetail(){
+  const el = regDetailEl(); if (!el || !regDetail?.registration) return;
+  try {
+    const t = T[L], r = regDetail.registration;
+    let data = {};
+    try { data = JSON.parse(r.data || "{}"); } catch { data = {}; }
+    const dlLbl = L === "es" ? "Descargar documento firmado" : "Download signed document";
+    const viewLbl = L === "es" ? "Ver respuestas" : "View answers";
+    const c = {
+      registrationNumber: r.registration_number || regDetail.customer?.registration_number || "",
+      ref: r.ref, status: r.status,
+      firstName: data.firstName || r.first_name, lastName: data.lastName || r.last_name,
+      preferredName: data.preferredName, dob: data.dob, phone: data.phone || r.phone, email: data.email || r.email,
+      address: data.address, city: data.city, state: data.state, zip: data.zip,
+      preferredLanguage: data.preferredLanguage, cert: data.cert, loggedDives: data.loggedDives, lastDive: data.lastDive,
+      ownGear: data.ownGear, gearSize: data.gearSize, gearNote: data.gearNote,
+      emergencyName: data.emergencyName, emergencyRelationship: data.emergencyRelationship, emergencyPhone: data.emergencyPhone,
+      notes: data.notes, medOtherDetail: data.medOtherDetail, review_note: data.review_note,
+      medicalFromPacket: data.medicalFromPacket, packetCompleted: data.packetCompleted, packetNeedsPhysician: data.packetNeedsPhysician,
+      staffReviewStatus: data.staffReviewStatus,
+      medFlag: data.medNeedsReview === 1 || data.packetNeedsPhysician === true || data.packetNeedsPhysician === 1 || data.staffReviewStatus === "PENDING_STAFF_REVIEW",
+    };
+    const formsBlock = (regDetail.formSubmissions || []).length
+      ? (regDetail.formSubmissions || []).map(s => {
+          let pdfs = [];
+          try { pdfs = JSON.parse(s.signed_pdf_r2_keys || "[]"); } catch { pdfs = []; }
+          return `<div style="margin:8px 0"><b>#${s.id}</b> · ${esc(s.registration_number || "")} · ${s.needs_physician ? "⚠️ Pending staff review" : "Cleared"} · ${s.signed_at ? new Date(s.signed_at).toLocaleString(L === "es" ? "es" : "en") : ""}
+            <div class="acts" style="margin-top:6px">${pdfButtons(s.id, pdfs)} <button type="button" class="ghost" data-view-sub="${s.id}">${viewLbl}</button> <button type="button" class="danger" data-del-sub="${s.id}">${esc(T[L].delForm || T[L].del)}</button></div></div>`;
+        }).join("")
+      : `<p class="mut">${L === "es" ? "Sin envíos de paquete aún" : "No packet submissions yet"}</p>`;
+    const partyPeople = regDetail.participants || [];
+    const regStatus = regDetail.status || null;
+    const partyBlock = partyPeople.length
+      ? overallPill(regStatus) +
+        `<p class="mut">${partyPeople.length} ${L === "es" ? "personas" : "people"} · ${t.guests}: ${data.participants || r.participants || partyPeople.length}</p>` +
+        partyPeople.map(p => {
+          const sub = (regDetail.formSubmissions || []).find(s => Number(s.participant_id) === Number(p.id));
+          let pdfs = [];
+          try { pdfs = JSON.parse(sub?.signed_pdf_r2_keys || "[]"); } catch { pdfs = []; }
+          const typeLbl = p.isMinor ? (L === "es" ? "Menor" : "Minor") : (L === "es" ? "Adulto" : "Adult");
+          const sp = regStatus ? (regStatus.people || []).find(x => Number(x.id) === Number(p.id)) : null;
+          const youthBtn = sp ? "" : (p.isMinor && p.youthAddendumStatus === "waiting"
+            ? `<button type="button" class="ghost" data-youth="${p.id}">${L === "es" ? "Marcar Youth Addendum" : "Mark Youth Addendum received"}</button>` : "");
+          return `<div style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px">
+            <b>${esc(p.firstName)} ${esc(p.lastName)}</b>
+            <span class="pill">${esc(typeLbl)}${p.age != null ? " · " + p.age : ""}</span>
+            <span class="pill ${p.needsPhysician ? "warn" : ""}">${esc(p.status || "—")}</span>
+            ${p.needsPhysician ? `<span class="chip warn">⚠️ ${L === "es" ? "Revisión médica" : "Medical review"}</span>` : ""}
+            <p class="mut" style="margin:4px 0">${esc(p.registrationNumber || "")} · ${esc(p.mode || "")} · ${esc(p.relationship || "")}${p.ownGear === "yes" ? " · " + (L === "es" ? "Equipo propio" : "Own gear") : ""}${p.ownGear === "no" ? " · " + (L === "es" ? "Equipo de la tienda" : "Shop gear") + (p.gearSize ? " " + esc(p.gearSize) : "") : ""}</p>
+            ${personTasksHtml(sp, p.id)}
+            <div class="acts">${pdfButtons(sub?.id, pdfs)}${youthBtn}${sub ? ` <button type="button" class="ghost" data-view-sub="${sub.id}">${viewLbl}</button>` : ""}</div>
+          </div>`;
+        }).join("")
+      : `<p class="mut">${L === "es" ? "Sin participantes de grupo aún (registro individual)" : "No party participants yet (single registration)"}</p>`;
+    const approveLbl = t.approveAct || (L === "es" ? "Aprobar" : "Approve");
+    const needLbl = t.needInfoAct || (L === "es" ? "Pedir info" : "Need info");
+    const rejectLbl = t.rejectAct || (L === "es" ? "Rechazar" : "Reject");
+    const moreLbl = L === "es" ? "Más detalles" : "More details";
+    el.innerHTML =
+      `<div class="acts" style="margin:0 0 12px;flex-wrap:wrap">
+        <button type="button" id="revApprove">${esc(approveLbl)}</button>
+        <button type="button" class="ghost" id="revNeedInfo">${esc(needLbl)}</button>
+        <button type="button" class="ghost" id="revReject">${esc(rejectLbl)}</button>
+        <button type="button" class="btn" id="revDlDoc" style="background:var(--pri)">${esc(dlLbl)}</button>
+        <button type="button" class="danger" id="revDelReg">${esc(T[L].delReg || T[L].del)}</button>
+      </div>` +
+      `<textarea id="revNote" rows="2" placeholder="${L === "es" ? "Nota de revisión (solo personal)" : "Review note (staff only)"}" style="width:100%;margin:0 0 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px">${esc(r.review_note || "")}</textarea>` +
+      checkinChips(c, t) +
+      sec(t.trip, kv([
+        [L === "es" ? "Actividad" : "Activity", data.activity || r.activity],
+        [L === "es" ? "Fecha" : "Date", [data.plannedDate || r.planned_date, data.plannedTime].filter(Boolean).join(" · ")],
+        [t.guests, String(data.participants || r.participants || 1)],
+        [t.phone, c.phone], [t.email, c.email],
+      ])) +
+      sec(L === "es" ? "Participantes" : "Participants", partyBlock) +
+      sec(L === "es" ? "Formularios firmados" : "Signed forms", formsBlock + `<div id="subView" class="hide" style="margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#f7fafc;white-space:pre-wrap;max-height:320px;overflow:auto"></div>`) +
+      `<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700;color:var(--ink)">${esc(moreLbl)}</summary>` +
+        checkinSummaryHtml(c, t) +
+        sec(L === "es" ? "Consentimientos" : "Consents",
+          (regDetail.consents || []).length
+            ? `<ul style="margin:0;padding-left:18px">${(regDetail.consents || []).map(x => `<li>${esc(x.purpose)}: <b>${x.granted ? (L === "es" ? "ACEPTADO" : "AGREED") : "no"}</b> (${esc(x.text_version)})</li>`).join("")}</ul>`
+            : `<p class="mut">${t.na}</p>`) +
+        (regDetail.signature
+          ? sec(L === "es" ? "Firma" : "Signature", `<p>${esc(regDetail.signature.signer_name)} · ${new Date(regDetail.signature.created_at).toLocaleString(L === "es" ? "es" : "en")}</p><img src="/api/registrations/${r.id}/signature" alt="Signature" style="max-width:280px;background:#fff;border:1px solid var(--line);border-radius:8px">`)
+          : "") +
+        sec(L === "es" ? "Historial" : "Customer history",
+          `<ul style="margin:0;padding-left:18px">${(regDetail.history || []).map(h => `<li>${esc(h.ref)} · ${esc(statusLabel(h.status))} · ${new Date(h.created_at).toLocaleDateString(L === "es" ? "es" : "en")}</li>`).join("")}</ul>`) +
+      `</details>`;
+    bindPdfButtons(el);
+    const shopAction = (btn, action, id) => async () => {
+      btn.disabled = true;
+      try {
+        await api("/api/registrations/" + r.id + "/participants", {
+          method: "POST",
+          body: JSON.stringify({ action, id: Number(id) }),
+        });
+        regDetail = await (await api("/api/registrations/" + r.id + "?lang=" + L)).json();
+        paintRegDetail();
+      } catch (e) { btn.disabled = false; }
+    };
+    el.querySelectorAll("[data-youth]").forEach(btn => btn.onclick = shopAction(btn, "youth_received", btn.dataset.youth));
+    el.querySelectorAll("[data-shop]").forEach(btn => btn.onclick = shopAction(btn, btn.dataset.shop, btn.dataset.pid));
+    const revDl = $("revDlDoc");
+    if (revDl) revDl.onclick = () => downloadPdf(`/api/registrations/${r.id}/document`, `registration-${r.ref || r.id}.html`);
+    const bindAct = (id, status) => {
+      const btn = $(id);
+      if (!btn) return;
+      btn.onclick = async () => {
+        try { await setRegStatus(r.id, status); }
+        catch (e) { alert(e.message || "Error"); }
+      };
+    };
+    bindAct("revApprove", "approved");
+    bindAct("revNeedInfo", "corrections_requested");
+    bindAct("revReject", "rejected");
+    if ($("revDelReg")) $("revDelReg").onclick = () => deleteReg(r.id);
+    el.querySelectorAll("[data-del-sub]").forEach(btn => btn.onclick = () => deleteFormSub(Number(btn.dataset.delSub)));
+    el.querySelectorAll("[data-view-sub]").forEach(btn => btn.onclick = async () => {
+      const box = $("subView");
+      box.classList.remove("hide");
+      box.innerHTML = `<p class="mut">${t.loading}</p>`;
+      try {
+        const d = await (await api("/api/forms/submissions/" + btn.dataset.viewSub)).json();
+        if (!d.ok) { box.textContent = d.error || "Error"; return; }
+        const lines = Object.entries(d.answers || {}).map(([k, v]) => `<div><b>${esc(k)}</b>: ${esc(v === true ? "yes" : v === false ? "no" : (v ?? ""))}</div>`).join("");
+        box.innerHTML =
+          `<p><b>${L === "es" ? "Firmante" : "Signer"}</b>: ${esc(d.submission?.signer_name || "—")} · <b>${L === "es" ? "Registro" : "Reg"} #</b> ${esc(d.submission?.registration_number || "—")}</p>` +
+          (d.submission?.needs_physician ? `<p class="chip warn">⚠️ ${L === "es" ? "Pendiente revisión del personal" : "Pending staff review"}</p>` : "") +
+          `<div class="acts" style="margin:8px 0">${pdfButtons(btn.dataset.viewSub, d.pdfs || [])}</div>` +
+          `<h3 style="margin:10px 0 6px;font-size:13px;text-transform:uppercase;color:#5a6e78">${L === "es" ? "Respuestas" : "Answers"}</h3>${lines || `<p class="mut">${t.na}</p>`}`;
+        bindPdfButtons(box);
+      } catch (e) { box.textContent = String(e.message || e); }
+    });
+  } catch(e) {
+    el.innerHTML = `<p class="err">${esc(e.message || "Could not open this registration")}</p>
+      <div class="acts" style="margin-top:10px">
+        <button type="button" id="revApprove">${esc(T[L].approveAct || (L === "es" ? "Aprobar" : "Approve"))}</button>
+        <button type="button" class="ghost" id="revNeedInfo">${esc(T[L].needInfoAct || (L === "es" ? "Pedir info" : "Need info"))}</button>
+        <button type="button" class="ghost" id="revReject">${esc(T[L].rejectAct || (L === "es" ? "Rechazar" : "Reject"))}</button>
+      </div>`;
+    const id = openReg;
+    if ($("revApprove")) $("revApprove").onclick = async () => { try { await setRegStatus(id, "approved"); } catch (err) { alert(err.message || "Error"); } };
+    if ($("revNeedInfo")) $("revNeedInfo").onclick = async () => { try { await setRegStatus(id, "corrections_requested"); } catch (err) { alert(err.message || "Error"); } };
+    if ($("revReject")) $("revReject").onclick = async () => { try { await setRegStatus(id, "rejected"); } catch (err) { alert(err.message || "Error"); } };
+  }
+}
+
+// ---- corrections ----
+$("cRefresh").onclick = loadCorr;
+async function loadCorr(){
+  try {
+    const d = await (await api("/api/corrections")).json();
+    const sched = await (await api("/api/schedule-requests")).json().catch(() => ({ requests: [] }));
+    const corr = (d.corrections||[]).map(c => `<div class="bk">
+      <div class="bkhead"><div><b>${esc(c.ref || "—")}</b> · ${esc(c.name)} <span class="mut">${esc(c.phone)} · ${new Date(c.created_at).toLocaleString()}</span><br>${esc(c.message)}</div>
+      <span class="pill ${c.status==="open"?"new":""}">${esc(c.status)}</span></div>
+      <div class="acts"><button class="ghost" data-c="${c.id}" data-s="${c.status==="open"?"resolved":"open"}">${c.status==="open"?T[L].saveClose:T[L].reopen}</button></div></div>`).join("");
+    const reqs = (sched.requests||[]).map(x => `<div class="bk ${x.status==="open"?"fresh":""}" id="sched-${x.id}">
+      <div class="bkhead"><div><b>${esc(x.full_name)}</b> · ${esc(x.kind)} <span class="mut">${esc(x.reservation_number)} · ${esc(x.phone)}${x.preferred_date ? " · " + esc(x.preferred_date) : ""} · ${new Date(x.created_at).toLocaleString()}</span></div>
+      <span class="pill ${x.status==="open"?"new":""}">${esc(x.status)}</span></div>
+      <div class="acts"><button class="ghost" data-sched="${x.id}" data-s="${x.status==="open"?"resolved":"open"}">${x.status==="open"?T[L].saveClose:T[L].reopen}</button></div></div>`).join("");
+    $("clist").innerHTML = (corr + reqs) || `<p class="mut">${L==="es"?"Sin solicitudes de corrección.":"No correction requests."}</p>`;
+    $("clist").querySelectorAll("button[data-c]").forEach(b => b.onclick = async () => { await api("/api/corrections", { method: "PATCH", body: JSON.stringify({ id: Number(b.dataset.c), status: b.dataset.s }) }); loadCorr(); loadPending(); });
+    $("clist").querySelectorAll("button[data-sched]").forEach(b => b.onclick = async () => { await api("/api/schedule-requests", { method: "PATCH", body: JSON.stringify({ id: Number(b.dataset.sched), status: b.dataset.s }) }); loadCorr(); loadPending(); });
+  } catch(e) {}
+}
+
+// ---- audit ----
+$("aRefresh").onclick = loadAudit;
+async function loadAudit(){
+  try {
+    const d = await (await api("/api/audit")).json();
+    $("alist").innerHTML = (d.audit||[]).map(a => `<div class="bk" style="padding:10px 14px"><span class="mut">${new Date(a.created_at).toLocaleString(L==="es"?"es":"en")}</span> · <b>${esc(a.actor)}</b> · ${esc(a.action)} · ${esc(a.entity)} ${esc(a.entity_id)}<br><span class="mut">${esc(a.details)}</span></div>`).join("") || `<p class="mut">${L==="es"?"Sin entradas de auditoría aún.":"No audit entries yet."}</p>`;
+  } catch(e) {}
+}
+
+let homeLanding = null;
+function homeSlideRow(s = {}) {
+  return `<div class="home-slide" style="border-top:1px solid #eadfc2;margin-top:10px;padding-top:8px">
+    <input class="hs-src" placeholder="img/opt/shop-front.jpg" value="${esc(s.src || "")}">
+    <input class="hs-alt" placeholder="Alt (EN)" value="${esc(s.alt || "")}">
+    <input class="hs-altes" placeholder="Alt (ES)" value="${esc(s.altEs || "")}">
+    <input class="hs-focal" placeholder="50% 50%" value="${esc(s.focal || "50% 50%")}" style="max-width:140px">
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" class="hs-on" ${s.on === false ? "" : "checked"} style="width:auto;min-height:auto"> On</label>
+    <input type="file" class="hs-file" accept="image/jpeg,image/png,image/webp,image/gif">
+  </div>`;
+}
+function homeReviewRow(r = {}) {
+  return `<div class="home-rev" style="border-top:1px solid #eadfc2;margin-top:10px;padding-top:8px">
+    <input class="hr-name" placeholder="Name" value="${esc(r.name || "")}">
+    <textarea class="hr-text" rows="2" placeholder="Review (EN)">${esc(r.text || "")}</textarea>
+    <textarea class="hr-textes" rows="2" placeholder="Reseña (ES)">${esc(r.textEs || "")}</textarea>
+    <input class="hr-rating" type="number" min="1" max="5" placeholder="1-5" value="${r.rating || ""}" style="max-width:90px">
+    <input class="hr-source" placeholder="Google" value="${esc(r.source || "")}">
+  </div>`;
+}
+function paintHome() {
+  const Lnd = homeLanding || {};
+  $("homeHeroOn").checked = Lnd.heroOn !== false;
+  $("homeMs").value = Math.round((Lnd.intervalMs || 6500) / 1000);
+  $("homeSlides").innerHTML = (Lnd.slides || []).map(homeSlideRow).join("");
+  $("homeTrust").value = (Lnd.trust || []).map(t => `${t.en || ""} | ${t.es || ""}`).join("\n");
+  $("homeSpecial").value = Lnd.specialImage || "";
+  $("homeHours").value = Lnd.hours || "";
+  $("homeHoursEs").value = Lnd.hoursEs || "";
+  $("homeReviews").innerHTML = (Lnd.reviews || []).map(homeReviewRow).join("") || homeReviewRow();
+}
+async function loadHome() {
+  $("homeErr").textContent = "";
+  try {
+    const d = await (await api("/api/landing")).json();
+    homeLanding = d.landing;
+    paintHome();
+  } catch (e) { $("homeErr").textContent = e.message || "Could not load"; }
+}
+async function uploadHomeFile(file) {
+  const body = new FormData();
+  body.append("file", file);
+  const r = await fetch("/api/landing/upload", { method: "POST", body });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || "Upload failed");
+  return d.src;
+}
+if ($("homeAddSlide")) $("homeAddSlide").onclick = () => { $("homeSlides").insertAdjacentHTML("beforeend", homeSlideRow({ on: true })); };
+if ($("homeAddReview")) $("homeAddReview").onclick = () => { $("homeReviews").insertAdjacentHTML("beforeend", homeReviewRow()); };
+if ($("homeSave")) $("homeSave").onclick = async () => {
+  $("homeErr").textContent = "";
+  try {
+    const slides = [];
+    for (const row of $("homeSlides").querySelectorAll(".home-slide")) {
+      let src = row.querySelector(".hs-src").value.trim();
+      const file = row.querySelector(".hs-file").files[0];
+      if (file) src = await uploadHomeFile(file);
+      slides.push({
+        src, alt: row.querySelector(".hs-alt").value, altEs: row.querySelector(".hs-altes").value,
+        focal: row.querySelector(".hs-focal").value, on: row.querySelector(".hs-on").checked,
+      });
+    }
+    const trust = $("homeTrust").value.split("\n").map(line => {
+      const [en, es] = line.split("|");
+      return { en: (en || "").trim(), es: (es || "").trim() };
+    }).filter(t => t.en || t.es);
+    const reviews = [...$("homeReviews").querySelectorAll(".home-rev")].map(row => ({
+      name: row.querySelector(".hr-name").value,
+      text: row.querySelector(".hr-text").value,
+      textEs: row.querySelector(".hr-textes").value,
+      rating: Number(row.querySelector(".hr-rating").value) || 0,
+      source: row.querySelector(".hr-source").value,
+    })).filter(r => r.text.trim());
+    const landing = {
+      heroOn: $("homeHeroOn").checked,
+      intervalMs: Number($("homeMs").value) * 1000,
+      slides, trust, reviews,
+      hours: $("homeHours").value, hoursEs: $("homeHoursEs").value,
+      specialImage: $("homeSpecial").value.trim(),
+    };
+    const r = await api("/api/landing", { method: "POST", body: JSON.stringify({ landing }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Save failed");
+    homeLanding = d.landing;
+    paintHome();
+    $("homeErr").textContent = T[L].homeSaved;
+  } catch (e) { $("homeErr").textContent = e.message || "Save failed"; }
+};
+
+applyLang();
+fetch("/api/bookings").then(r => { if (r.ok) showCRM(); else showLogin(); }).catch(showLogin);
+setInterval(() => { if (!$("crmView").classList.contains("hide")) load(); }, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,1835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Digital Dive Check-In · Banana Nut Burgers Dive Shop</title>
+<meta name="description" content="Complete your Banana Nut Burgers dive registration before arrival: guided check-in, forms, electronic signature, and confirmation.">
+<link rel="icon" href="/img/bnb-logo.png" type="image/png">
+<style>
+:root{
+  --bg:#fff8e6;--surface:#ffffff;--text:#0a2533;--muted:#3d5160;--border:#8a7348;--line:#d8cba8;
+  --primary:#075a78;--primary-text:#ffffff;--danger:#9b1c1c;--ok:#0b5c34;--ban:#ffc928;--ban-text:#0a2533;
+  --field:#ffffff;--field-text:#0a2533;--soft:#f7f3e6;--disabled:#d5dee4;--disabled-text:#0a2533;--on-photo:#f4fbff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#06161f;--surface:#123041;--text:#f5fbff;--muted:#d5e4ee;--border:#8eb4c8;--line:#3d6378;
+    --primary:#8fd4f0;--primary-text:#06202b;--danger:#ffb4b4;--ok:#8be3b0;
+    --field:#0b2230;--field-text:#f5fbff;--soft:#0e2836;--disabled:#2c4a5c;--disabled-text:#f5fbff;
+  }
+}
+*{box-sizing:border-box}
+html{overflow-y:scroll;-webkit-overflow-scrolling:touch}
+body{margin:0;background:#06161f url(img/reef-swim.jpg) center/cover fixed no-repeat;color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));overflow-x:hidden;min-height:100%}
+body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,22,31,.5) 0%,rgba(6,22,31,.72) 40%,rgba(6,22,31,.9) 100%)}
+.wrap,.top{position:relative;z-index:1}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0;max-width:760px;margin:0 auto}
+.top button{background:rgba(255,255,255,.92);color:#0a2533;border:1px solid rgba(255,255,255,.4);border-radius:99px;min-height:48px;min-width:48px;padding:8px 14px;font-weight:700;cursor:pointer}
+.brand{display:inline-flex;align-items:center;text-decoration:none;line-height:0}.brand img{width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
+h1{font-size:28px;margin:14px 0 4px;color:var(--on-photo);text-shadow:0 2px 14px rgba(0,0,0,.5)}
+h2{font-size:21px;margin:0 0 4px}
+h3{font-size:17px;margin:16px 0 6px}
+.lead{color:var(--on-photo);text-shadow:0 1px 8px rgba(0,0,0,.5);margin:0 0 8px}
+.card{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px;box-shadow:0 16px 48px rgba(0,0,0,.22)}
+.card .instr{color:var(--muted);margin:0 0 12px}
+label{display:block;font-weight:600;margin-top:14px;font-size:15px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--field);color:var(--field-text);min-height:48px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.row{grid-template-columns:1fr}}
+button,.btn{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14px;padding:12px 18px;background:var(--primary);color:var(--primary-text);font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
+button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not-allowed}
+.ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.ban{background:var(--ban);color:var(--ban-text)}
+.linkbtn{background:none;border:0;color:var(--text);text-decoration:underline;font-weight:700;padding:12px 4px}
+.wide{width:100%}
+.hide{display:none!important}
+.mut{color:var(--muted);font-size:14px}
+.err{color:var(--danger);font-weight:700;font-size:15px;min-height:20px}
+.okmsg{color:var(--ok);font-weight:700;font-size:14px}
+.chk{display:flex;gap:12px;align-items:flex-start;font-weight:600;margin-top:12px;min-height:48px;padding:10px 0}
+.chk input{width:24px;min-height:24px;height:24px;flex:none;margin-top:2px;accent-color:var(--primary)}
+.decl{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--soft);margin-top:10px}
+.bad{outline:3px solid var(--danger)}
+.chip{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:13px;font-weight:800;border:1px solid;border-radius:999px;padding:3px 10px}
+.st-not_started{color:#33434f!important;background:#eef2f5;border-color:#33434f}
+.st-in_progress{color:#6b4200!important;background:#fff1d6;border-color:#6b4200}
+.st-done{color:#0b5c34!important;background:#e3f5ea;border-color:#0b5c34}
+.st-needs_resign{color:#8f1a1a!important;background:#fde4e4;border-color:#8f1a1a}
+.st-waiting_shop{color:#33377f!important;background:#e8e9fb;border-color:#33377f}
+@media (prefers-color-scheme: dark){
+  .st-not_started{color:#d5e4ee!important;background:#1d3442;border-color:#d5e4ee}
+  .st-in_progress{color:#ffd58a!important;background:#3a2c10;border-color:#ffd58a}
+  .st-done{color:#8be3b0!important;background:#12352a;border-color:#8be3b0}
+  .st-needs_resign{color:#ffb4b4!important;background:#3d1717;border-color:#ffb4b4}
+  .st-waiting_shop{color:#c7c9ff!important;background:#23264d;border-color:#c7c9ff}
+}
+#stepper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:12px 0 0}
+#stepper button{flex-direction:column;gap:4px;padding:8px 4px;min-height:64px;background:var(--surface);color:var(--text);border:1px solid var(--line);font-size:13px;line-height:1.2}
+#stepper button[aria-current="step"]{outline:3px solid var(--ban);outline-offset:1px}
+#stepper button.locked{background:var(--disabled);color:var(--disabled-text)}
+#stepper .chip{font-size:11px;padding:2px 6px}
+@media(max-width:520px){#stepper .chip span.w{display:none}}
+#lockMsg{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--surface);color:var(--danger);font-weight:700}
+.switcher{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin:0 0 8px}
+.switcher button{flex:none;background:var(--surface);color:var(--text);border:1px solid var(--border);gap:8px}
+.switcher button[aria-pressed="true"]{outline:3px solid var(--primary);outline-offset:1px}
+.yesbig{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.yesbig button{min-height:64px;font-size:18px;background:var(--surface);color:var(--text);border:2px solid var(--border)}
+.yesbig button[aria-pressed="true"]{background:var(--primary);color:var(--primary-text);border-color:var(--primary)}
+.person{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;background:var(--soft)}
+.person .top2{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.person .checks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.person .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.allset{margin-top:12px;padding:14px;border-radius:12px;border:2px solid var(--ok);color:var(--ok);font-weight:800;background:var(--surface)}
+.embed{width:100%;border:0;display:block;min-height:240px;background:transparent}
+.doclist{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.docline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft)}
+.docline b{min-width:0;flex:1 1 8rem;overflow-wrap:anywhere}
+.docline .docacts{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.docline .docacts button{flex:1 1 auto;min-width:0;padding:10px 12px}
+@media(max-width:520px){.docline{flex-direction:column;align-items:stretch}.docline .docacts{width:100%;margin-left:0}.docline .docacts button{flex:1}}
+.reason{color:var(--danger);font-weight:700;font-size:14px;margin:4px 0 0}
+.pdfview{margin-top:8px;max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px}
+.pdfview canvas{width:100%;height:auto;display:block;margin:0 0 8px}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:8px}
+.bar .in button{flex:1}
+.bar #backBtn{flex:0 0 auto;min-width:96px}
+.ref{font-size:26px;font-weight:800;letter-spacing:1px;color:var(--text)}
+.confIds{display:grid;gap:10px;margin:12px 0}.confIds .idbox{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft);text-align:center}
+.confIds .idlab{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}.confIds .idval{font-size:22px;font-weight:800;color:var(--text);letter-spacing:1px;word-break:break-all}
+.confQr{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0}.confQr img{width:180px;height:180px;border-radius:12px;background:#fff;border:1px solid var(--line)}
+.confActs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.confActs a,.confActs button{flex:1;min-width:140px}
+.pill{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--ban);color:var(--ban-text)}
+.cal{border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:6px;background:var(--surface)}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.calhead b{font-size:18px;letter-spacing:2px;text-transform:uppercase}
+.calnav{width:48px;min-height:48px;padding:0;border-radius:10px;background:var(--surface);color:var(--text);border:1.5px solid var(--text);font-size:22px;line-height:1}
+.caldow,.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.caldow span{text-align:center;font-size:12px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:4px 0}
+.calday{min-height:48px;padding:6px 0;border-radius:9px;font-weight:600;background:#cdeccd;color:#14532d;border:1px solid #9ed69e}
+.calday.low{background:#fdf0b8;color:#713f12;border-color:#ecd97a}
+.calday.off{background:#f6cfcf;color:#7f1d1d;border-color:#edaeae;cursor:not-allowed}
+.calday.sel{background:#1d4ed8;color:#fff;border-color:#1e3a8a}
+.calblank{min-height:48px}.callegend{font-size:13px;margin:10px 0 0}
+.times{display:flex;flex-wrap:wrap;gap:8px}
+.tpill{min-height:48px;padding:10px 18px;border-radius:99px;background:var(--surface);color:var(--text);border:1.5px solid var(--text)}
+.tpill.sel,.tpill[aria-pressed="true"]{background:#1d4ed8;color:#fff;border-color:#1e3a8a}
+.tpill.off{text-decoration:line-through}
+.yesno{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.yesno label{margin-top:0;display:flex;gap:8px;align-items:center;min-height:48px;padding:10px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;font-weight:600}
+.yesno input{width:22px;min-height:22px;height:22px;margin:0;accent-color:var(--primary)}
+#kioskWarn{position:relative;z-index:2;max-width:760px;margin:8px auto;padding:10px 14px;background:var(--surface);border-radius:12px}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="/" aria-label="Banana Nut Burgers home">
+    <img src="/img/bnb-logo.png" width="88" height="88" alt="Banana Nut Burgers Dive Shop">
+  </a>
+  <button id="langBtn" type="button">ES</button>
+</div>
+<div class="wrap">
+  <h1>🤿 <span data-i="h1"></span></h1>
+  <p class="lead" data-i="sub"></p>
+  <nav id="stepper" class="hide" aria-label="Progress"></nav>
+  <p id="lockMsg" class="hide" role="status" aria-live="polite"></p>
+
+  <!-- landing -->
+  <section class="card" data-step="landing">
+    <h2 data-i="aH"></h2>
+    <p data-i="aP1"></p><p data-i="aP2"></p>
+    <div id="requirements"><b data-i="reqH"></b><p class="mut" data-i="reqP"></p></div>
+    <p class="mut"><span data-i="priv"></span></p>
+    <p class="mut"><span data-i="help"></span> <a href="https://wa.me/50498763374">WhatsApp +504 9876-3374</a> · <a href="mailto:banananutburgers@gmail.com">banananutburgers@gmail.com</a></p>
+    <p><button type="button" id="startBtn" class="ban wide" style="font-size:18px" data-i="start"></button></p>
+    <p><button type="button" class="ghost" id="resumeOpen" data-i="resumeOpen"></button>
+       <button type="button" class="ghost" id="corrBtn" data-i="corrOpen"></button></p>
+    <div id="resumePanel" class="hide">
+      <label for="rRef" data-i="corrRef"></label><input id="rRef" placeholder="BNB-2026-XXXXXX">
+      <label for="rTok" data-i="resumeCode"></label><input id="rTok" autocomplete="off">
+      <p class="err" id="resumeErr" aria-live="polite"></p>
+      <p><button type="button" id="resumeBtn" data-i="resumeBtn"></button></p>
+      <p class="mut" data-i="resumeNote"></p>
+    </div>
+  </section>
+
+  <!-- 1 About you: activity, time, your details, address, emergency contact, declarations -->
+  <section class="card hide" data-step="about">
+    <h2 data-i="stAbout"></h2>
+    <p class="instr" data-i="aboutInstr"></p>
+    <p class="mut" data-i="oneAdultNote"></p>
+    <label for="act" data-i="activity"></label><select id="act"><option value="" id="actPh"></option></select>
+    <label data-i="pdate"></label>
+    <div class="cal" id="cal">
+      <div class="calhead">
+        <button type="button" class="calnav" id="calPrev" aria-label="Previous month">‹</button>
+        <b id="calTitle"></b>
+        <button type="button" class="calnav" id="calNext" aria-label="Next month">›</button>
+      </div>
+      <div class="caldow"><span data-i="sun"></span><span data-i="mon"></span><span data-i="tue"></span><span data-i="wed"></span><span data-i="thu"></span><span data-i="fri"></span><span data-i="sat"></span></div>
+      <div class="calgrid" id="calGrid"></div>
+      <p class="callegend" data-i="calLegend"></p>
+      <p class="mut" id="calPick"></p>
+      <label data-i="availTimes"></label>
+      <div class="times" id="timeSlots"></div>
+    </div>
+    <input type="hidden" id="pdate">
+    <label data-i="courseQ"></label>
+    <div class="yesno">
+      <label><input type="radio" name="course" id="courseYes" value="yes"><span data-i="yes"></span></label>
+      <label><input type="radio" name="course" id="courseNo" value="no"><span data-i="no"></span></label>
+    </div>
+    <label for="bref" data-i="bref"></label><input id="bref" autocomplete="off">
+
+    <h3 data-i="bH"></h3>
+    <div class="row">
+      <div><label for="fn" data-i="first"></label><input id="fn" autocomplete="given-name"></div>
+      <div><label for="ln" data-i="last"></label><input id="ln" autocomplete="family-name"></div>
+    </div>
+    <label for="pn" data-i="pref"></label><input id="pn" autocomplete="nickname">
+    <div class="row">
+      <div><label for="ph" data-i="phone"></label><input id="ph" type="tel" autocomplete="tel" inputmode="tel"></div>
+      <div><label for="em" data-i="email"></label><input id="em" type="email" autocomplete="email"></div>
+    </div>
+    <label for="plang" data-i="plang"></label><select id="plang"><option value="en">English</option><option value="es">Español</option></select>
+    <label for="dob" data-i="dob"></label><input id="dob" type="date" autocomplete="bday">
+    <label for="addr" data-i="addr"></label><input id="addr" autocomplete="street-address">
+    <div class="row">
+      <div><label for="city" data-i="city"></label><input id="city" autocomplete="address-level2"></div>
+      <div><label for="state" data-i="state"></label><input id="state" autocomplete="address-level1"></div>
+    </div>
+    <label for="zip" data-i="zip"></label><input id="zip" autocomplete="postal-code">
+    <label data-i="ownGear"></label>
+    <div class="yesno">
+      <label><input type="radio" name="ownGear" id="gearYes" value="yes"><span data-i="yes"></span></label>
+      <label><input type="radio" name="ownGear" id="gearNo" value="no"><span data-i="no"></span></label>
+    </div>
+    <div id="gearSizeWrap" class="hide">
+      <label for="gearSize" data-i="gearSize"></label>
+      <select id="gearSize">
+        <option value="" data-i="sel"></option>
+        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option>
+        <option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
+      </select>
+      <label for="gearNote" data-i="gearNote"></label>
+      <input id="gearNote" autocomplete="off" data-p="gearNotePh">
+    </div>
+    <div class="row">
+      <div><label for="cert" data-i="cert"></label><select id="cert">
+        <option value="" data-i="sel"></option><option value="None">None</option><option value="Open Water">Open Water</option>
+        <option value="Advanced Open Water">Advanced Open Water</option><option value="Rescue">Rescue</option><option value="Other">Other</option></select></div>
+      <div><label for="logged" data-i="logged"></label><input id="logged" type="number" min="0" inputmode="numeric"></div>
+    </div>
+    <label for="lastdive" data-i="lastdive"></label><input id="lastdive" type="date">
+    <h3 data-i="emgH"></h3>
+    <label for="en" data-i="emgName"></label><input id="en" autocomplete="off">
+    <div class="row">
+      <div><label for="erel" data-i="emgRel"></label><input id="erel" autocomplete="off"></div>
+      <div><label for="ep" data-i="emgPhone"></label><input id="ep" type="tel" inputmode="tel"></div>
+    </div>
+    <label for="notes" data-i="notes"></label><textarea id="notes" rows="2"></textarea>
+    <div class="decl"><b id="declTitle"></b><p id="declText"></p>
+      <label class="chk"><input type="checkbox" id="cbDecl"><span id="declCheck"></span></label></div>
+    <div class="decl"><p id="privText"></p>
+      <label class="chk"><input type="checkbox" id="cbPriv"><span data-i="privCheck"></span></label></div>
+    <div class="decl"><p id="mktText"></p>
+      <label class="chk"><input type="checkbox" id="cbMkt"><span data-i="mktCheck"></span></label></div>
+    <p class="okmsg" id="draftMsg" aria-live="polite"></p>
+    <p class="err" id="errAbout" aria-live="polite"></p>
+  </section>
+
+  <!-- 2 Who's coming -->
+  <section class="card hide" data-step="minors">
+    <h2 data-i="stMinors"></h2>
+    <p class="instr" data-i="minorsQ"></p>
+    <div class="yesbig" role="group">
+      <button type="button" id="hasMinorsYes" aria-pressed="false" data-i="yes"></button>
+      <button type="button" id="hasMinorsNo" aria-pressed="false" data-i="noJustMe"></button>
+    </div>
+    <p class="mut" data-i="minorsLine"></p>
+    <div id="minorsBox" class="hide">
+      <div id="minorList"></div>
+      <p class="mut" id="sameLine" data-i="sameLine"></p>
+      <div id="addChildBox" class="decl">
+        <h3 data-i="addChildH" style="margin-top:0"></h3>
+        <div class="row">
+          <div><label for="pFirst" data-i="first"></label><input id="pFirst" autocomplete="off"></div>
+          <div><label for="pLast" data-i="last"></label><input id="pLast" autocomplete="off"></div>
+        </div>
+        <label for="pDob" data-i="dob"></label><input id="pDob" type="date">
+        <p class="err" id="pDobErr" aria-live="polite"></p>
+        <label for="pRel" data-i="partyRel"></label>
+        <select id="pRel">
+          <option value="child" data-i="relChild"></option>
+          <option value="grandchild" data-i="relGrand"></option>
+          <option value="relative" data-i="relRelative"></option>
+          <option value="other" data-i="relOther"></option>
+        </select>
+        <p class="err" id="partyAddErr" aria-live="polite"></p>
+        <p><button type="button" class="ban wide" id="partySavePerson" data-i="addChild"></button></p>
+      </div>
+      <p><button type="button" class="ghost wide hide" id="addAnotherBtn" data-i="addAnother"></button></p>
+      <p><button type="button" class="ghost wide" id="partyPastBtn" data-i="partyPast"></button></p>
+      <div id="partyPastPanel" class="decl hide">
+        <p class="mut" data-i="partyPastSub"></p>
+        <div id="partyPastList"></div>
+        <p><button type="button" class="ghost" id="partyPastClose" data-i="cancelOpt"></button></p>
+      </div>
+    </div>
+    <p class="err" id="errMinors" aria-live="polite"></p>
+  </section>
+
+  <!-- 3 Health, 4 Sign: one person at a time inside the same page -->
+  <section class="card hide" data-step="health">
+    <div class="switcher" id="healthSwitch" role="group"></div>
+    <h2 id="healthName"></h2>
+    <p class="mut" id="healthReg"></p>
+    <p id="healthLine"></p>
+    <p class="instr" data-i="healthInstr"></p>
+    <div id="healthBody"></div>
+    <p class="err" id="errHealth" aria-live="polite"></p>
+  </section>
+  <section class="card hide" data-step="sign">
+    <div class="switcher" id="signSwitch" role="group"></div>
+    <h2 id="signName"></h2>
+    <p class="mut" id="signReg"></p>
+    <p id="signLine"></p>
+    <p class="instr" data-i="signInstr"></p>
+    <div id="signBody"></div>
+    <p class="err" id="errSign" aria-live="polite"></p>
+  </section>
+
+  <!-- 5 Done -->
+  <section class="card hide" data-step="done">
+    <h2>✅ <span data-i="doneH"></span></h2>
+    <p><span class="pill" id="donePill" data-i="statusAwait"></span></p>
+    <p data-i="fRef"></p>
+    <div class="confIds">
+      <div class="idbox"><div class="idlab" data-i="confBooking"></div><div class="idval" id="confBooking">—</div></div>
+      <div class="idbox"><div class="idlab" data-i="confRefLab"></div><div class="idval ref" id="confRef" style="font-size:18px">—</div></div>
+    </div>
+    <p class="mut" id="confWhen"></p>
+    <div id="donePeople"></div>
+    <div class="confQr">
+      <img id="confQr" alt="Check-in QR" width="180" height="180">
+      <p class="mut" data-i="confQrHint"></p>
+    </div>
+    <div class="confActs">
+      <a class="btn ban" id="confCal" href="#" download="bnb-dive.ics" data-i="confCal"></a>
+      <a class="btn" id="confWa" href="#" data-i="confShare"></a>
+      <button type="button" class="ghost" id="confCopy" data-i="confCopy"></button>
+    </div>
+    <p class="okmsg hide" id="confCopied" data-i="confCopied"></p>
+    <p class="mut" data-i="editAfter"></p>
+    <div id="kioskDoneWrap"></div>
+    <div id="nextPersonBox" class="decl" style="margin-top:16px">
+      <b data-i="nextPersonH">Next person?</b>
+      <p class="mut" data-i="nextPersonSub"></p>
+      <p class="mut hide" id="nextPersonDlHint" data-i="nextPersonDlHint"></p>
+      <p class="err hide" id="nextPersonSaveErr" aria-live="polite"></p>
+      <p><button type="button" class="ban wide" id="startNewRegBtn" data-i="startNewReg">Start new registration</button></p>
+      <p><button type="button" class="ghost wide" id="showNextQrBtn" data-i="showQr">Show QR code</button></p>
+      <div id="nextPersonShare" class="hide" style="margin-top:10px">
+        <img id="nextPersonQr" alt="" width="160" height="160" style="display:block;margin:8px auto;background:#fff;border-radius:8px">
+        <input id="nextPersonUrl" readonly autocomplete="off">
+        <div class="confActs">
+          <button type="button" class="ghost" id="nextPersonShareBtn" data-i="shareBtn">Share</button>
+          <a class="btn" id="nextPersonWa" href="#" data-i="linkWa">WhatsApp</a>
+          <a class="btn" id="nextPersonSms" href="#" data-i="linkSms">SMS</a>
+          <a class="btn" id="nextPersonMail" href="#" data-i="linkEmail">Email</a>
+          <button type="button" class="ghost" id="nextPersonCopy" data-i="confCopy">Copy</button>
+        </div>
+        <p class="okmsg hide" id="nextPersonCopied" data-i="confCopied" aria-live="polite"></p>
+      </div>
+      <p class="mut hide" id="nextPersonIdle" aria-live="polite"></p>
+      <p><button type="button" class="ghost wide hide" id="nextPersonStay" data-i="stayOnPage">Stay on this page</button></p>
+    </div>
+    <p data-i="fNext"></p>
+    <p><a class="btn" href="/" data-i="fBack">Back to home</a></p>
+  </section>
+
+  <section class="card hide" id="passDeviceCard" role="status" aria-live="assertive">
+    <h2 data-i="passDeviceH">Thank you</h2>
+    <p class="mut" id="passDeviceMsg" data-i="passDeviceSub">Pass the device to the next person.</p>
+    <p><button type="button" class="ban wide" id="passDeviceGo" data-i="passDeviceGo">Start the next registration</button></p>
+  </section>
+
+  <section class="card hide" id="dobLockBox" role="dialog" aria-modal="false">
+    <h2 data-i="dobLockH"></h2>
+    <p class="mut" id="dobLockSub"></p>
+    <label for="dobLockInput" data-i="dob"></label>
+    <input id="dobLockInput" type="date" style="max-width:240px">
+    <p class="err" id="dobLockErr" aria-live="polite"></p>
+    <p><button type="button" class="ban wide" id="dobLockGo" data-i="dobLockGo"></button></p>
+    <p><button type="button" class="ghost wide" id="dobLockClear" data-i="dobLockClear"></button></p>
+  </section>
+
+  <!-- correction request -->
+  <section class="card hide" id="corrCard">
+    <h2 data-i="corrH"></h2>
+    <p class="mut" data-i="corrSub"></p>
+    <label for="cRef" data-i="corrRef"></label><input id="cRef" placeholder="BNB-2026-XXXXXX">
+    <label for="cPhone" data-i="phone"></label><input id="cPhone" type="tel" inputmode="tel">
+    <label for="cName" data-i="fullName"></label><input id="cName">
+    <label for="cMsg" data-i="corrMsg"></label><textarea id="cMsg" rows="3"></textarea>
+    <p class="err" id="corrErr" aria-live="polite"></p>
+    <p><button type="button" id="corrSend" data-i="corrSend"></button></p>
+  </section>
+  <input id="hp" class="hide" tabindex="-1" autocomplete="off" aria-hidden="true">
+</div>
+<div class="bar hide" id="bar">
+  <div class="in">
+    <button type="button" class="ghost" id="backBtn" data-i="back"></button>
+    <button type="button" class="ban" id="primaryBtn"></button>
+  </div>
+  <p class="mut" id="saveState" style="text-align:center;margin:4px 0 0" aria-live="polite"></p>
+</div>
+
+<script src="/api/register/status-client"></script>
+<script>
+const DECL = {
+  en:{title:"Customer Information Accuracy Declaration",text:"I certify that the information I have provided in this registration form is true, accurate, complete, and current to the best of my knowledge and belief. I understand that I am responsible for reviewing my answers and notifying Banana Nut Burger of any material changes or corrections.",check:"I have read and agree to this Customer Information Accuracy Declaration.",
+      priv:"I acknowledge that Banana Nut Burger will store my registration information and signed documents privately to manage my customer record and bookings, and that I may request corrections by contacting the business.",
+      mkt:"I agree to receive occasional offers and news from Banana Nut Burger by WhatsApp or email. (Optional)"},
+  es:{title:"Declaración de exactitud de la información del cliente",text:"Certifico que la información que he proporcionado en este formulario de registro es verdadera, exacta, completa y actual, según mi leal saber y entender. Entiendo que soy responsable de revisar mis respuestas y notificar a Banana Nut Burger de cualquier cambio o corrección importante.",check:"He leído y acepto esta Declaración de exactitud de la información del cliente.",
+      priv:"Reconozco que Banana Nut Burger guardará mi información de registro y documentos firmados de forma privada para gestionar mi registro de cliente y reservas, y que puedo solicitar correcciones contactando al negocio.",
+      mkt:"Acepto recibir ofertas y novedades ocasionales de Banana Nut Burger por WhatsApp o correo. (Opcional)"}
+};
+const ACTS = ["Scuba","Dives & courses","Snorkel"];
+const T = {
+  en:{h1:"Digital dive check-in",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Book my Dive",aP1:"Five short steps: about you, who's coming, health questions, signing, done. That books your appointment and registers you with the shop.",aP2:"You get a registration reference for staff, and your date and time appear in our Bookings inbox. No account needed. Everything saves as you go.",reqH:"What you may need",reqP:"Your certification card details (if certified), an emergency contact, and a phone or email we can reach you on. Signed forms are stored privately; only authorized staff can view them.",priv:"Privacy: we only collect what this registration needs. Never share your resume code — it opens your saved registration.",help:"Need help? Contact us:",start:"Book my Dive",resumeOpen:"Finish or Update My Registration",corrOpen:"Correct an existing registration",corrRef:"Registration reference *",resumeCode:"Resume code *",resumeBtn:"Open my registration",resumeNote:"Your resume code was shown when your registration was first saved (and is kept on this device). Without it, a registration cannot be opened — contact us for help.",
+    stAbout:"About you",stMinors:"Who's coming",stHealth:"Health",stSign:"Sign",stDone:"Done",
+    aboutInstr:"Your details go on every form, so you only type them once. Everything saves as you go.",
+    activity:"Activity / dive type *",pdate:"Preferred date & time *",oneAdultNote:"Each adult completes their own registration. Children under 18 are added on the next step.",bref:"Booking reference (if you have one)",sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat",calLegend:"Green: available · Yellow: almost full · Red: unavailable",pickTime:"Pick an open time",availTimes:"Available times",noTimes:"No times left this day — pick another date.",courseQ:"Are you interested in any course? (optional)",
+    bH:"Your details",first:"First name *",last:"Last name *",pref:"Preferred name",phone:"Phone (WhatsApp) *",email:"Email",plang:"Preferred language",dob:"Date of birth *",addr:"Street address",city:"City *",state:"State / Province",zip:"ZIP / Postal code",ownGear:"Do you have your own gear? *",yes:"Yes",no:"No",gearSize:"What size do you need? *",gearNote:"Size notes (boots, BCD, etc.)",gearNotePh:"e.g. boots 9, BCD medium",cert:"Certification level",logged:"Number of logged dives",lastdive:"Date of last dive",emgH:"Emergency contact",emgName:"Emergency contact name *",emgRel:"Relationship",emgPhone:"Emergency contact phone *",notes:"Notes (optional)",sel:"Select…",privCheck:"I acknowledge this.",mktCheck:"Yes, sign me up (optional).",
+    back:"Back",
+    fixFirst:"Still needed: ",needAct:"Activity",needDate:"Date and time",needFirst:"First name",needLast:"Last name",needPhone:"Phone",needDob:"Date of birth",needCity:"City",needGear:"Own gear (yes or no)",needGearSize:"Gear size",needEmgName:"Emergency contact name",needEmgPhone:"Emergency contact phone",needDecl:"Accuracy declaration",needPriv:"Privacy acknowledgement",needGuardianFirst:"You must be 18 or older to register. A parent or guardian registers first and adds you.",futureDob:"Date of birth cannot be in the future.",
+    minorsQ:"Is anyone under 18 coming with you?",noJustMe:"No, just me",minorsLine:"Children under 12 have their own options and restrictions and need a parent or guardian with them at all times. You answer their health questions and sign for them.",
+    addChildH:"Add a child",addChild:"Add child",addAnother:"Add another child",partyRel:"Relationship to you (optional)",relChild:"Child",relGrand:"Grandchild",relRelative:"Other relative",relOther:"Other",
+    childAdult:"This person is 18 or older and needs their own registration.",childNeedName:"Enter their first and last name.",childNeedDob:"Enter their date of birth.",childDup:"{name} is already on this registration.",addAnyway:"Add anyway",
+    sameLine:"Children use the same address and emergency contact as yours.",sameFor:"Same address and emergency contact as yours.",ownFor:"Own address or emergency contact.",editFor:"Edit for {name}",useMine:"Use mine again",saveFor:"Save for {name}",
+    chkDetails:"Details",chkHealth:"Health",chkDocs:"Documents",ageN:"age {n}",edit:"Edit",remove:"Remove",save:"Save",cancelOpt:"Cancel",removeAsk:"Remove {name} from this registration?",removeYes:"Yes, remove",keep:"Keep",
+    partyPast:"Add someone you've registered before",partyPastSub:"Names, dates of birth and contact details only — never health answers.",partyPastNone:"No one found from earlier visits.",
+    you:"You",healthInstr:"Choose Yes or No for each question. Answers save as you go.",healthSelf:"Your health questions.",healthFor:"Health questions for {name} (answered by you as {name}'s parent or guardian).",
+    signInstr:"Open each document, read to the end, tick that you agree, and sign once.",signSelf:"Your documents.",signFor:"Documents for {name} (signed by you as {name}'s parent or guardian).",
+    personHead:"{name}, age {age}",personHeadSelf:"{name} (you), age {age}",
+    loadingForms:"Loading…",formsFail:"These forms could not be opened.",tryAgain:"Try again",
+    healthLocked:"These answers are done and locked with the signed documents. If something changed, tell the shop.",
+    allSet:"{name} is all set.",allSetSelf:"You're all set.",resignBtn:"Re-sign the changed document",signedDocs:"Signed documents",
+    waitShop:"Customer finished – waiting on shop",waitShopNote:"The shop still needs: {items}. You don't need to do anything.",youthItem:"Youth Addendum (paper, signed at the shop)",physItem:"Physician clearance",
+    preview:"Preview",hidePreview:"Hide preview",download:"Download",regNumLabel:"Registration #",allDocsFile:"All documents (one file)",
+    saving:"Saving…",savedOk:"Saved",notSaved:"Not saved — check your connection. Your answers are still here.",
+    finish:"Finish",sending:"Finishing…",failed:"Could not finish (connection?). Everything is saved — try again, or contact us on WhatsApp.",lockedBy:"Finish {step} first: {task}.",
+    doneH:"Registration complete",statusAwait:"Submitted",fRef:"Your registration reference — show this to staff when you arrive:",fNext:"Our staff will review your registration. To correct something, use the steps above, the correction form, or message us on WhatsApp.",fBack:"Back to home",editAfter:"Need to change something? Tap a step above. Only documents whose printed details change will ask for a new signature.",
+    corrH:"Request a correction",corrSub:"Enter your registration reference and the phone number you registered with. We never display your record here.",fullName:"Your name",corrMsg:"What needs to be corrected? *",corrSend:"Send correction request",corrOk:"Thank you. If your details match a registration, your request has been received.",corrNeed:"Reference, phone and a message are required.",
+    saved:"Saved ✓ Reference",returning:"Welcome back — we filled what we could from your last visit.",resumeBad:"Registration not found. Check the reference and resume code.",
+    confBooking:"Booking #",confRefLab:"Reference",confQrHint:"Show this QR or your numbers at the shop or boat.",confCal:"Add to calendar",confShare:"Share on WhatsApp",confCopy:"Copy IDs",confCopied:"Copied ✓",slotFull:"Full",slotLeft:"left",
+    actLabels:{"Scuba":"Scuba","Dives & courses":"Dives & courses","Snorkel":"Snorkel"},
+    kioskWarn:"Still there? This tablet will clear for the next customer soon.",kioskDone:"Done — start new registration",shareBtn:"Share",linkWa:"WhatsApp",linkSms:"SMS",linkEmail:"Email",
+    dobLockH:"Who is continuing?",dobLockSub:"Enter {name}'s date of birth to unlock this registration.",dobLockGo:"Unlock my registration",dobLockBad:"Date of birth does not match. Try again.",dobLockClear:"Not me — start over",
+    inviteShareMsg:"Dive registration: ",passDeviceH:"Thank you",passDeviceSub:"Pass the device to the next person.",passDeviceGo:"Start the next registration",
+    nextPersonSavedA11y:"New registration started",nextPersonSaveFail:"Could not save. Tap retry, then start a new registration.",nextPersonSaving:"Still saving, one moment…",nextPersonThanks:"Thank you, {name}. Pass the device to the next person.",nextPersonIdle:"Starting a new registration in {n}…",stayOnPage:"Stay on this page",hideQr:"Hide QR code",showQr:"Show QR code",startNewReg:"Start new registration",nextPersonDlHint:"Download your copy first if you want one.",nextPersonSub:"Each adult completes their own registration. Start a new one on this device, or scan the code or share the link to register on another phone.",nextPersonH:"Next person?"},
+  es:{h1:"Check-in digital de buceo",sub:"Banana Nut Burgers Dive Shop · West End, Roatán",aH:"Reservar Mi Buceo",aP1:"Cinco pasos cortos: sobre ti, quién viene, preguntas de salud, firma y listo. Así reservas tu cita y te registras en la tienda.",aP2:"Recibes una referencia para el personal, y tu fecha y hora aparecen en Reservas. Sin crear cuenta. Todo se guarda mientras avanzas.",reqH:"Lo que puedes necesitar",reqP:"Datos de tu certificación (si estás certificado), un contacto de emergencia y un teléfono o correo donde contactarte. Los formularios firmados se guardan de forma privada; solo el personal autorizado puede verlos.",priv:"Privacidad: solo recopilamos lo necesario para este registro. Nunca compartas tu código de continuación: abre tu registro guardado.",help:"¿Necesitas ayuda? Contáctanos:",start:"Reservar Mi Buceo",resumeOpen:"Terminar o Actualizar Mi Registro",corrOpen:"Corregir un registro existente",corrRef:"Referencia de registro *",resumeCode:"Código de continuación *",resumeBtn:"Abrir mi registro",resumeNote:"Tu código se mostró la primera vez que se guardó tu registro (y queda en este dispositivo). Sin él, el registro no puede abrirse: contáctanos para ayuda.",
+    stAbout:"Sobre ti",stMinors:"Quién viene",stHealth:"Salud",stSign:"Firmar",stDone:"Listo",
+    aboutInstr:"Tus datos van en cada formulario, así que solo los escribes una vez. Todo se guarda mientras avanzas.",
+    activity:"Actividad / tipo de buceo *",pdate:"Fecha y hora preferidas *",oneAdultNote:"Cada adulto completa su propio registro. Los menores de 18 se agregan en el siguiente paso.",bref:"Referencia de reserva (si tienes)",sun:"Dom",mon:"Lun",tue:"Mar",wed:"Mié",thu:"Jue",fri:"Vie",sat:"Sáb",calLegend:"Verde: disponible · Amarillo: casi lleno · Rojo: no disponible",pickTime:"Elige un horario abierto",availTimes:"Horarios disponibles",noTimes:"No quedan horarios este día — elige otra fecha.",courseQ:"¿Te interesa algún curso? (opcional)",
+    bH:"Tus datos",first:"Nombre *",last:"Apellido *",pref:"Nombre preferido",phone:"Teléfono (WhatsApp) *",email:"Correo",plang:"Idioma preferido",dob:"Fecha de nacimiento *",addr:"Dirección",city:"Ciudad *",state:"Estado / Provincia",zip:"Código postal",ownGear:"¿Traes tu propio equipo? *",yes:"Sí",no:"No",gearSize:"¿Qué talla necesitas? *",gearNote:"Notas de talla (botas, BCD, etc.)",gearNotePh:"ej. botas 9, BCD mediano",cert:"Nivel de certificación",logged:"Número de buceos registrados",lastdive:"Fecha del último buceo",emgH:"Contacto de emergencia",emgName:"Nombre del contacto de emergencia *",emgRel:"Parentesco",emgPhone:"Teléfono de emergencia *",notes:"Notas (opcional)",sel:"Seleccionar…",privCheck:"Lo reconozco.",mktCheck:"Sí, quiero recibirlas (opcional).",
+    back:"Atrás",
+    fixFirst:"Falta: ",needAct:"Actividad",needDate:"Fecha y hora",needFirst:"Nombre",needLast:"Apellido",needPhone:"Teléfono",needDob:"Fecha de nacimiento",needCity:"Ciudad",needGear:"Equipo propio (sí o no)",needGearSize:"Talla de equipo",needEmgName:"Nombre del contacto de emergencia",needEmgPhone:"Teléfono de emergencia",needDecl:"Declaración de exactitud",needPriv:"Reconocimiento de privacidad",needGuardianFirst:"Debes tener 18 años o más para registrarte. Un padre, madre o tutor se registra primero y te agrega.",futureDob:"La fecha de nacimiento no puede ser futura.",
+    minorsQ:"¿Viene alguien menor de 18 contigo?",noJustMe:"No, solo yo",minorsLine:"Los menores de 12 años tienen sus propias opciones y restricciones y necesitan un padre o tutor con ellos en todo momento. Tú respondes sus preguntas de salud y firmas por ellos.",
+    addChildH:"Agregar un menor",addChild:"Agregar menor",addAnother:"Agregar otro menor",partyRel:"Parentesco contigo (opcional)",relChild:"Hijo/a",relGrand:"Nieto/a",relRelative:"Otro familiar",relOther:"Otro",
+    childAdult:"Esta persona tiene 18 años o más y necesita su propio registro.",childNeedName:"Escribe su nombre y apellido.",childNeedDob:"Escribe su fecha de nacimiento.",childDup:"{name} ya está en este registro.",addAnyway:"Agregar de todos modos",
+    sameLine:"Los menores usan tu misma dirección y contacto de emergencia.",sameFor:"Misma dirección y contacto de emergencia que tú.",ownFor:"Dirección o contacto de emergencia propios.",editFor:"Editar para {name}",useMine:"Usar los míos otra vez",saveFor:"Guardar para {name}",
+    chkDetails:"Datos",chkHealth:"Salud",chkDocs:"Documentos",ageN:"{n} años",edit:"Editar",remove:"Quitar",save:"Guardar",cancelOpt:"Cancelar",removeAsk:"¿Quitar a {name} de este registro?",removeYes:"Sí, quitar",keep:"Mantener",
+    partyPast:"Agregar a alguien que registraste antes",partyPastSub:"Solo nombres, fechas de nacimiento y contacto — nunca respuestas de salud.",partyPastNone:"No encontramos a nadie de visitas anteriores.",
+    you:"Tú",healthInstr:"Elige Sí o No en cada pregunta. Las respuestas se guardan mientras avanzas.",healthSelf:"Tus preguntas de salud.",healthFor:"Preguntas de salud de {name} (las respondes tú como padre, madre o tutor de {name}).",
+    signInstr:"Abre cada documento, léelo hasta el final, marca que estás de acuerdo y firma una vez.",signSelf:"Tus documentos.",signFor:"Documentos de {name} (los firmas tú como padre, madre o tutor de {name}).",
+    personHead:"{name}, {age} años",personHeadSelf:"{name} (tú), {age} años",
+    loadingForms:"Cargando…",formsFail:"No se pudieron abrir estos formularios.",tryAgain:"Intentar de nuevo",
+    healthLocked:"Estas respuestas están listas y quedaron guardadas con los documentos firmados. Si algo cambió, avisa a la tienda.",
+    allSet:"{name} ya está listo.",allSetSelf:"Ya terminaste.",resignBtn:"Firmar de nuevo el documento que cambió",signedDocs:"Documentos firmados",
+    waitShop:"Cliente terminó – esperando a la tienda",waitShopNote:"La tienda aún necesita: {items}. No tienes que hacer nada.",youthItem:"Anexo juvenil (en papel, se firma en la tienda)",physItem:"Autorización médica",
+    preview:"Vista previa",hidePreview:"Ocultar vista previa",download:"Descargar",regNumLabel:"Registro #",allDocsFile:"Todos los documentos (un archivo)",
+    saving:"Guardando…",savedOk:"Guardado",notSaved:"No se guardó — revisa tu conexión. Tus datos siguen aquí.",
+    finish:"Terminar",sending:"Terminando…",failed:"No se pudo terminar (¿conexión?). Todo está guardado — inténtalo de nuevo o escríbenos por WhatsApp.",lockedBy:"Termina primero {step}: {task}.",
+    doneH:"Registro completo",statusAwait:"Enviado",fRef:"Tu referencia de registro — muéstrala al personal al llegar:",fNext:"Nuestro personal revisará tu registro. Para corregir algo, usa los pasos de arriba, el formulario de corrección o escríbenos por WhatsApp.",fBack:"Volver al inicio",editAfter:"¿Necesitas cambiar algo? Toca un paso arriba. Solo los documentos cuyos datos impresos cambien pedirán una nueva firma.",
+    corrH:"Solicitar una corrección",corrSub:"Ingresa tu referencia y el teléfono con el que te registraste. Nunca mostramos tu registro aquí.",fullName:"Tu nombre",corrMsg:"¿Qué hay que corregir? *",corrSend:"Enviar solicitud de corrección",corrOk:"Gracias. Si tus datos coinciden con un registro, tu solicitud fue recibida.",corrNeed:"Referencia, teléfono y un mensaje son requeridos.",
+    saved:"Guardado ✓ Referencia",returning:"Bienvenido de nuevo — rellenamos lo que pudimos de tu última visita.",resumeBad:"Registro no encontrado. Revisa la referencia y el código.",
+    confBooking:"Reserva #",confRefLab:"Referencia",confQrHint:"Muestra este QR o tus números en la tienda o el bote.",confCal:"Añadir al calendario",confShare:"Compartir por WhatsApp",confCopy:"Copiar IDs",confCopied:"Copiado ✓",slotFull:"Lleno",slotLeft:"libres",
+    actLabels:{"Scuba":"Scuba / Try Scuba","Dives & courses":"Buceos y cursos","Snorkel":"Snorkel"},
+    kioskWarn:"¿Sigues ahí? Esta tablet se limpiará pronto para el siguiente cliente.",kioskDone:"Listo — iniciar nuevo registro",shareBtn:"Compartir",linkWa:"WhatsApp",linkSms:"SMS",linkEmail:"Correo",
+    dobLockH:"¿Quién continúa?",dobLockSub:"Ingresa la fecha de nacimiento de {name} para desbloquear este registro.",dobLockGo:"Desbloquear mi registro",dobLockBad:"La fecha de nacimiento no coincide. Intenta de nuevo.",dobLockClear:"No soy yo — empezar de nuevo",
+    inviteShareMsg:"Registro de buceo: ",passDeviceH:"Gracias",passDeviceSub:"Pasa el dispositivo a la siguiente persona.",passDeviceGo:"Iniciar el siguiente registro",
+    nextPersonSavedA11y:"Nuevo registro iniciado",nextPersonSaveFail:"No se pudo guardar. Toca reintentar y luego inicia un nuevo registro.",nextPersonSaving:"Aún se está guardando, un momento…",nextPersonThanks:"Gracias, {name}. Pasa el dispositivo a la siguiente persona.",nextPersonIdle:"Iniciando un nuevo registro en {n}…",stayOnPage:"Quedarme en esta página",hideQr:"Ocultar código QR",showQr:"Mostrar código QR",startNewReg:"Iniciar nuevo registro",nextPersonDlHint:"Descarga tu copia primero si la quieres.",nextPersonSub:"Cada adulto completa su propio registro. Inicia uno nuevo en este dispositivo, o escanea el código o comparte el enlace para registrarse en otro teléfono.",nextPersonH:"¿Siguiente persona?"}
+};
+const STEP_IDS = ["about", "minors", "health", "sign", "done"];
+const STEP_KEYS = { about: "stAbout", minors: "stMinors", health: "stHealth", sign: "stSign", done: "stDone" };
+let L = (navigator.language || "en").startsWith("es") ? "es" : "en";
+try { const saved = localStorage.getItem("bnb_lang"); if (saved === "en" || saved === "es") L = saved; } catch (e) {}
+let step = "landing", personId = null;
+let party = { participants: [] }, status = null;
+let kioskMode = /(?:^|[?&])kiosk=1(?:&|$)/.test(location.search);
+let availCache = {}, availSlotCap = 8;
+let lastConfirm = null;
+let packetLinks = {};
+let finishing = false;
+let draft = {};
+try { draft = JSON.parse(localStorage.getItem("bnb_reg_draft") || "{}"); } catch (e) { draft = {}; }
+function newKey(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(); }
+if (!draft.idempotencyKey) { draft.idempotencyKey = newKey(); saveLocal(); }
+function saveLocal(){ try { localStorage.setItem("bnb_reg_draft", JSON.stringify(draft)); } catch (e) {} }
+const $ = i => document.getElementById(i);
+const V = i => ($(i) ? $(i).value.trim() : "");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (s, map) => String(s || "").replace(/\{(\w+)\}/g, (_, k) => (map && map[k] != null ? map[k] : ""));
+const t = () => T[L];
+const todayIso = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+function ageFromDobStr(dob){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dob || ""))) return null;
+  const [y, m, d] = String(dob).split("-").map(Number);
+  const now = new Date();
+  let age = now.getFullYear() - y;
+  if ((now.getMonth() + 1) * 100 + now.getDate() < m * 100 + d) age--;
+  return age;
+}
+function clampPastDates(){
+  const max = todayIso();
+  ["dob", "lastdive", "pDob"].forEach(id => { const el = $(id); if (el) el.max = max; });
+}
+clampPastDates();
+function chipHtml(word, cls){
+  const words = (STATUS_WORDS[L] || STATUS_WORDS.en);
+  return `<span class="chip st-${cls || word}"><span aria-hidden="true">${STATUS_ICONS[word] || ""}</span><span class="w">${esc(words[word] || word)}</span></span>`;
+}
+
+/* ---------- About you ---------- */
+function ownGearVal(){ return $("gearYes").checked ? "yes" : ($("gearNo").checked ? "no" : ""); }
+function courseVal(){ const el = document.querySelector('input[name="course"]:checked'); return el ? el.value : ""; }
+function syncGearUI(){
+  const need = ownGearVal() === "no";
+  $("gearSizeWrap").classList.toggle("hide", !need);
+  if (!need) { $("gearSize").value = ""; $("gearNote").value = ""; }
+}
+function minorsOnParty(){ return (party.participants || []).filter(p => p.role !== "primary"); }
+function collect(){
+  return { activity: V("act"), plannedDate: selDate || draft.plannedDate || "", plannedTime: selTime || draft.plannedTime || "",
+    participants: String(1 + minorsOnParty().length), bookingRef: V("bref") || draft.bookingRef || "",
+    firstName: V("fn"), lastName: V("ln"), preferredName: V("pn"), phone: V("ph"), email: V("em"), preferredLanguage: V("plang"),
+    ownGear: ownGearVal(), gearSize: V("gearSize"), gearNote: V("gearNote"),
+    cert: V("cert"), loggedDives: V("logged"), lastDive: V("lastdive"),
+    emergencyName: V("en"), emergencyRelationship: V("erel"), emergencyPhone: V("ep"), notes: V("notes"),
+    dob: V("dob"), address: V("addr"), city: V("city"), state: V("state"), zip: V("zip"),
+    courseInterest: courseVal(),
+    hasMinors: draft.hasMinors === true ? true : (draft.hasMinors === false ? false : null),
+    accuracyDeclaration: $("cbDecl").checked, privacyAck: $("cbPriv").checked, marketingConsent: $("cbMkt").checked };
+}
+function fill(d){
+  const map = { act:"activity", bref:"bookingRef", fn:"firstName", ln:"lastName", pn:"preferredName", ph:"phone", em:"email", plang:"preferredLanguage", gearSize:"gearSize", gearNote:"gearNote", cert:"cert", logged:"loggedDives", lastdive:"lastDive", en:"emergencyName", erel:"emergencyRelationship", ep:"emergencyPhone", notes:"notes", dob:"dob", addr:"address", city:"city", state:"state", zip:"zip" };
+  Object.entries(map).forEach(([id, k]) => { if (d[k] !== undefined && d[k] !== null && d[k] !== "" && $(id)) $(id).value = d[k]; });
+  if (d.ownGear === "yes") $("gearYes").checked = true;
+  else if (d.ownGear === "no") $("gearNo").checked = true;
+  syncGearUI();
+  if (d.ownGear === "no") { if (d.gearSize) $("gearSize").value = d.gearSize; if (d.gearNote) $("gearNote").value = d.gearNote; }
+  if (d.courseInterest === "yes") $("courseYes").checked = true;
+  if (d.courseInterest === "no") $("courseNo").checked = true;
+  if (d.accuracyDeclaration === true) $("cbDecl").checked = true;
+  if (d.privacyAck === true) $("cbPriv").checked = true;
+  if (d.marketingConsent === true) $("cbMkt").checked = true;
+  if (d.hasMinors === true || d.hasMinors === false) { draft.hasMinors = d.hasMinors; saveLocal(); }
+  if (d.plannedDate) { selDate = d.plannedDate; $("pdate").value = d.plannedDate; const dt = new Date(d.plannedDate + "T12:00:00"); if (!isNaN(dt)) calCur = new Date(dt.getFullYear(), dt.getMonth(), 1); }
+  if (d.plannedTime) selTime = d.plannedTime;
+  renderCal();
+}
+/** Same checks as getRegistrationStatus's "About you" task, so the inline message matches the stepper. */
+function aboutProblems(){
+  const d = collect(), x = t(), out = [];
+  if (!d.activity) out.push(["act", x.needAct]);
+  if (!d.plannedDate || !d.plannedTime) out.push(["cal", x.needDate]);
+  if (!d.firstName) out.push(["fn", x.needFirst]);
+  if (!d.lastName) out.push(["ln", x.needLast]);
+  if (d.phone.replace(/\D/g, "").length < 8) out.push(["ph", x.needPhone]);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.dob)) out.push(["dob", x.needDob]);
+  if (!d.city) out.push(["city", x.needCity]);
+  if (!d.ownGear) out.push(["gearYes", x.needGear]);
+  if (d.ownGear === "no" && !d.gearSize) out.push(["gearSize", x.needGearSize]);
+  if (d.emergencyName.length < 2) out.push(["en", x.needEmgName]);
+  if (d.emergencyPhone.replace(/\D/g, "").length < 7) out.push(["ep", x.needEmgPhone]);
+  if (!d.accuracyDeclaration) out.push(["cbDecl", x.needDecl]);
+  if (!d.privacyAck) out.push(["cbPriv", x.needPriv]);
+  return out;
+}
+function aboutBlocker(){
+  const d = collect();
+  if (d.dob && d.dob > todayIso()) return t().futureDob;
+  const age = ageFromDobStr(d.dob);
+  if (age != null && age < 18) return t().needGuardianFirst;
+  return "";
+}
+
+/* ---------- saving ---------- */
+let saveTimer = null, statusTimer = null, savingNow = null, flowGen = 0;
+function setSaveState(kind){
+  const el = $("saveState"); if (!el) return;
+  el.textContent = kind === "saving" ? t().saving : kind === "ok" ? t().savedOk : kind === "fail" ? t().notSaved : "";
+  el.style.color = kind === "fail" ? "var(--danger)" : "";
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => saveDraft(false), 600);
+}
+async function saveDraft(show){
+  clearTimeout(saveTimer);
+  const gen = flowGen;
+  const d = collect();
+  if (!d.firstName || !d.lastName || d.phone.replace(/\D/g, "").length < 8) return false;
+  if (savingNow) await savingNow;
+  if (gen !== flowGen) return false;
+  setSaveState("saving");
+  savingNow = (async () => {
+    const post = async (body) => {
+      const r = await fetch("/api/register/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const out = await r.json().catch(() => ({}));
+      return { r, out };
+    };
+    try {
+      let creating = !(draft.ref && draft.token);
+      let { r, out } = await post(creating ? { data: d } : { ref: draft.ref, token: draft.token, data: d });
+      // A saved code from an older visit is gone. Drop it and create a new draft.
+      if (!r.ok && (r.status === 404 || r.status === 401) && !creating) {
+        draft.ref = ""; draft.token = ""; saveLocal();
+        creating = true;
+        ({ r, out } = await post({ data: d }));
+      }
+      if (gen !== flowGen) return false;
+      if (r.ok && out.ref) {
+        draft.ref = out.ref; if (out.token) draft.token = out.token; saveLocal();
+        if (creating && out.prior) {
+          const cur = collect(), merge = {};
+          Object.entries(out.prior).forEach(([k, v]) => { if (v && !cur[k]) merge[k] = v; });
+          if (Object.keys(merge).length) fill({ ...cur, ...merge });
+        }
+        if (creating) $("draftMsg").textContent = (out.returning ? t().returning + " · " : "") + `${t().saved}: ${out.ref} · ${t().resumeCode.replace(" *", "")}: ${draft.token}`;
+        setSaveState("ok");
+        scheduleStatus();
+        return true;
+      }
+      setSaveState("fail");
+      return false;
+    } catch (e) { if (gen === flowGen) setSaveState("fail"); return false; }
+  })();
+  const ok = await savingNow;
+  savingNow = null;
+  return ok;
+}
+function scheduleStatus(){ clearTimeout(statusTimer); statusTimer = setTimeout(refreshStatus, 400); }
+async function refreshStatus(){
+  const gen = flowGen;
+  if (!draft.ref || !draft.token) { paintChrome(); return null; }
+  try {
+    const r = await fetch(`/api/register/participants?ref=${encodeURIComponent(draft.ref)}&token=${encodeURIComponent(draft.token)}&lang=${L}`);
+    const out = await r.json().catch(() => ({}));
+    if (gen !== flowGen) return null;
+    if (!r.ok) {
+      if (r.status === 404 || r.status === 401) { draft.ref = ""; draft.token = ""; saveLocal(); status = null; }
+      else if (out.code === "GUARDIAN_REQUIRED" && $("errAbout")) $("errAbout").textContent = t().needGuardianFirst;
+      paintChrome();
+      return null;
+    }
+    const before = status;
+    party = out; status = out.status || null;
+    paintChrome();
+    paintStep();
+    autoAdvance(before, status);
+    return out;
+  } catch (e) { paintChrome(); return null; }
+}
+
+/* ---------- stepper + one primary button ---------- */
+function personById(id){ return (status && status.people || []).find(p => p.id === id) || null; }
+function stepState(id){
+  if (!status) return { status: id === "about" ? "in_progress" : "not_started", locked: id !== "about", blockedBy: id === "about" ? null : "about" };
+  return status.steps[id] || { status: "not_started", locked: true };
+}
+function lockText(id){
+  const st = stepState(id);
+  const blocked = st.blockedBy || "about";
+  const task = status ? taskLabel(status.nextRequiredTask, status, L) : t().stAbout;
+  return fmt(t().lockedBy, { step: t()[STEP_KEYS[blocked]] || blocked, task });
+}
+function paintStepper(){
+  const nav = $("stepper");
+  nav.classList.toggle("hide", step === "landing");
+  nav.innerHTML = "";
+  for (const id of STEP_IDS) {
+    const st = stepState(id);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = st.locked ? "locked" : "";
+    if (id === step) b.setAttribute("aria-current", "step");
+    const word = st.status === "waiting_on_shop" ? "waiting_shop" : (st.status || "not_started");
+    b.innerHTML = `<span>${esc(t()[STEP_KEYS[id]])}</span>${chipHtml(word)}`;
+    b.setAttribute("aria-label", t()[STEP_KEYS[id]] + ": " + ((STATUS_WORDS[L] || {})[word] || word));
+    b.onclick = () => onStepClick(id);
+    nav.appendChild(b);
+  }
+}
+async function onStepClick(id){
+  const st = stepState(id);
+  if (st.locked && !(id === "done" && status && status.customerFinished)) {
+    $("lockMsg").textContent = lockText(id);
+    $("lockMsg").classList.remove("hide");
+    return;
+  }
+  $("lockMsg").classList.add("hide");
+  if (step === "about") await saveDraft(false);
+  if (id === "done" && status && !status.submitted) { await finishRegistration(); return; }
+  go(id, defaultPerson(id));
+}
+function defaultPerson(id){
+  if (id !== "health" && id !== "sign") return null;
+  const people = (status && status.people) || [];
+  if (personId && people.some(p => p.id === personId)) return personId;
+  const next = status && status.nextRequiredTask;
+  if (next && next.step === id && next.personId) return next.personId;
+  const open = people.find(p => (id === "health" ? p.health : p.documents) !== "done");
+  return (open || people[0] || {}).id || null;
+}
+function currentAction(){
+  if (step === "landing") return null;
+  if (!status) return { kind: "save", label: (L === "es" ? "Siguiente: " : "Next: ") + t().stMinors };
+  return primaryAction(status, { step, personId, lang: L });
+}
+function paintChrome(){
+  paintStepper();
+  const bar = $("bar");
+  bar.classList.toggle("hide", step === "landing" || step === "done");
+  const act = currentAction();
+  const btn = $("primaryBtn");
+  btn.classList.toggle("hide", !act || act.kind === "none");
+  if (act && act.kind !== "none") btn.textContent = finishing ? t().sending : act.label;
+  btn.disabled = finishing;
+  $("backBtn").classList.toggle("hide", step === "about" || step === "landing");
+}
+async function onPrimary(){
+  const act = currentAction();
+  if (!act) return;
+  $("lockMsg").classList.add("hide");
+  if (step === "about") {
+    const block = aboutBlocker();
+    const probs = aboutProblems();
+    if (block || probs.length) {
+      $("errAbout").textContent = block || (t().fixFirst + probs.map(p => p[1]).join(", "));
+      const el = $(block ? "dob" : probs[0][0]);
+      if (el) { el.classList.add("bad"); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      return;
+    }
+    $("errAbout").textContent = "";
+    const ok = await saveDraft(true);
+    if (!ok) return;
+    await refreshStatus();
+    if (!draft.seenMinors) { draft.seenMinors = true; saveLocal(); go("minors"); return; }
+    const a = currentAction();
+    if (a && a.target && a.target.step && a.target.step !== "about") return go(a.target.step, a.target.personId || defaultPerson(a.target.step));
+    return go("minors");
+  }
+  if (act.kind === "finish") return finishRegistration();
+  if (act.kind === "focus" && step === "minors" && act.target && !act.target.personId) {
+    if (draft.hasMinors === false && !minorsOnParty().length) return continueFromMinors();
+    if (draft.hasMinors === true && !minorsOnParty().length) {
+      $("errMinors").textContent = L === "es" ? "Agrega al menor para continuar." : "Add the child to continue.";
+      if ($("pFirst")) $("pFirst").focus();
+      return;
+    }
+    $("errMinors").textContent = L === "es" ? "Elige Sí o No para continuar." : "Choose Yes or No to continue.";
+    $("hasMinorsNo").focus();
+    return;
+  }
+  if (act.kind === "focus") return focusTask(act.target);
+  if (act.kind === "go" || act.kind === "save") {
+    const tg = act.target || {};
+    return go(tg.step || "about", tg.personId || defaultPerson(tg.step));
+  }
+}
+function focusTask(target){
+  if (!target) return;
+  if (target.step === "minors") {
+    if (!target.personId) { $("hasMinorsYes").scrollIntoView({ behavior: "smooth", block: "center" }); $("hasMinorsYes").focus(); return; }
+    openEdit(target.personId);
+    return;
+  }
+  const frame = document.querySelector("#" + (step === "health" ? "healthBody" : "signBody") + " iframe");
+  if (frame && frame.contentWindow) {
+    frame.contentWindow.postMessage({ type: "bnb_focus", docKey: target.docKey || "" }, location.origin);
+    frame.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+$("primaryBtn").onclick = onPrimary;
+$("backBtn").onclick = () => {
+  const i = STEP_IDS.indexOf(step);
+  const prev = STEP_IDS[Math.max(0, i - 1)];
+  go(prev, defaultPerson(prev));
+};
+
+/* ---------- navigation (Back keeps everything: all data is saved server-side) ---------- */
+function hashFor(id, pid){ return "#" + id + (pid ? ":" + pid : ""); }
+function go(id, pid, opts){
+  opts = opts || {};
+  if (step === "about" && id !== "about") saveDraft(false);
+  step = id;
+  personId = pid || null;
+  draft.ui = { step, personId }; saveLocal();
+  document.querySelectorAll("[data-step]").forEach(s => s.classList.toggle("hide", s.dataset.step !== id));
+  $("lockMsg").classList.add("hide");
+  if (!opts.noHistory) {
+    try { (opts.replace ? history.replaceState : history.pushState).call(history, { step, personId }, "", location.pathname + location.search + hashFor(step, personId)); } catch (e) {}
+  }
+  if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: "smooth" });
+  paintStep();
+  paintChrome();
+}
+function stepFromHash(){
+  const m = /^#(\w+)(?::(\d+))?$/.exec(location.hash || "");
+  if (!m || (m[1] !== "landing" && !STEP_IDS.includes(m[1]))) return null;
+  return { step: m[1], personId: m[2] ? Number(m[2]) : null };
+}
+window.addEventListener("popstate", (ev) => {
+  const s = (ev.state && ev.state.step) ? ev.state : stepFromHash();
+  if (!s || !s.step) { go("landing", null, { noHistory: true }); return; }
+  if (!draft.ref && s.step !== "about") { go(s.step === "landing" ? "landing" : "about", null, { noHistory: true }); return; }
+  if (s.step !== "landing" && s.step !== "about" && stepState(s.step).locked && !(s.step === "done" && status && status.submitted)) {
+    go(status && status.nextRequiredTask ? status.nextRequiredTask.step : "about", status && status.nextRequiredTask ? status.nextRequiredTask.personId : null, { noHistory: true });
+    return;
+  }
+  go(s.step, s.personId, { noHistory: true });
+});
+function paintStep(){
+  if (step === "minors") paintMinors();
+  else if (step === "health" || step === "sign") paintPerson();
+  else if (step === "done") paintDone();
+}
+
+/* ---------- Who's coming ---------- */
+let editOpen = null, removeAsk = null, dupForce = false;
+async function continueFromMinors(){
+  const ok = await saveDraft(false);
+  if (!ok) { $("errMinors").textContent = t().notSaved; return; }
+  await refreshStatus();
+  const n = status && status.nextRequiredTask;
+  if (n && n.step && !(n.step === "minors" && !n.personId)) go(n.step, n.personId || defaultPerson(n.step));
+  else go("health", defaultPerson("health"));
+}
+async function setHasMinors(v){
+  if (v === false && minorsOnParty().length) {
+    $("errMinors").textContent = L === "es" ? "Quita primero a los menores de la lista." : "Remove the children below first.";
+    return;
+  }
+  $("errMinors").textContent = "";
+  draft.hasMinors = v; saveLocal();
+  paintMinors();
+  if (v === false) return continueFromMinors();
+  saveDraft(false);
+}
+$("hasMinorsYes").onclick = () => setHasMinors(true);
+$("hasMinorsNo").onclick = () => setHasMinors(false);
+function paintMinors(){
+  const x = t();
+  const minors = minorsOnParty();
+  if (minors.length && draft.hasMinors !== true) { draft.hasMinors = true; saveLocal(); }
+  const yes = draft.hasMinors === true, no = draft.hasMinors === false;
+  $("hasMinorsYes").setAttribute("aria-pressed", yes ? "true" : "false");
+  $("hasMinorsNo").setAttribute("aria-pressed", no ? "true" : "false");
+  $("minorsBox").classList.toggle("hide", !yes);
+  $("addChildBox").classList.toggle("hide", minors.length > 0 && !draft.addingChild);
+  $("addAnotherBtn").classList.toggle("hide", !(minors.length > 0 && !draft.addingChild));
+  $("sameLine").classList.toggle("hide", !minors.length);
+  const list = $("minorList");
+  list.innerHTML = "";
+  for (const p of minors) {
+    const sp = personById(p.id) || {};
+    const card = document.createElement("div");
+    card.className = "person";
+    const age = p.age != null ? fmt(x.ageN, { n: p.age }) : "";
+    const chip = (label, st) => `<span class="mut" style="font-weight:700">${esc(label)}</span> ${chipHtml(st === "waiting_on_shop" ? "waiting_shop" : (st || "not_started"))}`;
+    card.innerHTML = `<div class="top2"><b style="font-size:18px">${esc(p.firstName)} ${esc(p.lastName)}</b><span class="mut">${esc(age)}</span></div>
+      <div class="checks">${chip(x.chkDetails, sp.details)} ${chip(x.chkHealth, sp.health)} ${chip(x.chkDocs, sp.documents)}</div>
+      <p class="mut" style="margin:0">${esc(p.sameAddress && p.sameEmergency ? x.sameFor : x.ownFor)}</p>`;
+    const acts = document.createElement("div"); acts.className = "acts";
+    const mk = (label, cls, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label; b.onclick = fn; acts.appendChild(b); return b; };
+    mk(x.edit, "ghost", () => openEdit(p.id));
+    mk(fmt(x.editFor, { name: p.firstName }), "linkbtn", () => openEdit(p.id, "contact"));
+    mk(x.remove, "ghost", () => { removeAsk = p.id; paintMinors(); });
+    card.appendChild(acts);
+    if (removeAsk === p.id) {
+      const box = document.createElement("div"); box.className = "decl";
+      box.innerHTML = `<p style="margin:0 0 8px;font-weight:700">${esc(fmt(x.removeAsk, { name: p.firstName }))}</p>`;
+      const a2 = document.createElement("div"); a2.className = "acts";
+      const yesB = document.createElement("button"); yesB.type = "button"; yesB.textContent = x.removeYes; yesB.onclick = () => removePerson(p.id);
+      const keepB = document.createElement("button"); keepB.type = "button"; keepB.className = "ghost"; keepB.textContent = x.keep; keepB.onclick = () => { removeAsk = null; paintMinors(); };
+      a2.append(yesB, keepB); box.appendChild(a2); card.appendChild(box);
+    }
+    if (editOpen && editOpen.id === p.id) card.appendChild(editForm(p, editOpen.part));
+    list.appendChild(card);
+  }
+}
+function field(label, id, value, type){
+  return `<label for="${id}">${esc(label)}</label><input id="${id}" value="${esc(value || "")}"${type ? ` type="${type}"` : ""}${type === "date" ? ` max="${todayIso()}"` : ""}>`;
+}
+function editForm(p, part){
+  const x = t();
+  const box = document.createElement("div");
+  box.className = "decl";
+  const addr = p.address || {}, emg = p.emergency || {};
+  const own = !(p.sameAddress && p.sameEmergency);
+  if (part === "contact") {
+    box.innerHTML = `<h3 style="margin-top:0">${esc(fmt(x.editFor, { name: p.firstName }))}</h3>
+      ${field(x.addr, "eAddr", own ? addr.address : V("addr"))}${field(x.city, "eCity", own ? addr.city : V("city"))}
+      <div class="row"><div>${field(x.state, "eState", own ? addr.state : V("state"))}</div><div>${field(x.zip, "eZip", own ? addr.zip : V("zip"))}</div></div>
+      ${field(x.emgName, "eEn", own ? emg.name : V("en"))}${field(x.emgRel, "eErel", own ? emg.relationship : V("erel"))}${field(x.emgPhone, "eEp", own ? emg.phone : V("ep"), "tel")}
+      <p class="err" id="eErr" aria-live="polite"></p>`;
+  } else {
+    box.innerHTML = `<h3 style="margin-top:0">${esc(x.edit)}: ${esc(p.firstName)}</h3>
+      <div class="row"><div>${field(x.first, "eFirst", p.firstName)}</div><div>${field(x.last, "eLast", p.lastName)}</div></div>
+      ${field(x.dob, "eDob", p.dob, "date")}
+      <label for="eRel">${esc(x.partyRel)}</label><select id="eRel">${[["child", x.relChild], ["grandchild", x.relGrand], ["relative", x.relRelative], ["other", x.relOther]].map(([v, l]) => `<option value="${v}"${p.relationship === v ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+      <label>${esc(x.ownGear)}</label>
+      <div class="yesno"><label><input type="radio" name="eGear" value="yes"${p.ownGear === "yes" ? " checked" : ""}><span>${esc(x.yes)}</span></label><label><input type="radio" name="eGear" value="no"${p.ownGear === "no" ? " checked" : ""}><span>${esc(x.no)}</span></label></div>
+      <label for="eSize">${esc(x.gearSize)}</label><select id="eSize">${["", "XS", "S", "M", "L", "XL", "XXL"].map(s => `<option value="${s}"${p.gearSize === s ? " selected" : ""}>${s || esc(x.sel)}</option>`).join("")}</select>
+      <p class="err" id="eErr" aria-live="polite"></p>`;
+  }
+  const acts = document.createElement("div"); acts.className = "acts";
+  const saveB = document.createElement("button"); saveB.type = "button"; saveB.textContent = part === "contact" ? fmt(x.saveFor, { name: p.firstName }) : x.save;
+  saveB.onclick = () => saveEdit(p, part, saveB);
+  acts.appendChild(saveB);
+  if (part === "contact" && own) {
+    const mine = document.createElement("button"); mine.type = "button"; mine.className = "ghost"; mine.textContent = x.useMine;
+    mine.onclick = () => upsertPerson(p, { sameAddress: true, sameEmergency: true }).then(ok => { if (ok) { editOpen = null; paintMinors(); } });
+    acts.appendChild(mine);
+  }
+  const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "ghost"; cancel.textContent = x.cancelOpt;
+  cancel.onclick = () => { editOpen = null; paintMinors(); };
+  acts.appendChild(cancel);
+  box.appendChild(acts);
+  setTimeout(() => { const el = box.querySelector("input"); if (el) el.focus(); }, 0);
+  return box;
+}
+function openEdit(id, part){
+  if (step !== "minors") go("minors");
+  editOpen = { id, part: part || "details" };
+  removeAsk = null;
+  paintMinors();
+}
+async function upsertPerson(p, extra){
+  const body = {
+    action: "upsert", ref: draft.ref, token: draft.token, id: p.id, lang: L,
+    firstName: p.firstName, lastName: p.lastName, dob: p.dob, relationship: p.relationship || "child",
+    phone: p.phone || "", email: p.email || "", mode: "here",
+    ownGear: p.ownGear || undefined, gearSize: p.gearSize || "", gearNote: p.gearNote || "",
+    ...extra,
+  };
+  const r = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) { if ($("eErr")) $("eErr").textContent = out.error || "Error"; return false; }
+  party = out; status = out.status || status;
+  paintChrome();
+  return true;
+}
+async function saveEdit(p, part, btn){
+  const x = t();
+  btn.disabled = true;
+  let ok;
+  if (part === "contact") {
+    ok = await upsertPerson(p, { sameAddress: false, sameEmergency: false,
+      address: { address: V("eAddr"), city: V("eCity"), state: V("eState"), zip: V("eZip") },
+      emergency: { name: V("eEn"), relationship: V("eErel"), phone: V("eEp") } });
+  } else {
+    const dob = V("eDob");
+    const age = ageFromDobStr(dob);
+    if (!V("eFirst") || !V("eLast")) { $("eErr").textContent = x.childNeedName; btn.disabled = false; return; }
+    if (age == null) { $("eErr").textContent = x.childNeedDob; btn.disabled = false; return; }
+    if (age >= 18) { $("eErr").textContent = x.childAdult; btn.disabled = false; return; }
+    const g = document.querySelector('input[name="eGear"]:checked');
+    const gear = g ? g.value : "";
+    if (gear === "no" && !V("eSize")) { $("eErr").textContent = x.needGearSize; btn.disabled = false; return; }
+    ok = await upsertPerson(p, { firstName: V("eFirst"), lastName: V("eLast"), dob, relationship: V("eRel"), ownGear: gear || undefined, gearSize: V("eSize"), forceDuplicate: true });
+  }
+  btn.disabled = false;
+  if (ok) { editOpen = null; paintMinors(); }
+}
+function checkChildDob(){
+  const age = ageFromDobStr(V("pDob"));
+  $("pDobErr").textContent = age != null && age >= 18 ? t().childAdult : "";
+}
+$("pDob").addEventListener("change", checkChildDob);
+$("pDob").addEventListener("input", checkChildDob);
+$("addAnotherBtn").onclick = () => { draft.addingChild = true; saveLocal(); paintMinors(); $("pFirst").focus(); };
+async function addChild(){
+  const x = t();
+  $("partyAddErr").textContent = "";
+  const first = V("pFirst"), last = V("pLast"), dob = V("pDob");
+  if (!first || !last) { $("partyAddErr").textContent = x.childNeedName; return; }
+  const age = ageFromDobStr(dob);
+  if (age == null || dob > todayIso()) { $("partyAddErr").textContent = x.childNeedDob; return; }
+  if (age >= 18) { $("pDobErr").textContent = x.childAdult; return; }
+  if (!draft.ref || !draft.token) { const ok = await saveDraft(false); if (!ok) { $("partyAddErr").textContent = t().notSaved; return; } }
+  $("partySavePerson").disabled = true;
+  const r = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+    action: "upsert", ref: draft.ref, token: draft.token, lang: L, firstName: first, lastName: last, dob,
+    relationship: V("pRel") || "child", mode: "here", sameAddress: true, sameEmergency: true, forceDuplicate: dupForce,
+  })});
+  const out = await r.json().catch(() => ({}));
+  $("partySavePerson").disabled = false;
+  if (!r.ok) {
+    if (r.status === 409 && out.code === "DUPLICATE_PERSON") {
+      dupForce = true;
+      $("partyAddErr").textContent = fmt(x.childDup, { name: first + " " + last });
+      $("partySavePerson").textContent = x.addAnyway;
+      return;
+    }
+    $("partyAddErr").textContent = out.error || "Error";
+    return;
+  }
+  dupForce = false;
+  $("partySavePerson").textContent = x.addChild;
+  ["pFirst", "pLast", "pDob"].forEach(id => { $(id).value = ""; });
+  $("pRel").value = "child";
+  draft.addingChild = false; draft.hasMinors = true; saveLocal();
+  party = out; status = out.status || status;
+  paintMinors(); paintChrome();
+  saveDraft(false);
+}
+$("partySavePerson").onclick = addChild;
+async function removePerson(id){
+  const r = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "remove", ref: draft.ref, token: draft.token, id, lang: L, reason: "removed by registrant" }) });
+  const out = await r.json().catch(() => ({}));
+  removeAsk = null;
+  if (r.ok) { party = out; status = out.status || status; delete packetLinks[id]; }
+  else $("errMinors").textContent = out.error || "";
+  paintMinors(); paintChrome();
+}
+$("partyPastBtn").onclick = async () => {
+  const panel = $("partyPastPanel"), list = $("partyPastList");
+  panel.classList.remove("hide");
+  list.innerHTML = `<p class="mut">${esc(t().loadingForms)}</p>`;
+  if (!draft.ref || !draft.token) await saveDraft(false);
+  const r = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "suggest", ref: draft.ref, token: draft.token, phone: V("ph"), email: V("em") }) });
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) { list.innerHTML = `<p class="err">${esc(out.error || "Error")}</p>`; return; }
+  const suggestions = out.suggestions || [];
+  if (!suggestions.length) { list.innerHTML = `<p class="mut">${esc(t().partyPastNone)}</p>`; return; }
+  list.innerHTML = "";
+  suggestions.forEach((s) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ghost wide"; b.style.margin = "4px 0"; b.style.justifyContent = "flex-start";
+    b.textContent = `${s.firstName} ${s.lastName} · ${s.dob || ""}`;
+    b.onclick = async () => {
+      const rr = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        action: "upsert", ref: draft.ref, token: draft.token, lang: L, firstName: s.firstName, lastName: s.lastName, dob: s.dob,
+        phone: s.phone, email: s.email, relationship: s.relationship || "child", mode: "here", sameEmergency: true, sameAddress: true,
+      })});
+      const oo = await rr.json().catch(() => ({}));
+      if (rr.ok) { party = oo; status = oo.status || status; draft.hasMinors = true; saveLocal(); panel.classList.add("hide"); paintMinors(); paintChrome(); saveDraft(false); }
+      else $("errMinors").textContent = oo.error || "";
+    };
+    list.appendChild(b);
+  });
+};
+$("partyPastClose").onclick = () => $("partyPastPanel").classList.add("hide");
+
+/* ---------- Health and Sign: one person, embedded forms ---------- */
+function personPublic(id){ return (party.participants || []).find(p => p.id === id) || null; }
+function paintSwitcher(box, kind){
+  box.innerHTML = "";
+  const people = (status && status.people) || [];
+  box.classList.toggle("hide", people.length < 2);
+  for (const p of people) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-pressed", p.id === personId ? "true" : "false");
+    const st = kind === "health" ? p.health : p.documents;
+    b.innerHTML = `<span>${esc(p.self ? t().you : p.firstName)}</span>${chipHtml(st || "not_started")}`;
+    b.onclick = () => go(step, p.id, { replace: false });
+    box.appendChild(b);
+  }
+}
+async function packetLink(id, opts){
+  opts = opts || {};
+  if (packetLinks[id] && !opts.resign) return packetLinks[id];
+  const r = await fetch(`/api/register/participants/${id}/packet`, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ref: draft.ref, token: draft.token, resign: !!opts.resign }) });
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(out.error || t().formsFail);
+  packetLinks[id] = out.formLink ? { link: out.formLink } : { completed: true };
+  return packetLinks[id];
+}
+function embedFrame(link, kind, title){
+  const f = document.createElement("iframe");
+  f.className = "embed";
+  f.title = title;
+  f.src = link + (link.includes("?") ? "&" : "?") + "embed=" + kind + "&lang=" + encodeURIComponent(L);
+  return f;
+}
+function signedDocList(sp){
+  const wrap = document.createElement("div");
+  const h = document.createElement("h3"); h.textContent = t().signedDocs; wrap.appendChild(h);
+  const list = document.createElement("div"); list.className = "doclist";
+  for (const task of (sp.tasks || []).filter(x => x.kind === "doc")) {
+    const row = document.createElement("div");
+    const line = document.createElement("div"); line.className = "docline";
+    line.innerHTML = `<b>${esc(task.name)}</b>${chipHtml(task.status === "done" ? "signed" : (task.status === "needs_resign" ? "needs_resign" : "not_read"), task.status === "done" ? "done" : (task.status === "needs_resign" ? "needs_resign" : "not_started"))}`;
+    row.appendChild(line);
+    if (task.reason) { const why = document.createElement("p"); why.className = "reason"; why.textContent = task.reason; row.appendChild(why); }
+    list.appendChild(row);
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
+let paintedFor = "";
+async function paintPerson(){
+  const kind = step;
+  const body = $(kind === "health" ? "healthBody" : "signBody");
+  const sp = personById(personId);
+  paintSwitcher($(kind === "health" ? "healthSwitch" : "signSwitch"), kind);
+  if (!sp) { body.innerHTML = `<p class="mut">${esc(t().loadingForms)}</p>`; paintedFor = ""; return; }
+  const x = t();
+  const name = sp.firstName || "";
+  $(kind + "Name").textContent = sp.age != null ? fmt(sp.self ? x.personHeadSelf : x.personHead, { name, age: sp.age }) : name;
+  const pub = personPublic(sp.id);
+  const regNum = sp.registrationNumber || (pub && pub.registrationNumber) || "";
+  const regEl = $(kind + "Reg");
+  if (regEl) { regEl.textContent = regNum ? (x.regNumLabel + " " + regNum) : ""; regEl.classList.toggle("hide", !regNum); }
+  $(kind + "Line").textContent = kind === "health" ? (sp.self ? x.healthSelf : fmt(x.healthFor, { name })) : (sp.self ? x.signSelf : fmt(x.signFor, { name }));
+  const docs = (sp.tasks || []).filter(tk => tk.kind === "doc");
+  const needsResign = docs.some(d => d.status === "needs_resign");
+  const cached = packetLinks[sp.id];
+  const wantResign = kind === "sign" && needsResign && (!cached || cached.completed);
+  if (cached && !wantResign && paintedFor === kind + ":" + sp.id + ":" + L + ":" + (cached.link || "done") && body.childElementCount) return;
+  if (!cached || wantResign) body.innerHTML = `<p class="mut">${esc(x.loadingForms)}</p>`;
+  let info;
+  try {
+    info = await packetLink(sp.id);
+    if (info.completed && wantResign) info = await packetLink(sp.id, { resign: true });
+  } catch (e) {
+    paintedFor = "";
+    body.innerHTML = "";
+    const p = document.createElement("p"); p.className = "err"; p.textContent = e.message || x.formsFail;
+    const b = document.createElement("button"); b.type = "button"; b.className = "ghost"; b.textContent = x.tryAgain; b.onclick = () => paintPerson();
+    body.append(p, b);
+    return;
+  }
+  if (step !== kind || personId !== sp.id) return;
+  const key = kind + ":" + sp.id + ":" + L + ":" + (info.link || "done");
+  if (paintedFor === key && body.querySelector("iframe, .allset")) return;
+  paintedFor = key;
+  body.innerHTML = "";
+  if (info.completed) {
+    if (kind === "health") {
+      const ok = document.createElement("div"); ok.className = "allset"; ok.textContent = x.healthLocked; body.appendChild(ok);
+    } else {
+      const ok = document.createElement("div"); ok.className = "allset"; ok.textContent = sp.self ? x.allSetSelf : fmt(x.allSet, { name }); body.appendChild(ok);
+      body.appendChild(signedDocList(sp));
+    }
+    return;
+  }
+  body.appendChild(embedFrame(info.link, kind, ($(kind + "Line").textContent || name)));
+}
+function frameFor(win){
+  return [...document.querySelectorAll("iframe.embed")].find(f => f.contentWindow === win) || null;
+}
+window.addEventListener("message", async (ev) => {
+  if (ev.origin !== location.origin || !ev.data) return;
+  const frame = frameFor(ev.source);
+  if (!frame) return;
+  const d = ev.data;
+  if (d.type === "bnb_embed_height" && d.h > 0) frame.style.height = Math.min(Math.max(d.h, 240), 20000) + "px";
+  else if (d.type === "bnb_embed_saved") { setSaveState("ok"); scheduleStatus(); }
+  else if (d.type === "bnb_embed_scroll") window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top + (Number(d.top) || 0) - 120, behavior: "smooth" });
+  else if (d.type === "bnb_packet_done") {
+    if (personId) packetLinks[personId] = { completed: true };
+    await new Promise(r => setTimeout(r, 400));
+    await refreshStatus();
+  }
+});
+/** When the person on screen just finished this step, move on by itself (the green state shows first). */
+let advanceTimer = null;
+function autoAdvance(before, after){
+  if (!before || !after || (step !== "health" && step !== "sign")) return;
+  const was = (before.people || []).find(p => p.id === personId);
+  const now = (after.people || []).find(p => p.id === personId);
+  if (!was || !now) return;
+  const key = step === "health" ? "health" : "documents";
+  const finished = was[key] !== "done" && now[key] === "done" && (step === "health" || now.submitted);
+  if (!finished) return;
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(() => {
+    const act = primaryAction(after, { step, personId, lang: L });
+    if (act.kind === "go" && act.target) go(act.target.step, act.target.personId || defaultPerson(act.target.step));
+    else if (act.kind === "focus" && act.target && act.target.personId && act.target.personId !== personId) go(act.target.step, act.target.personId);
+  }, 1500);
+}
+
+/* ---------- Finish and Done ---------- */
+async function finishRegistration(){
+  if (finishing) return;
+  await saveDraft(false);
+  const fresh = await refreshStatus();
+  if (!status) return;
+  if (!status.customerFinished) {
+    const n = status.nextRequiredTask;
+    if (n) go(n.step, n.personId || defaultPerson(n.step));
+    return;
+  }
+  const unsent = status.people.find(p => !p.submitted);
+  if (unsent) { go("sign", unsent.id); return; }
+  finishing = true; paintChrome();
+  const d = collect();
+  draft.idempotencyKey = newKey(); saveLocal();
+  try {
+    const r = await fetch("/api/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      ...d, hp: V("hp"), signerName: `${d.firstName} ${d.lastName}`.trim(),
+      idempotencyKey: draft.idempotencyKey, draftRef: draft.ref || "", draftToken: draft.token || "",
+    })});
+    const out = await r.json().catch(() => ({}));
+    finishing = false;
+    if (!r.ok) {
+      $("lockMsg").textContent = out.error || t().failed;
+      $("lockMsg").classList.remove("hide");
+      if (out.nextRequiredTask) go(out.nextRequiredTask.step, out.nextRequiredTask.personId || defaultPerson(out.nextRequiredTask.step));
+      else paintChrome();
+      return;
+    }
+    lastConfirm = { ...out, activity: d.activity, plannedDate: d.plannedDate, plannedTime: d.plannedTime, firstName: d.firstName };
+    try { localStorage.setItem("bnb_last_confirm", JSON.stringify(lastConfirm)); } catch (e) {}
+    confirmSaveOk = true; confirmSaveFailed = false;
+    await refreshStatus();
+    go("done");
+  } catch (e) {
+    finishing = false;
+    confirmSaveOk = false; confirmSaveFailed = true;
+    $("lockMsg").textContent = t().failed;
+    $("lockMsg").classList.remove("hide");
+    paintChrome();
+  }
+}
+function paintDone(){
+  const x = t();
+  try { if (!lastConfirm) lastConfirm = JSON.parse(localStorage.getItem("bnb_last_confirm") || "null"); } catch (e) {}
+  const out = lastConfirm || { ref: draft.ref };
+  const trip = lastConfirm || collect();
+  $("donePill").textContent = status && status.overall === "waiting_on_shop" ? x.waitShop : x.statusAwait;
+  $("confBooking").textContent = out.bookingId ? String(out.bookingId) : "—";
+  $("confRef").textContent = out.ref || draft.ref || "—";
+  const whenBits = [trip.plannedDate, trip.plannedTime].filter(Boolean).join(" · ");
+  $("confWhen").textContent = (out.submittedAt ? new Date(out.submittedAt).toLocaleString(L === "es" ? "es" : "en") : "") + (whenBits ? ` · ${whenBits}` : "") + (trip.activity ? ` · ${trip.activity}` : "");
+  const regNums = (party.participants || []).map(p => p.registrationNumber).filter(Boolean);
+  const qrPayload = ["BANANA NUT BURGER", out.bookingId ? `BOOKING:${out.bookingId}` : "", ...regNums.map(n => `REG:${n}`), out.ref ? `REF:${out.ref}` : "", whenBits, trip.activity || ""].filter(Boolean).join("|");
+  $("confQr").src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(qrPayload);
+  $("confQr").alt = qrPayload;
+  $("confCal").href = URL.createObjectURL(new Blob([buildIcs(trip, { ...out, registrationNumber: regNums.join(", ") })], { type: "text/calendar" }));
+  $("confCal").download = `bnb-${out.bookingId || out.ref || "dive"}.ics`;
+  const share = (L === "es"
+    ? `Banana Nut Burger — mi check-in\nReserva #${out.bookingId || "—"}\nRegistro ${regNums.join(", ") || "—"}\nRef ${out.ref || ""}\n${whenBits} ${trip.activity || ""}`
+    : `Banana Nut Burger — my check-in\nBooking #${out.bookingId || "—"}\nRegistration ${regNums.join(", ") || "—"}\nRef ${out.ref || ""}\n${whenBits} ${trip.activity || ""}`);
+  $("confWa").href = "https://wa.me/?text=" + encodeURIComponent(share);
+  $("cRef").value = out.ref || draft.ref || "";
+  $("kioskDoneWrap").innerHTML = kioskMode ? `<p><button type="button" class="ban wide" id="kioskDone">${esc(x.kioskDone)}</button></p>` : "";
+  if ($("kioskDone")) $("kioskDone").onclick = () => startNewRegistration({ auto: true });
+  paintDonePeople();
+  setupNextPersonBox(out);
+  armDoneIdleReset();
+}
+let pdfLib = null;
+function loadPdfJs(){
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (pdfLib) return pdfLib;
+  pdfLib = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; resolve(window.pdfjsLib); };
+    s.onerror = () => reject(new Error("pdf.js"));
+    document.head.appendChild(s);
+  });
+  return pdfLib;
+}
+async function previewPdf(url, host){
+  host.innerHTML = `<p class="mut">${esc(t().loadingForms)}</p>`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("download");
+    const bytes = await res.arrayBuffer();
+    const pdfjs = await loadPdfJs();
+    const pdf = await pdfjs.getDocument({ data: bytes }).promise;
+    host.innerHTML = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.3 });
+      const c = document.createElement("canvas"); c.width = viewport.width; c.height = viewport.height;
+      host.appendChild(c);
+      await page.render({ canvasContext: c.getContext("2d"), viewport }).promise;
+    }
+  } catch (e) { host.innerHTML = `<p class="err">${esc(t().formsFail)}</p>`; }
+}
+async function paintDonePeople(){
+  const box = $("donePeople");
+  if (!box || !draft.ref || !draft.token) return;
+  const x = t();
+  let files = [];
+  try {
+    const r = await fetch(`/api/register/party-downloads?ref=${encodeURIComponent(draft.ref)}&token=${encodeURIComponent(draft.token)}`);
+    const out = await r.json().catch(() => ({}));
+    if (r.ok) files = out.participants || [];
+  } catch (e) {}
+  box.innerHTML = "";
+  for (const sp of (status && status.people) || []) {
+    const pub = files.find(f => f.participantId === sp.id) || {};
+    const card = document.createElement("div"); card.className = "person";
+    const regNum = pub.registrationNumber || (personPublic(sp.id) || {}).registrationNumber || "";
+    card.innerHTML = `<div class="top2"><b style="font-size:18px">${esc(sp.firstName)} ${esc(sp.lastName || "")}</b>${chipHtml(sp.customerDone ? "done" : "in_progress")}</div>
+      <p style="margin:6px 0"><span class="mut">${esc(x.regNumLabel)}</span> <b style="font-size:18px">${esc(regNum || "—")}</b></p>`;
+    const waiting = (sp.shopTasks || []).filter(s => s.status === "waiting_shop").map(s => s.id === "youth_addendum" ? x.youthItem : x.physItem);
+    if (waiting.length) { const w = document.createElement("p"); w.className = "mut"; w.innerHTML = chipHtml("waiting_shop") + " " + esc(fmt(x.waitShopNote, { items: waiting.join(", ") })); card.appendChild(w); }
+    for (const f of pub.files || []) {
+      const name = f.templateKey === "packet" ? x.allDocsFile
+        : ((sp.tasks || []).find(tk => tk.docKey === f.templateKey) || {}).name || f.templateKey;
+      const row = document.createElement("div"); row.className = "docline"; row.style.marginTop = "8px";
+      row.innerHTML = `<b>${esc(name)}</b>`;
+      const acts = document.createElement("div"); acts.className = "docacts";
+      const view = document.createElement("div"); view.className = "pdfview hide";
+      const pv = document.createElement("button"); pv.type = "button"; pv.className = "ghost"; pv.textContent = x.preview;
+      pv.onclick = () => { const open = view.classList.toggle("hide"); pv.textContent = open ? x.preview : x.hidePreview; if (!open && !view.childElementCount) previewPdf(f.download, view); };
+      const dl = document.createElement("button"); dl.type = "button"; dl.textContent = x.download;
+      dl.onclick = async () => { await blobDownload(f.download, `${regNum || "form"}-${f.templateKey}.pdf`); downloadedCopy = true; if ($("nextPersonDlHint")) $("nextPersonDlHint").classList.add("hide"); };
+      acts.append(pv, dl); row.appendChild(acts);
+      card.append(row, view);
+    }
+    box.appendChild(card);
+  }
+}
+async function blobDownload(url, name){
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name || "form.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch (_) {}
+}
+function buildIcs(trip, out){
+  const title = `BNB Dive · ${trip.activity || "Dive"}`;
+  const desc = `Booking #${out.bookingId || ""} · Reg ${out.registrationNumber || ""} · Ref ${out.ref || ""}`.replace(/\n/g, "\\n");
+  let dtStart = "", dtEnd = "";
+  try {
+    const map = { "8:00 AM":[8,0], "10:00 AM":[10,0], "1:00 PM":[13,0], "4:00 PM":[16,0], "5:00 PM":[17,0] };
+    const hm = map[trip.plannedTime] || [9, 0];
+    const [y, m, d] = (trip.plannedDate || "").split("-").map(Number);
+    if (y) {
+      const pad = n => String(n).padStart(2, "0");
+      dtStart = `${y}${pad(m)}${pad(d)}T${pad(hm[0])}${pad(hm[1])}00`;
+      dtEnd = `${y}${pad(m)}${pad(d)}T${pad(hm[0] + 3)}${pad(hm[1])}00`;
+    }
+  } catch (e) {}
+  const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Banana Nut Burger//Check-in//EN", "BEGIN:VEVENT",
+    `UID:${out.ref || out.bookingId || now}@banananutburger`, `DTSTAMP:${now}`,
+    dtStart ? `DTSTART:${dtStart}` : "", dtEnd ? `DTEND:${dtEnd}` : "",
+    `SUMMARY:${title}`, `DESCRIPTION:${desc}`, "LOCATION:Banana Nut Burgers Dive Shop, West End, Roatan",
+    "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+}
+$("confCopy").onclick = async () => {
+  const regNums = (party.participants || []).map(p => p.registrationNumber).filter(Boolean).join(", ");
+  const text = `Booking #${(lastConfirm && lastConfirm.bookingId) || "—"} · Reg ${regNums || "—"} · Ref ${(lastConfirm && lastConfirm.ref) || draft.ref || ""}`;
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  $("confCopied").classList.remove("hide");
+  setTimeout(() => $("confCopied").classList.add("hide"), 2000);
+};
+
+/* ---------- next person, share, kiosk ---------- */
+let confirmSaveOk = false, confirmSaveFailed = false, downloadedCopy = false;
+let shopPublic = { kioskAutoReset: true, kioskDoneIdleSec: 45, allowDeviceMultiReg: true };
+let nextRegUrl = "", doneIdleTimer = null, doneCountdownTimer = null, passTransitionTimer = null;
+let formSessionKey = "bnb1";
+let armKioskIdle = () => {};
+(async () => {
+  try {
+    const r = await fetch("/api/register/shop-public");
+    const out = await r.json().catch(() => ({}));
+    if (r.ok && out) shopPublic = { kioskAutoReset: out.kioskAutoReset !== false, kioskDoneIdleSec: Number(out.kioskDoneIdleSec) || 45, allowDeviceMultiReg: out.allowDeviceMultiReg !== false };
+  } catch (e) {}
+})();
+function buildFreshRegistrationUrl(ctx = {}) {
+  const u = new URL(location.origin + "/register.html");
+  const booking = String(ctx.bookingId || ctx.bookingRef || draft.bookingRef || (lastConfirm && lastConfirm.bookingId) || "").trim();
+  if (booking) u.searchParams.set("booking", booking);
+  u.searchParams.set("fresh", "1");
+  u.searchParams.set("lang", ctx.lang || L || "en");
+  const act = ctx.activity || (lastConfirm && lastConfirm.activity) || V("act") || "";
+  if (act) u.searchParams.set("activity", act);
+  if (kioskMode || ctx.kiosk) u.searchParams.set("kiosk", "1");
+  // Never attach ref/token/name/registration numbers — new empty registration only.
+  return u.toString();
+}
+function paintNextPersonShare(url) {
+  nextRegUrl = url || "";
+  $("nextPersonUrl").value = nextRegUrl;
+  if (nextRegUrl) {
+    $("nextPersonQr").src = "https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=" + encodeURIComponent(nextRegUrl);
+    $("nextPersonQr").alt = t().showQr;
+  }
+  const msg = encodeURIComponent(t().inviteShareMsg + nextRegUrl);
+  $("nextPersonWa").href = "https://wa.me/?text=" + msg;
+  $("nextPersonSms").href = "sms:?&body=" + msg;
+  $("nextPersonMail").href = "mailto:?subject=" + encodeURIComponent(t().nextPersonH) + "&body=" + msg;
+}
+async function ensureNextPersonLink() {
+  let url = buildFreshRegistrationUrl();
+  const booking = String((lastConfirm && lastConfirm.bookingId) || draft.bookingRef || "").trim();
+  if (!booking && draft.ref && draft.token) {
+    try {
+      const r = await fetch("/api/register/invite-adult", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ref: draft.ref, token: draft.token }) });
+      const out = await r.json().catch(() => ({}));
+      if (r.ok && (out.registrationUrl || out.inviteUrl || out.bookingId)) {
+        if (out.bookingId) draft.bookingRef = String(out.bookingId);
+        url = out.registrationUrl || out.inviteUrl || buildFreshRegistrationUrl({ bookingId: out.bookingId });
+        try {
+          const parsed = new URL(url, location.origin);
+          ["ref", "token", "resume", "name", "registration", "reg"].forEach((k) => parsed.searchParams.delete(k));
+          parsed.searchParams.set("fresh", "1");
+          url = parsed.toString();
+        } catch (e) {}
+      }
+    } catch (e) {}
+  }
+  paintNextPersonShare(url);
+  return url;
+}
+function setupNextPersonBox() {
+  $("nextPersonSaveErr").classList.add("hide");
+  $("nextPersonIdle").classList.add("hide");
+  $("nextPersonStay").classList.add("hide");
+  $("startNewRegBtn").classList.toggle("hide", shopPublic.allowDeviceMultiReg === false);
+  $("nextPersonDlHint").classList.toggle("hide", !!downloadedCopy);
+  const alwaysQr = kioskMode || (window.matchMedia && window.matchMedia("(min-width: 900px)").matches);
+  $("nextPersonShare").classList.toggle("hide", !alwaysQr);
+  $("showNextQrBtn").classList.toggle("hide", alwaysQr);
+  $("showNextQrBtn").textContent = t().showQr;
+  $("showNextQrBtn").setAttribute("aria-expanded", alwaysQr ? "true" : "false");
+  ensureNextPersonLink();
+}
+function logRegEvent(event, extra = {}) {
+  const bookingId = String((lastConfirm && lastConfirm.bookingId) || draft.bookingRef || "").trim();
+  fetch("/api/register/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event, bookingId, shop: "BNB", ...extra }) }).catch(() => {});
+}
+function announceA11y(msg) {
+  let live = $("bnbA11yLive");
+  if (!live) {
+    live = document.createElement("div");
+    live.id = "bnbA11yLive"; live.setAttribute("role", "status"); live.setAttribute("aria-live", "assertive");
+    live.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)";
+    document.body.appendChild(live);
+  }
+  live.textContent = "";
+  setTimeout(() => { live.textContent = msg || ""; }, 40);
+}
+function clearBrowserPersonalStorage() {
+  try { ["bnb_reg_draft", "bnb_reg_number", "bnb_last_confirm", "bnb_reg_prefill"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  try {
+    const keys = [];
+    for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); if (k && /^bnb_/i.test(k)) keys.push(k); }
+    keys.forEach((k) => sessionStorage.removeItem(k));
+  } catch (e) {}
+}
+function wipePersonalFields() {
+  formSessionKey = "bnb" + Date.now().toString(36);
+  ["fn","ln","pn","ph","em","dob","addr","city","state","zip","en","erel","ep","notes","cert","logged","lastdive","bref","pFirst","pLast","pDob","cName","cPhone","cMsg","rRef","rTok","gearSize","gearNote","dobLockInput"].forEach((id) => {
+    const el = $(id); if (!el) return;
+    el.value = "";
+    try { el.setAttribute("autocomplete", "off"); el.setAttribute("data-form-key", formSessionKey); } catch (e) {}
+  });
+  ["cbDecl","cbPriv","cbMkt","courseYes","courseNo","gearYes","gearNo"].forEach((id) => { if ($(id)) $(id).checked = false; });
+  syncGearUI();
+  $("healthBody").innerHTML = ""; $("signBody").innerHTML = ""; $("donePeople").innerHTML = ""; $("minorList").innerHTML = "";
+  $("draftMsg").textContent = "";
+  $("confQr").removeAttribute("src"); $("confQr").alt = "";
+  document.title = "Banana Nut Burgers · Check-in";
+}
+function resetState(ctx){
+  draft = ctx || { idempotencyKey: newKey() };
+  party = { participants: [] }; status = null; packetLinks = {}; paintedFor = "";
+  personId = null; lastConfirm = null; confirmSaveOk = false; confirmSaveFailed = false; downloadedCopy = false;
+  editOpen = null; removeAsk = null; selDate = draft.plannedDate || ""; selTime = draft.plannedTime || "";
+  saveLocal();
+}
+function keepBookingContextOnly() {
+  const next = { idempotencyKey: newKey() };
+  const booking = String((lastConfirm && lastConfirm.bookingId) || draft.bookingRef || new URLSearchParams(location.search).get("booking") || "").trim();
+  if (booking) next.bookingRef = booking;
+  const activity = (lastConfirm && lastConfirm.activity) || V("act");
+  if (activity) next.activity = activity;
+  if (lastConfirm && lastConfirm.plannedDate) next.plannedDate = lastConfirm.plannedDate;
+  if (lastConfirm && lastConfirm.plannedTime) next.plannedTime = lastConfirm.plannedTime;
+  next.preferredLanguage = L;
+  return next;
+}
+function finishPassTransition() {
+  if (passTransitionTimer) { clearTimeout(passTransitionTimer); passTransitionTimer = null; }
+  flowGen += 1;
+  const url = new URL(buildFreshRegistrationUrl());
+  url.searchParams.set("start", "1");
+  clearBrowserPersonalStorage();
+  logRegEvent("new_registration_started_from_done");
+  try { location.replace(url.toString()); } catch (e) { location.href = url.toString(); }
+}
+async function startNewRegistration(opts = {}) {
+  const finished = confirmSaveOk || (status && status.submitted) || (lastConfirm && (lastConfirm.ref || lastConfirm.bookingId));
+  const err = $("nextPersonSaveErr");
+  if (!finished && err.classList.contains("hide")) {
+    err.classList.remove("hide");
+    err.textContent = confirmSaveFailed ? t().nextPersonSaveFail : t().nextPersonSaving;
+    return;
+  }
+  flowGen += 1;
+  clearDoneIdle();
+  const first = (V("fn") || (lastConfirm && lastConfirm.firstName) || "").trim();
+  document.querySelectorAll("[data-step]").forEach((s) => s.classList.add("hide"));
+  $("corrCard").classList.add("hide");
+  $("bar").classList.add("hide");
+  $("stepper").classList.add("hide");
+  $("passDeviceCard").classList.remove("hide");
+  $("passDeviceCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("passDeviceMsg").textContent = fmt(t().nextPersonThanks, { name: first || (L === "es" ? "amigo" : "friend") });
+  if (passTransitionTimer) clearTimeout(passTransitionTimer);
+  passTransitionTimer = setTimeout(() => finishPassTransition(), opts.auto ? 1200 : 3000);
+}
+function clearDoneIdle() {
+  if (doneIdleTimer) { clearTimeout(doneIdleTimer); doneIdleTimer = null; }
+  if (doneCountdownTimer) { clearInterval(doneCountdownTimer); doneCountdownTimer = null; }
+  $("nextPersonIdle").classList.add("hide"); $("nextPersonIdle").textContent = "";
+  $("nextPersonStay").classList.add("hide");
+}
+function armDoneIdleReset() {
+  clearDoneIdle();
+  if (!kioskMode || !shopPublic.kioskAutoReset) return;
+  const idleMs = Math.max(10, Number(shopPublic.kioskDoneIdleSec) || 45) * 1000;
+  doneIdleTimer = setTimeout(() => {
+    let left = 10;
+    $("nextPersonIdle").classList.remove("hide");
+    $("nextPersonIdle").textContent = fmt(t().nextPersonIdle, { n: left });
+    $("nextPersonStay").classList.remove("hide");
+    doneCountdownTimer = setInterval(() => {
+      left -= 1;
+      $("nextPersonIdle").textContent = fmt(t().nextPersonIdle, { n: Math.max(0, left) });
+      if (left <= 0) { clearDoneIdle(); startNewRegistration({ auto: true }); }
+    }, 1000);
+  }, idleMs);
+}
+$("startNewRegBtn").onclick = () => startNewRegistration();
+$("showNextQrBtn").onclick = () => {
+  const open = $("nextPersonShare").classList.contains("hide");
+  $("nextPersonShare").classList.toggle("hide", !open);
+  $("showNextQrBtn").textContent = open ? t().hideQr : t().showQr;
+  $("showNextQrBtn").setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) ensureNextPersonLink();
+};
+$("nextPersonCopy").onclick = async () => {
+  const v = nextRegUrl || $("nextPersonUrl").value || "";
+  if (!v) return;
+  try { await navigator.clipboard.writeText(v); } catch (e) {}
+  $("nextPersonCopied").classList.remove("hide");
+  setTimeout(() => $("nextPersonCopied").classList.add("hide"), 1600);
+  logRegEvent("registration_link_shared", { method: "copy" });
+};
+$("nextPersonShareBtn").onclick = async () => {
+  const v = nextRegUrl || $("nextPersonUrl").value || await ensureNextPersonLink();
+  if (!v) return;
+  if (navigator.share) {
+    try { await navigator.share({ title: t().nextPersonH, url: v, text: t().inviteShareMsg + v }); logRegEvent("registration_link_shared", { method: "native" }); return; } catch (e) {}
+  }
+  try { await navigator.clipboard.writeText(v); } catch (e) {}
+  $("nextPersonCopied").classList.remove("hide");
+  setTimeout(() => $("nextPersonCopied").classList.add("hide"), 1600);
+  logRegEvent("registration_link_shared", { method: "copy" });
+};
+["nextPersonWa", "nextPersonSms", "nextPersonMail"].forEach((id) => {
+  $(id).addEventListener("click", () => logRegEvent("registration_link_shared", { method: id === "nextPersonWa" ? "whatsapp" : (id === "nextPersonSms" ? "sms" : "email") }));
+});
+$("nextPersonStay").onclick = () => { clearDoneIdle(); armDoneIdleReset(); };
+$("passDeviceGo").onclick = () => finishPassTransition();
+
+/* ---------- landing, resume, corrections, language ---------- */
+$("startBtn").onclick = () => go("about");
+$("corrBtn").onclick = () => { $("corrCard").classList.toggle("hide"); $("corrCard").scrollIntoView({ behavior: "smooth" }); };
+$("resumeOpen").onclick = () => { $("resumePanel").classList.toggle("hide"); if (draft.ref) $("rRef").value = draft.ref; if (draft.token) $("rTok").value = draft.token; };
+async function openSaved(ref, token){
+  const r = await fetch(`/api/register/draft?ref=${encodeURIComponent(ref)}&token=${encodeURIComponent(token)}`);
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    if (r.status === 404 || r.status === 401) { draft.ref = ""; draft.token = ""; saveLocal(); }
+    return false;
+  }
+  if (draft.ref !== out.ref) { packetLinks = {}; draft.ui = null; }
+  draft.ref = out.ref; draft.token = token; saveLocal();
+  fill(out.data || {});
+  if (out.data && out.data.preferredLanguage) { L = out.data.preferredLanguage === "es" ? "es" : "en"; applyLang(); }
+  await refreshStatus();
+  resume();
+  return true;
+}
+/** Land on the saved step and person, unless an earlier required task now blocks it. */
+function resume(){
+  const fromHash = stepFromHash();
+  const ui = (fromHash && fromHash.step !== "landing" ? fromHash : null) || draft.ui || {};
+  if (status && status.submitted && status.customerFinished && (!ui.step || ui.step === "done")) return go("done", null, { replace: true });
+  if (ui.step && STEP_IDS.includes(ui.step) && (ui.step === "about" || !stepState(ui.step).locked)) return go(ui.step, ui.personId || defaultPerson(ui.step), { replace: true });
+  const n = status && status.nextRequiredTask;
+  if (n) return go(n.step, n.personId || defaultPerson(n.step), { replace: true });
+  if (status && status.customerFinished) return go(status.submitted ? "done" : "sign", status.submitted ? null : defaultPerson("sign"), { replace: true });
+  go("about", null, { replace: true });
+}
+$("resumeBtn").onclick = async () => {
+  try { if (!(await openSaved(V("rRef").toUpperCase(), V("rTok")))) throw new Error("bad"); }
+  catch (e) { $("resumeErr").textContent = t().resumeBad; }
+};
+$("corrSend").onclick = async () => {
+  const body = { ref: V("cRef"), phone: V("cPhone"), name: V("cName"), message: V("cMsg"), hp: V("hp") };
+  if (!body.ref || !body.phone || !body.message) { $("corrErr").textContent = t().corrNeed; return; }
+  await fetch("/api/corrections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
+  $("corrErr").textContent = ""; $("corrSend").textContent = "✓ " + t().corrOk;
+  $("cMsg").value = "";
+};
+function applyLang(){
+  const x = t(), d = DECL[L];
+  document.documentElement.lang = L;
+  document.querySelectorAll("[data-i]").forEach(e => { if (typeof x[e.dataset.i] === "string") e.textContent = x[e.dataset.i]; });
+  document.querySelectorAll("[data-p]").forEach(e => { if (x[e.dataset.p]) e.placeholder = x[e.dataset.p]; });
+  $("langBtn").textContent = L === "en" ? "ES" : "EN";
+  $("declTitle").textContent = d.title; $("declText").textContent = d.text; $("declCheck").textContent = d.check;
+  $("privText").textContent = d.priv; $("mktText").textContent = d.mkt;
+  $("actPh").textContent = x.sel;
+  const keep = $("act").value;
+  while ($("act").options.length > 1) $("act").remove(1);
+  ACTS.forEach(a => { const o = document.createElement("option"); o.value = a; o.textContent = (x.actLabels && x.actLabels[a]) || a; $("act").append(o); });
+  if (keep) $("act").value = keep;
+  $("partySavePerson").textContent = dupForce ? x.addAnyway : x.addChild;
+  renderCal();
+  paintedFor = "";
+  paintStep();
+  paintChrome();
+  for (const f of document.querySelectorAll("iframe.embed")) { try { f.contentWindow.postMessage({ type: "bnb_set_lang", lang: L }, location.origin); } catch (e) {} }
+}
+$("langBtn").onclick = () => {
+  L = L === "en" ? "es" : "en";
+  try { localStorage.setItem("bnb_lang", L); } catch (e) {}
+  applyLang();
+  refreshStatus();
+};
+window.addEventListener("storage", (ev) => {
+  if (ev.key !== "bnb_lang" || (ev.newValue !== "en" && ev.newValue !== "es") || ev.newValue === L) return;
+  L = ev.newValue; applyLang(); refreshStatus();
+});
+
+/* ---------- autosave About you ---------- */
+document.querySelector('[data-step="about"]').addEventListener("input", (e) => {
+  if (e.target && e.target.classList) e.target.classList.remove("bad");
+  if (e.target && e.target.id === "dob") $("errAbout").textContent = aboutBlocker();
+  scheduleSave();
+});
+document.querySelector('[data-step="about"]').addEventListener("change", (e) => {
+  if (e.target && (e.target.name === "ownGear")) syncGearUI();
+  if (e.target && e.target.id === "dob") $("errAbout").textContent = aboutBlocker();
+  scheduleSave();
+});
+
+/* ---------- calendar ---------- */
+const TIMES = [[8,"8:00 AM"],[10,"10:00 AM"],[13,"1:00 PM"],[16,"4:00 PM"],[17,"5:00 PM"]];
+let calCur = new Date(); calCur.setDate(1); let selDate = "", selTime = "";
+const isoD = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const monthKey = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+async function loadAvail(month){
+  if (availCache[month] && availCache[month]._loaded) return availCache[month];
+  try {
+    const r = await fetch("/api/availability?month=" + encodeURIComponent(month));
+    const out = await r.json().catch(() => ({}));
+    if (r.ok) {
+      availSlotCap = out.slotCap || 8;
+      availCache[month] = { days: out.days || {}, slots: out.slots || {}, dayCap: out.dayCap || availSlotCap * 5, _loaded: true };
+      return availCache[month];
+    }
+  } catch (e) {}
+  availCache[month] = { days: {}, slots: {}, dayCap: availSlotCap * 5, _loaded: true };
+  return availCache[month];
+}
+function slotTaken(date, timeLabel){ const m = availCache[date.slice(0, 7)]; return m ? (m.slots[`${date}|${timeLabel}`] || 0) : 0; }
+function calState(d){
+  const tday = new Date(); tday.setHours(0, 0, 0, 0);
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  if (x < tday) return "off";
+  const iso = isoD(d), m = availCache[iso.slice(0, 7)];
+  if (!m) return "open";
+  const dayN = m.days[iso] || 0;
+  const openSlots = TIMES.filter(tm => slotTaken(iso, tm[1]) < availSlotCap).length;
+  if (openSlots === 0 || dayN >= (m.dayCap || availSlotCap * 5)) return "off";
+  if (openSlots <= 2 || dayN >= availSlotCap * 3) return "low";
+  return "open";
+}
+function renderTimes(){
+  const x = t(), box = $("timeSlots"); box.innerHTML = "";
+  if (!selDate) { $("calPick").textContent = ""; return; }
+  let list = TIMES.slice();
+  if (selDate === isoD(new Date())) { const h = new Date().getHours(); list = list.filter(v => v[0] > h); }
+  list = list.map(v => { const left = Math.max(0, availSlotCap - slotTaken(selDate, v[1])); return { label: v[1], left, full: left <= 0 }; }).filter(v => !v.full || v.label === selTime);
+  if (!list.length) { $("calPick").textContent = x.noTimes; return; }
+  if (selTime && !list.some(v => v.label === selTime && !v.full)) selTime = "";
+  $("calPick").textContent = selTime ? (selDate + " · " + selTime) : x.pickTime;
+  list.forEach(v => {
+    const b = document.createElement("button"); b.type = "button";
+    const on = selTime === v.label;
+    b.className = "tpill" + (on ? " sel" : "") + (v.full ? " off" : "");
+    b.disabled = v.full;
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.textContent = v.full ? `${v.label} · ${x.slotFull}` : `${v.label} · ${v.left} ${x.slotLeft}`;
+    b.addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation();
+      if (v.full) return;
+      selTime = v.label; $("pdate").value = selDate;
+      draft.plannedDate = selDate; draft.plannedTime = selTime; saveLocal();
+      renderTimes(); scheduleSave();
+    });
+    box.append(b);
+  });
+}
+async function renderCal(){
+  const y = calCur.getFullYear(), m = calCur.getMonth(), now = new Date();
+  $("calTitle").textContent = calCur.toLocaleDateString(L === "es" ? "es" : "en", { month: "long", year: "numeric" });
+  $("calPrev").disabled = (y === now.getFullYear() && m === now.getMonth());
+  const mx = new Date(now.getFullYear(), now.getMonth() + 6, 1);
+  $("calNext").disabled = (y === mx.getFullYear() && m === mx.getMonth());
+  await loadAvail(monthKey(calCur));
+  const grid = $("calGrid"); grid.innerHTML = "";
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < first; i++) { const s = document.createElement("span"); s.className = "calblank"; grid.append(s); }
+  for (let d = 1; d <= days; d++) {
+    const dt = new Date(y, m, d), st = calState(dt), b = document.createElement("button");
+    b.type = "button"; b.textContent = d; b.className = "calday " + st + (selDate === isoD(dt) ? " sel" : "");
+    b.disabled = st === "off"; b.setAttribute("aria-label", isoD(dt));
+    b.onclick = () => { selDate = isoD(dt); selTime = ""; $("pdate").value = selDate; renderCal(); };
+    grid.append(b);
+  }
+  renderTimes();
+}
+$("calPrev").onclick = () => { calCur = new Date(calCur.getFullYear(), calCur.getMonth() - 1, 1); renderCal(); };
+$("calNext").onclick = () => { calCur = new Date(calCur.getFullYear(), calCur.getMonth() + 1, 1); renderCal(); };
+
+/* ---------- kiosk: idle warning, then DOB lock (or clear), then full clear ---------- */
+const params = new URLSearchParams(location.search);
+kioskMode = kioskMode || params.get("kiosk") === "1";
+let kioskLocked = false;
+function kioskClearAndRestart(){
+  clearDoneIdle();
+  clearBrowserPersonalStorage();
+  wipePersonalFields();
+  resetState({ idempotencyKey: newKey() });
+  kioskLocked = false;
+  $("dobLockBox").classList.add("hide");
+  try { history.replaceState({}, "", "/register.html?kiosk=1"); } catch (e) {}
+  announceA11y(t().nextPersonSavedA11y);
+  go("landing", null, { replace: true });
+}
+function showDobLock(){
+  const need = V("dob");
+  if (!kioskMode || step === "landing" || !/^\d{4}-\d{2}-\d{2}$/.test(need)) return false;
+  kioskLocked = true;
+  document.querySelectorAll("[data-step]").forEach(s => s.classList.add("hide"));
+  $("bar").classList.add("hide"); $("stepper").classList.add("hide");
+  $("dobLockBox").classList.remove("hide");
+  $("dobLockSub").textContent = fmt(t().dobLockSub, { name: V("fn") });
+  $("dobLockInput").value = ""; $("dobLockErr").textContent = "";
+  return true;
+}
+$("dobLockGo").onclick = () => {
+  if (V("dobLockInput") !== V("dob")) { $("dobLockErr").textContent = t().dobLockBad; return; }
+  kioskLocked = false;
+  $("dobLockBox").classList.add("hide");
+  go(step, personId, { noHistory: true });
+  armKioskIdle();
+};
+$("dobLockClear").onclick = () => kioskClearAndRestart();
+if (kioskMode) {
+  const warn = document.createElement("p");
+  warn.id = "kioskWarn"; warn.className = "err hide"; warn.dataset.i = "kioskWarn";
+  warn.textContent = t().kioskWarn;
+  document.body.prepend(warn);
+  let idleWarn, idleLock, idleReset;
+  armKioskIdle = () => {
+    if (kioskLocked || !shopPublic.kioskAutoReset) return;
+    clearTimeout(idleWarn); clearTimeout(idleLock); clearTimeout(idleReset);
+    warn.classList.add("hide");
+    const doneIdle = Math.max(10, Number(shopPublic.kioskDoneIdleSec) || 45);
+    idleWarn = setTimeout(() => warn.classList.remove("hide"), Math.max(doneIdle, 60) * 1000);
+    idleLock = setTimeout(() => { if (step === "done") return; if (!showDobLock()) kioskClearAndRestart(); }, Math.max(doneIdle + 30, 90) * 1000);
+    idleReset = setTimeout(() => { if (step === "done") return; kioskClearAndRestart(); }, Math.max(doneIdle + 60, 120) * 1000);
+  };
+  ["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, () => {
+    if (!kioskLocked) armKioskIdle();
+    if (step === "done" && shopPublic.kioskAutoReset && $("nextPersonStay").classList.contains("hide")) armDoneIdleReset();
+  }, { passive: true }));
+  armKioskIdle();
+}
+
+/* ---------- start ---------- */
+applyLang();
+(async () => {
+  const actQ = params.get("activity");
+  if (actQ && ACTS.includes(actQ)) $("act").value = actQ;
+  const bookingQ = params.get("booking");
+  if (params.get("fresh") === "1") {
+    clearBrowserPersonalStorage();
+    resetState({ idempotencyKey: newKey(), bookingRef: bookingQ ? String(bookingQ) : undefined, activity: (actQ && ACTS.includes(actQ)) ? actQ : undefined });
+  } else if (bookingQ && !draft.bookingRef) { draft.bookingRef = String(bookingQ); saveLocal(); }
+  if (bookingQ) {
+    $("bref").value = String(bookingQ);
+    try {
+      const ctx = await (await fetch("/api/bookings/" + encodeURIComponent(bookingQ) + "/invite-context")).json();
+      if (ctx.ok && ctx.booking) {
+        if (ctx.booking.activity && ACTS.includes(ctx.booking.activity)) $("act").value = ctx.booking.activity;
+        if (ctx.booking.date) { selDate = ctx.booking.date; $("pdate").value = ctx.booking.date; }
+        if (ctx.booking.time) selTime = ctx.booking.time;
+        renderCal();
+        if (!$("inviteBanner")) {
+          const note = document.createElement("p"); note.className = "mut"; note.id = "inviteBanner";
+          note.textContent = ctx.message || t().oneAdultNote;
+          document.querySelector('[data-step="about"] h2').after(note);
+        }
+      }
+    } catch (e) {}
+  }
+  // Staff links and reminder emails open a saved registration with ?ref=&token=.
+  const qRef = params.get("ref"), qTok = params.get("token");
+  if (params.get("fresh") !== "1" && qRef && qTok) {
+    try { history.replaceState({}, "", location.pathname + (kioskMode ? "?kiosk=1" : "")); } catch (e) {}
+    if (await openSaved(qRef, qTok)) return;
+  }
+  if (draft.plannedDate) { selDate = draft.plannedDate; $("pdate").value = draft.plannedDate; }
+  if (draft.plannedTime) selTime = draft.plannedTime;
+  try {
+    const pre = JSON.parse(localStorage.getItem("bnb_reg_prefill") || "null");
+    if (pre) { fill(pre); localStorage.removeItem("bnb_reg_prefill"); }
+  } catch (e) {}
+  if (location.hash === "#resume") $("resumeOpen").click();
+  if (location.hash === "#requirements") setTimeout(() => $("requirements").scrollIntoView({ behavior: "smooth" }), 300);
+  // Same device: reopen where this person left off (reload never loses the step).
+  if (params.get("fresh") !== "1" && draft.ref && draft.token) {
+    if (await openSaved(draft.ref, draft.token)) return;
+  }
+  if (params.get("start") === "1" || actQ) go("about", null, { replace: true });
+  else go("landing", null, { replace: true });
+})();
+</script>
+</body>
+</html>
