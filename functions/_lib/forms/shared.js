@@ -98,6 +98,72 @@ export function fromRegistrationData(data = {}) {
   };
 }
 
+/** A saved blank must not erase a value already collected on the registration. */
+export function mergeDraftOverPrefill(prefill = {}, draft = {}) {
+  const out = { ...(prefill || {}) };
+  for (const [key, value] of Object.entries(draft || {})) {
+    if (value == null || value === "") continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * Identity for one diver's packet.
+ * The primary registrant uses the registration they just filled.
+ * A minor keeps their own date of birth and inherits the guardian's phone
+ * so the forms are not asked for those details again.
+ */
+export function packetPrefill({
+  participant = {},
+  data = {},
+  customer = {},
+  guardian = null,
+  sharedAddr = {},
+  sharedEmg = {},
+  registrationNumber = "",
+} = {}) {
+  const role = participant.role || "";
+  const ownDob = String(participant.dob || "").trim();
+  const regDob = /^\d{4}-\d{2}-\d{2}$/.test(String(data.dob || "")) ? String(data.dob) : "";
+  const dob = role === "primary" ? (regDob || ownDob) : ownDob;
+  const age = ageFromDob(dob);
+  const minor = role !== "primary" && (Number(participant.is_minor) === 1 || (age != null && age < 18));
+  const guardianPhone = String((guardian && guardian.phone) || "").trim();
+  const regPhone = String(data.phone || "").trim();
+  const phone = role === "primary"
+    ? (regPhone || participant.phone || customer.phone || "")
+    : (participant.phone || guardianPhone || (minor ? regPhone : "") || "");
+  const email = role === "primary"
+    ? (data.email || participant.email || customer.email || "")
+    : (participant.email || "");
+  const first = role === "primary"
+    ? (data.firstName || data.first_name || participant.first_name || "")
+    : (participant.first_name || "");
+  const last = role === "primary"
+    ? (data.lastName || data.last_name || participant.last_name || "")
+    : (participant.last_name || "");
+  const addr = sharedAddr || {};
+  const emg = sharedEmg || {};
+  return fromRegistrationData({
+    firstName: first,
+    lastName: last,
+    dob,
+    phone,
+    email,
+    address: addr.address || data.address || "",
+    city: addr.city || data.city || "",
+    state: addr.state || data.state || "",
+    zip: addr.zip || data.zip || "",
+    emergencyName: emg.name || data.emergencyName || "",
+    emergencyRelationship: emg.relationship || data.emergencyRelationship || "",
+    emergencyPhone: emg.phone || data.emergencyPhone || "",
+    registration_number: registrationNumber,
+    guardian_name: (guardian && guardian.name) || "",
+    guardian_relationship: (guardian && (guardian.relationship || guardian.rel)) || (minor ? "parent/guardian" : ""),
+  });
+}
+
 export function contactUpdatesFromAnswers(answers = {}) {
   // Save non-sensitive edits back to CRM contact — never medical answers.
   return {

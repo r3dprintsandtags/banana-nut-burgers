@@ -230,9 +230,13 @@ export function resumeTarget(flow, answers, now = new Date()) {
   const ui = answers?.__ui || {};
   const ids = (flow?.steps || []).map((s) => s.id).filter((id) => id !== "finish");
   let stepId = ids.includes(ui.step) ? ui.step : "";
+  // Date of birth and phone are collected once. Do not park on a finished identity step.
+  const identity = new Set(["about", "emergency", "guardian"]);
+  if (stepId && identity.has(stepId) && !stepProblems(stepId, flow, answers, now).length) stepId = "";
   if (!stepId) {
     stepId = ids[0] || "about";
     for (const id of ids) {
+      if (id === "review") break;
       if (stepProblems(id, flow, answers, now).length) { stepId = id; break; }
       stepId = id;
     }
@@ -283,6 +287,20 @@ export function recordSignature(map, key, dataUrl) {
   }
   next[key] = url;
   return { ok: true, map: next };
+}
+
+/** Copy one saved signature onto every document that does not already have its own. */
+export function applyReuseSignature(map, docKeys) {
+  const next = { ...(map || {}) };
+  if (next._reuseOff === true) return next;
+  const reuse = String(next._reuse || "");
+  if (!reuse.startsWith("data:image/png;base64,") || reuse.length < 80) return next;
+  for (const key of docKeys || []) {
+    if (!key) continue;
+    const own = String(next[key] || "");
+    if (!own.startsWith("data:image/png;base64,")) next[key] = reuse;
+  }
+  return next;
 }
 
 /** Ack-only checkboxes are accepted with the document. Guardian pad counts as the guardian signature. Does not touch medical answers. */

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "fs";
 import {
   THEMES, buildFlow, stepLabel, stepProblems, earlierBlock, missingItems, resumeTarget,
-  hashFor, parseHash, documentCanAgree, recordSignature, satisfyHiddenGates, submitFailureView,
+  hashFor, parseHash, documentCanAgree, recordSignature, applyReuseSignature, satisfyHiddenGates, submitFailureView,
   themeContrastIssues, legalBundle, firstOpenDocument,
 } from "../../functions/_lib/forms/wizard.js";
 import { validateAnswers } from "../../functions/_lib/forms/schema.js";
@@ -90,6 +90,7 @@ describe("gating, reload, and back", () => {
     assert.equal(resumeTarget(flow, adultAnswers({ __ui: { step: "documents", docIndex: 1 } })).stepId, "medical");
     const prefilled = { first_name: "Maria", last_name: "Lopez", dob: "1990-04-02", city: "Austin", state: "TX", zip: "78701", emergency_contact_name: "Ana Lopez", emergency_contact_phone: "50498763374" };
     assert.equal(resumeTarget(flow, prefilled).stepId, "medical");
+    assert.equal(resumeTarget(flow, { ...prefilled, __ui: { step: "about" } }).stepId, "medical");
     assert.equal(parseHash(hashFor("medical"), flow).stepId, "medical");
     assert.equal(parseHash("#documents:1", flow).docIndex, 1);
   });
@@ -113,6 +114,9 @@ describe("contrast tokens", () => {
     assert.equal(html.includes("themeBtn"), false);
     assert.equal(/data-theme="dark"/.test(html), false);
     assert.match(html, /Banana Nut Burgers/);
+    assert.match(html, /Use this signature on every signature line/);
+    assert.match(html, /\.qcard\{/);
+    assert.match(html, /These details are already on every form/);
   });
 });
 
@@ -121,6 +125,14 @@ describe("completion gates", () => {
     assert.equal(documentCanAgree({ overflow: false, sentinelVisible: false }), true);
     assert.equal(documentCanAgree({ overflow: true, sentinelVisible: false }), false);
     assert.equal(documentCanAgree({ overflow: true, sentinelVisible: true }), true);
+  });
+
+  it("copies one signature onto every document that still needs one", () => {
+    const ink = "data:image/png;base64," + "c".repeat(90);
+    const out = applyReuseSignature({ _reuse: ink, diver_medical: ink }, ["diver_medical", "fit_to_dive", "privacy"]);
+    assert.equal(out.fit_to_dive, ink);
+    assert.equal(out.privacy, ink);
+    assert.equal(applyReuseSignature({ _reuseOff: true, _reuse: ink }, ["fit_to_dive"]).fit_to_dive, undefined);
   });
 
   it("saves a real signature and rejects an empty one", () => {

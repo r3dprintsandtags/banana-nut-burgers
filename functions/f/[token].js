@@ -4,13 +4,13 @@ import { packetClientScript } from "../_lib/forms/packet-client.js";
 import {
   ageYears, fieldVisible, isAckSection, legalBundle, buildFlow, stepLabel, stepProblems,
   earlierBlock, missingItems, resumeTarget, firstOpenDocument, hashFor, parseHash, documentCanAgree,
-  recordSignature, submitFailureView,
+  recordSignature, applyReuseSignature, submitFailureView,
 } from "../_lib/forms/wizard.js";
 
 const wizardSource = [
   ageYears, fieldVisible, isAckSection, legalBundle, buildFlow, stepLabel, stepProblems,
   earlierBlock, missingItems, resumeTarget, firstOpenDocument, hashFor, parseHash, documentCanAgree,
-  recordSignature, submitFailureView,
+  recordSignature, applyReuseSignature, submitFailureView,
 ].map((fn) => fn.toString()).join("\n");
 
 export async function onRequestGet({ params }) {
@@ -45,13 +45,26 @@ h2{font-size:18px;margin:0 0 8px;color:var(--text)}
 .card p,.card li,.card label,.card h2,.card h3,.card span{color:var(--text)}
 .mut{color:var(--muted);font-size:14px}
 .card .mut,.docpos{color:var(--muted)}
-label{display:block;font-weight:700;margin-top:12px;font-size:14px}
-input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--paper);color:var(--paper-text);min-height:48px}
+label{display:block;font-weight:700;margin-top:14px;font-size:16px;line-height:1.35}
+input,select,textarea{width:100%;font:17px/1.4 system-ui,sans-serif;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--paper);color:var(--paper-text);min-height:52px}
 .bad,.bad input{outline:3px solid var(--danger)}
-.yesno{display:flex;gap:10px;margin-top:6px}
-.yesno label{margin:0;display:flex;gap:6px;align-items:center;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.yesno label{margin:0;display:flex;gap:8px;align-items:center;justify-content:center;padding:14px 12px;min-height:56px;border:2px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-size:18px}
 .yesno label.picked,.yesno label:has(input:checked){border-color:var(--primary);background:color-mix(in srgb,var(--primary) 18%,var(--surface));font-weight:800}
-.yesno input{accent-color:var(--primary);width:18px;height:18px;min-height:18px}
+.yesno input{accent-color:var(--primary);width:22px;height:22px;min-height:22px}
+.qcard{margin:16px 0;padding:16px;border:1px solid var(--border);border-radius:18px;background:var(--surface)}
+.qcard > label{font-size:18px;line-height:1.45;font-weight:650;margin:0 0 12px}
+.qcard .yesno{margin-top:0}
+.qcard .chk{font-size:17px;line-height:1.45;margin-top:0}
+.note{font-size:16px;line-height:1.5}
+.who{border:1px solid var(--border);border-radius:18px;padding:16px;background:#f3fafc;margin:0 0 14px}
+.who-name{font-size:24px;font-weight:800;margin:0;line-height:1.2;color:var(--text)}
+.who-meta{font-size:17px;font-weight:700;margin:6px 0 0;line-height:1.35;color:var(--text)}
+.sigcard{margin-top:16px;padding:16px;border:2px solid var(--primary);border-radius:18px;background:var(--surface)}
+.sigcard h3{margin:0 0 4px;font-size:20px}
+.sigpreview{display:block;width:100%;height:120px;object-fit:contain;background:#fff;border:1px dashed var(--border);border-radius:12px;margin:10px 0}
+.docpills{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin:0;list-style:none}
+.docpills button{flex:none;width:auto;margin:0;min-height:44px;padding:8px 14px;font-size:14px;border-radius:999px}
 button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14px;padding:12px 16px;background:var(--primary);color:var(--primary-text);font-weight:700;min-height:48px}
 .ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
 .ban{background:var(--primary);color:var(--primary-text)}
@@ -63,7 +76,8 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 .boxhead{margin-top:16px;font-weight:800;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-weight:700;color:var(--text)}
 .chk input{width:22px;height:22px;min-height:22px;flex:none}
-.doc,.paper{max-height:min(70vh,640px);overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;cursor:zoom-in}
+.doc,.paper{overflow:visible;border:1px solid var(--border);border-radius:12px;padding:8px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;cursor:zoom-in}
+.docpos{font-size:18px;font-weight:800;color:var(--text)!important;margin:4px 0 8px}
 .doc canvas,.paper canvas{width:100%!important;height:auto!important;border:0!important;border-radius:0!important;touch-action:pan-y!important;pointer-events:none}
 .paper .filled{color:#08315c!important;font-weight:800;border-bottom:1px solid #08315c}
 .paper .cap,.paper .blank{color:#3d5160!important}
@@ -91,7 +105,10 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);cursor:not-allowed}
 #retry,#missing{background:var(--surface);color:var(--text);border:1px solid var(--danger);border-radius:12px;padding:12px;margin-top:12px}
 #missing .miss{display:block;width:100%;margin-top:8px;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left}
-#pad,#gpad,canvas.sigpad{width:100%;height:160px;border:2px solid var(--primary);border-radius:12px;background:#fff;touch-action:none}
+#pad,#gpad,canvas.sigpad{width:100%;height:180px;border:2px solid var(--primary);border-radius:14px;background:#fff;touch-action:none}
+body.embed{padding:8px 8px 24px;background:transparent}
+body.embed .brand,body.embed #title{display:none}
+body.embed .actions.sticky{position:static;margin-top:16px;padding:0;border:0;background:transparent;backdrop-filter:none;max-width:none}
 </style>
 </head>
 <body>
