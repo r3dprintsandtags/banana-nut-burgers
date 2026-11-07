@@ -242,6 +242,25 @@ export async function ensureSchema(env) {
       participant_id INTEGER
     )`
   ).run();
+  // Registration numbers + form audit (migration 0004) so Health packets do not 500 on older local DBs.
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS reg_number_seq (
+      yymm TEXT PRIMARY KEY,
+      last_seq INTEGER NOT NULL DEFAULT 0
+    )`
+  ).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS form_audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id INTEGER,
+      submission_id INTEGER,
+      event TEXT NOT NULL,
+      actor TEXT NOT NULL DEFAULT 'system',
+      ip_hash TEXT NOT NULL DEFAULT '',
+      details TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL DEFAULT 0
+    )`
+  ).run();
   schemaReady = true;
 }
 

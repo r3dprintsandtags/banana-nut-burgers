@@ -34,7 +34,9 @@ test("unanswered kids question stays on minors", () => {
   const people = [{ id: 7, role: "primary", firstName: "Ada", lastName: "Lovelace", dob: "1990-01-01", status: "not_started" }];
   const status = getRegistrationStatus(reg, people);
   assert.equal(status.nextRequiredTask.step, "minors");
+  assert.equal(status.nextRequiredTask.taskId, "ask");
   assert.equal(status.nextRequiredTask.personId, undefined);
+  assert.equal(status.hasMinors, null);
 });
 
 test("Yes with no child still asks for a child", () => {
@@ -42,6 +44,8 @@ test("Yes with no child still asks for a child", () => {
   const people = [{ id: 7, role: "primary", firstName: "Ada", lastName: "Lovelace", dob: "1990-01-01", status: "not_started" }];
   const status = getRegistrationStatus(reg, people);
   assert.equal(status.nextRequiredTask.step, "minors");
+  assert.equal(status.nextRequiredTask.taskId, "add_child");
+  assert.equal(status.hasMinors, true);
 });
 
 test("a child already on the roster counts as Yes even if the flag lagged", () => {

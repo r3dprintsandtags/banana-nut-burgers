@@ -769,7 +769,15 @@ async function onPrimary(){
 function focusTask(target){
   if (!target) return;
   if (target.step === "minors") {
-    if (!target.personId) { $("hasMinorsYes").scrollIntoView({ behavior: "smooth", block: "center" }); $("hasMinorsYes").focus(); return; }
+    if (!target.personId) {
+      if (draft.hasMinors === true || target.taskId === "add_child") {
+        draft.addingChild = true; saveLocal(); paintMinors();
+        if ($("pFirst")) { $("pFirst").scrollIntoView({ behavior: "smooth", block: "center" }); $("pFirst").focus(); }
+        return;
+      }
+      $("hasMinorsYes").scrollIntoView({ behavior: "smooth", block: "center" }); $("hasMinorsYes").focus();
+      return;
+    }
     openEdit(target.personId);
     return;
   }
@@ -983,11 +991,12 @@ async function saveEdit(p, part, btn){
     if (age >= 18) { $("eErr").textContent = x.childAdult; btn.disabled = false; return; }
     const g = document.querySelector('input[name="eGear"]:checked');
     const gear = g ? g.value : "";
+    if (gear !== "yes" && gear !== "no") { $("eErr").textContent = x.needGear; btn.disabled = false; return; }
     if (gear === "no" && !V("eSize")) { $("eErr").textContent = x.needGearSize; btn.disabled = false; return; }
-    ok = await upsertPerson(p, { firstName: V("eFirst"), lastName: V("eLast"), dob, relationship: V("eRel"), ownGear: gear || undefined, gearSize: V("eSize"), forceDuplicate: true });
+    ok = await upsertPerson(p, { firstName: V("eFirst"), lastName: V("eLast"), dob, relationship: V("eRel"), ownGear: gear, gearSize: gear === "no" ? V("eSize") : "", forceDuplicate: true });
   }
   btn.disabled = false;
-  if (ok) { editOpen = null; paintMinors(); }
+  if (ok) { editOpen = null; paintMinors(); paintChrome(); }
 }
 function checkChildDob(){
   const age = ageFromDobStr(V("pDob"));
@@ -1060,7 +1069,15 @@ async function removePerson(id){
     body: JSON.stringify({ action: "remove", ref: draft.ref, token: draft.token, id, lang: L, reason: "removed by registrant" }) });
   const out = await r.json().catch(() => ({}));
   removeAsk = null;
-  if (r.ok) { party = out; status = out.status || status; delete packetLinks[id]; }
+  if (r.ok) {
+    party = out; status = out.status || status; delete packetLinks[id];
+    if (!minorsOnParty().length) {
+      // Keep Yes selected and show Add a child again — do not silently flip to No.
+      draft.hasMinors = true; draft.addingChild = true; saveLocal();
+    }
+    await saveDraft(false);
+    await refreshStatus();
+  }
   else $("errMinors").textContent = out.error || "";
   paintMinors(); paintChrome();
 }
@@ -1086,7 +1103,16 @@ $("partyPastBtn").onclick = async () => {
         phone: s.phone, email: s.email, relationship: s.relationship || "child", mode: "here", sameEmergency: true, sameAddress: true,
       })});
       const oo = await rr.json().catch(() => ({}));
-      if (rr.ok) { party = oo; status = oo.status || status; draft.hasMinors = true; saveLocal(); panel.classList.add("hide"); paintMinors(); paintChrome(); saveDraft(false); }
+      if (rr.ok) {
+        party = oo; status = oo.status || status; draft.hasMinors = true; saveLocal();
+        panel.classList.add("hide");
+        const added = (oo.participants || []).find((p) => p.role !== "primary" && p.firstName === s.firstName && p.lastName === s.lastName && p.dob === s.dob);
+        paintMinors(); paintChrome();
+        await saveDraft(false);
+        await refreshStatus();
+        // Past picks often lack gear — open edit so Health does not stay locked.
+        if (added && (!added.ownGear || (added.ownGear === "no" && !added.gearSize))) openEdit(added.id);
+      }
       else $("errMinors").textContent = oo.error || "";
     };
     list.appendChild(b);
@@ -1221,6 +1247,7 @@ function autoAdvance(before, after){
   clearTimeout(advanceTimer);
   advanceTimer = setTimeout(() => {
     const act = primaryAction(after, { step, personId, lang: L });
+    if (act.kind === "finish") return finishRegistration();
     if (act.kind === "go" && act.target) go(act.target.step, act.target.personId || defaultPerson(act.target.step));
     else if (act.kind === "focus" && act.target && act.target.personId && act.target.personId !== personId) go(act.target.step, act.target.personId);
   }, 1500);
@@ -1241,10 +1268,14 @@ async function finishRegistration(){
   if (unsent) { go("sign", unsent.id); return; }
   finishing = true; paintChrome();
   const d = collect();
+  const packetDone = (status.people || []).length > 0 && (status.people || []).every((p) => p.documents === "done" || p.documents === "waiting_shop");
   draft.idempotencyKey = newKey(); saveLocal();
   try {
     const r = await fetch("/api/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       ...d, hp: V("hp"), signerName: `${d.firstName} ${d.lastName}`.trim(),
+      // SSI packet already collected medical acks + drawn signatures.
+      medPregnantAck: true, medTruthAck: true,
+      medicalFromPacket: packetDone, packetCompleted: packetDone,
       idempotencyKey: draft.idempotencyKey, draftRef: draft.ref || "", draftToken: draft.token || "",
     })});
     const out = await r.json().catch(() => ({}));

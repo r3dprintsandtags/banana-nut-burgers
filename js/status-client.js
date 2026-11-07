@@ -58,7 +58,13 @@ function primaryAction(status, ctx) {
   }
   if (here && next.step === "about") return { kind: "save", label: es ? "Siguiente: Qui\xE9n viene" : "Next: Who's coming", target: next };
   if (here && next.step === "minors") {
-    return { kind: "focus", label: next.personId && person ? es ? "Completa los datos de " + person.firstName : "Finish " + person.firstName + "'s details" : es ? "Responde: \xBFviene alg\xFAn menor?" : "Answer: is anyone under 18 coming?", target: next };
+    if (next.personId && person) {
+      return { kind: "focus", label: es ? "Completa los datos de " + person.firstName : "Finish " + person.firstName + "'s details", target: next };
+    }
+    if (next.taskId === "add_child" || status.hasMinors === true) {
+      return { kind: "focus", label: es ? "Agrega al menor para continuar" : "Add the child to continue", target: next };
+    }
+    return { kind: "focus", label: es ? "Responde: \xBFviene alg\xFAn menor?" : "Answer: is anyone under 18 coming?", target: next };
   }
   return { kind: "go", label: (es ? "Siguiente: " : "Next: ") + taskLabel(next, status, lang), target: next };
 }
