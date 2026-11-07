@@ -196,6 +196,71 @@ export async function ensureSchema(env) {
       value TEXT NOT NULL DEFAULT ''
     )`
   ).run();
+  // Minimal form packet tables so party status works on DBs that never ran 0004.
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS form_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER,
+      registration_id INTEGER,
+      booking_id INTEGER,
+      packet_id INTEGER,
+      template_id INTEGER,
+      template_versions TEXT NOT NULL DEFAULT '{}',
+      token_hash TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'sent',
+      prefill_json TEXT NOT NULL DEFAULT '{}',
+      draft_json TEXT NOT NULL DEFAULT '{}',
+      expires_at INTEGER,
+      sent_via TEXT NOT NULL DEFAULT '',
+      sent_at INTEGER,
+      completed_at INTEGER,
+      created_at INTEGER NOT NULL DEFAULT 0,
+      participant_id INTEGER
+    )`
+  ).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS form_submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id INTEGER NOT NULL,
+      customer_id INTEGER,
+      registration_id INTEGER,
+      answers_encrypted TEXT NOT NULL DEFAULT '',
+      signature_r2_key TEXT NOT NULL DEFAULT '',
+      signed_pdf_r2_keys TEXT NOT NULL DEFAULT '[]',
+      signer_name TEXT NOT NULL DEFAULT '',
+      signed_at INTEGER,
+      ip_hash TEXT NOT NULL DEFAULT '',
+      user_agent TEXT NOT NULL DEFAULT '',
+      consent_text TEXT NOT NULL DEFAULT '',
+      language TEXT NOT NULL DEFAULT 'en',
+      guardian_json_encrypted TEXT NOT NULL DEFAULT '',
+      pdf_sha256 TEXT NOT NULL DEFAULT '',
+      registration_number TEXT NOT NULL DEFAULT '',
+      valid_until INTEGER,
+      needs_physician INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT 0,
+      participant_id INTEGER
+    )`
+  ).run();
+  // Registration numbers + form audit (migration 0004) so Health packets do not 500 on older local DBs.
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS reg_number_seq (
+      yymm TEXT PRIMARY KEY,
+      last_seq INTEGER NOT NULL DEFAULT 0
+    )`
+  ).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS form_audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id INTEGER,
+      submission_id INTEGER,
+      event TEXT NOT NULL,
+      actor TEXT NOT NULL DEFAULT 'system',
+      ip_hash TEXT NOT NULL DEFAULT '',
+      details TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL DEFAULT 0
+    )`
+  ).run();
   schemaReady = true;
 }
 

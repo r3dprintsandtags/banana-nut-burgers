@@ -60,9 +60,12 @@ export function getRegistrationStatus(reg, participants, opts = {}) {
 
   const submitted = reg.status && reg.status !== "draft";
   const aboutDone = aboutComplete(data);
-  const hasMinors = data.hasMinors === true ? true : (data.hasMinors === false ? false : null);
   const guests = (participants || []).filter((p) => p.role !== "primary");
   const primary = (participants || []).find((p) => p.role === "primary") || null;
+  // Children already on the roster count as Yes even if the draft flag lagged behind.
+  const hasMinors = guests.length > 0
+    ? true
+    : (data.hasMinors === true ? true : (data.hasMinors === false ? false : null));
 
   const people = (participants || []).map((p) => {
     const self = p.role === "primary";
@@ -98,12 +101,12 @@ export function getRegistrationStatus(reg, participants, opts = {}) {
   if (!aboutDone) {
     nextRequiredTask = { step: "about" };
   } else if (hasMinors === null) {
-    nextRequiredTask = { step: "minors" };
+    nextRequiredTask = { step: "minors", taskId: "ask" };
   } else if (hasMinors === true && !guests.length) {
-    nextRequiredTask = { step: "minors" };
+    nextRequiredTask = { step: "minors", taskId: "add_child" };
   } else if (hasMinors === true) {
     const incomplete = people.find((p) => !p.self && p.details !== "done");
-    if (incomplete) nextRequiredTask = { step: "minors", personId: incomplete.id };
+    if (incomplete) nextRequiredTask = { step: "minors", personId: incomplete.id, taskId: "edit_child" };
   }
 
   if (!nextRequiredTask) {
@@ -156,6 +159,7 @@ export function getRegistrationStatus(reg, participants, opts = {}) {
     submitted: !!submitted,
     customerFinished: !!customerFinished,
     overall,
+    hasMinors,
     nextRequiredTask,
     steps,
     people,

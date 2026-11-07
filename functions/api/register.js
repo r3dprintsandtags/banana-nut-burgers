@@ -70,10 +70,49 @@ export async function onRequestPost({ request, env }) {
   if (b.privacyAck !== true) return json({ error: "The privacy acknowledgement must be accepted" }, 422);
   const marketing = b.marketingConsent === true;
 
-  // --- signature: typed legal name + drawn signature image are both required ---
+  // Resolve draft early so we can trust packet completion from the DB (not only the client body).
+  let draftReg = null;
+  if (b.draftRef && b.draftToken) {
+    const cand = await env.DB.prepare("SELECT * FROM registrations WHERE upper(ref)=? AND status='draft'").bind(str(b.draftRef, 20).toUpperCase()).first();
+    if (cand && cand.draft_token_hash && (await sha256(String(b.draftToken))) === cand.draft_token_hash) draftReg = cand;
+  }
+
+  let packetRow = null;
+  let packetSubmission = null;
+  if (draftReg) {
+    try {
+      packetRow = await env.DB.prepare(
+        "SELECT id, status FROM form_requests WHERE registration_id=? ORDER BY id DESC LIMIT 1"
+      ).bind(draftReg.id).first();
+      const hasPackets = await env.DB.prepare("SELECT id FROM form_packets WHERE status='active' LIMIT 1").first();
+      if (hasPackets && packetRow?.status !== "completed") {
+        return json({ error: "Complete the required form packet before submitting" }, 422);
+      }
+      if (packetRow?.status === "completed") {
+        packetSubmission = await env.DB.prepare(
+          "SELECT signature_r2_key, needs_physician FROM form_submissions WHERE request_id=? ORDER BY id DESC LIMIT 1"
+        ).bind(packetRow.id).first();
+      }
+    } catch (_) { /* forms tables may not be migrated yet */ }
+  }
+
+  const packetDone = packetRow?.status === "completed" || b.medicalFromPacket === true || b.packetCompleted === true;
+
+  // --- signature: typed legal name required; drawn signature from body OR completed SSI packet ---
   const signerName = str(b.signerName, 120);
   if (!signerName) return json({ error: "Type your full name to sign" }, 422);
-  const sig = String(b.signatureDataUrl ?? "");
+  let sig = String(b.signatureDataUrl ?? "");
+  if ((!sig.startsWith("data:image/png;base64,") || sig.length > 300_000) && packetDone && packetSubmission?.signature_r2_key && env.DOCS) {
+    try {
+      const obj = await env.DOCS.get(packetSubmission.signature_r2_key);
+      if (obj) {
+        const bytes = new Uint8Array(await obj.arrayBuffer());
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        sig = `data:image/png;base64,${btoa(bin)}`;
+      }
+    } catch (_) { /* fall through to validation */ }
+  }
   if (!sig.startsWith("data:image/png;base64,") || sig.length > 300_000)
     return json({ error: "A drawn signature is required" }, 422);
 
@@ -84,14 +123,16 @@ export async function onRequestPost({ request, env }) {
     todayIso = new Intl.DateTimeFormat("en-CA", { timeZone: env.SHOP_TZ || "America/Tegucigalpa", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   } catch (_) { /* keep UTC fallback */ }
   if (dob > todayIso) return json({ error: "Date of birth cannot be in the future" }, 422);
-  if (b.medPregnantAck !== true || b.medTruthAck !== true) return json({ error: "Medical acknowledgements are required" }, 422);
-
-  // Medical answers live only in the SSI packet — shop registration just carries the staff-review flag.
-  const medicalFromPacket = b.medicalFromPacket === true || b.packetCompleted === true;
-  if (!medicalFromPacket) {
+  // Medical acks live in the SSI packet when that path is used.
+  if (!packetDone && (b.medPregnantAck !== true || b.medTruthAck !== true)) {
+    return json({ error: "Medical acknowledgements are required" }, 422);
+  }
+  if (!packetDone) {
     return json({ error: "Complete the SSI medical / forms packet before submitting registration" }, 422);
   }
-  const needsStaffReview = b.packetNeedsPhysician === true || b.staffReviewStatus === "PENDING_STAFF_REVIEW" || b.medNeedsReview === 1 || b.medNeedsReview === true;
+  const needsStaffReview = !!(packetSubmission?.needs_physician)
+    || b.packetNeedsPhysician === true || b.staffReviewStatus === "PENDING_STAFF_REVIEW"
+    || b.medNeedsReview === 1 || b.medNeedsReview === true;
   const staffReviewStatus = needsStaffReview ? "PENDING_STAFF_REVIEW" : "CLEARED";
 
   const data = {
@@ -138,25 +179,6 @@ export async function onRequestPost({ request, env }) {
         status: "submitted", duplicate: true, bookingId,
       });
     }
-  }
-  // Resuming a saved draft? It will be converted (same ref kept) on submit.
-  let draftReg = null;
-  if (b.draftRef && b.draftToken) {
-    const cand = await env.DB.prepare("SELECT * FROM registrations WHERE upper(ref)=? AND status='draft'").bind(str(b.draftRef, 20).toUpperCase()).first();
-    if (cand && cand.draft_token_hash && (await sha256(String(b.draftToken))) === cand.draft_token_hash) draftReg = cand;
-  }
-
-  // Require packet completion before converting draft → submitted (avoids orphan submitted regs with no booking).
-  if (draftReg) {
-    try {
-      const latest = await env.DB.prepare(
-        "SELECT id, status FROM form_requests WHERE registration_id=? ORDER BY id DESC LIMIT 1"
-      ).bind(draftReg.id).first();
-      const hasPackets = await env.DB.prepare("SELECT id FROM form_packets WHERE status='active' LIMIT 1").first();
-      if (hasPackets && latest?.status !== "completed") {
-        return json({ error: "Complete the required form packet before submitting" }, 422);
-      }
-    } catch (_) { /* forms tables may not be migrated yet */ }
   }
 
   // rate limit: 5 registrations / IP / 10 min
@@ -268,12 +290,12 @@ export async function onRequestPost({ request, env }) {
   let registrationNumber = "";
   try { registrationNumber = await ensureRegistrationNumber(env, customer.id); } catch (_) {}
 
-  let formLink = null, formToken = null, packetDone = false;
+  let formLink = null, formToken = null, packetCompletedOut = packetDone;
   try {
     const latest = await env.DB.prepare(
       "SELECT id, status FROM form_requests WHERE registration_id=? ORDER BY id DESC LIMIT 1"
     ).bind(regId).first();
-    packetDone = latest?.status === "completed";
+    packetCompletedOut = latest?.status === "completed" || packetDone;
   } catch (_) { /* forms tables may not be migrated yet */ }
 
   // Always create/update the CRM booking so the appointment appears under Bookings.
@@ -300,7 +322,7 @@ export async function onRequestPost({ request, env }) {
   await audit(env, "customer", "registration.submitted", "registration", ref, isDuplicate ? "duplicate customer match" : "new customer");
   return json({
     ok: true, ref, submittedAt: new Date(now).toISOString(), status: "submitted",
-    registrationNumber, formLink, formToken, packetCompleted: packetDone, bookingId,
+    registrationNumber, formLink, formToken, packetCompleted: packetCompletedOut, bookingId,
     next: null,
   }, 201);
 }

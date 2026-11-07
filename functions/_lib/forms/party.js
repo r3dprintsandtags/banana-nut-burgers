@@ -600,13 +600,19 @@ export async function partyDashboard(env, reg, { staff = false } = {}) {
   const rows = await listParticipants(env, reg.id);
   const people = [];
   for (const row of rows) {
-    const sub = await env.DB.prepare(
-      `SELECT s.needs_physician, s.signed_pdf_r2_keys, s.registration_number, s.id AS submission_id, r.status AS request_status
-       FROM form_requests r
-       LEFT JOIN form_submissions s ON s.request_id = r.id
-       WHERE r.participant_id=?
-       ORDER BY r.id DESC, s.id DESC LIMIT 1`
-    ).bind(row.id).first();
+    let sub = null;
+    try {
+      sub = await env.DB.prepare(
+        `SELECT s.needs_physician, s.signed_pdf_r2_keys, s.registration_number, s.id AS submission_id, r.status AS request_status
+         FROM form_requests r
+         LEFT JOIN form_submissions s ON s.request_id = r.id
+         WHERE r.participant_id=?
+         ORDER BY r.id DESC, s.id DESC LIMIT 1`
+      ).bind(row.id).first();
+    } catch (_) {
+      // Older local DBs may not have form_requests yet; status still works without packets.
+      sub = null;
+    }
     // Heal stuck in_progress rows when the packet already completed (prior sync swallow).
     if (sub && sub.request_status === "completed" && (row.status === "in_progress" || row.status === "not_started")) {
       try {
@@ -626,7 +632,12 @@ export async function partyDashboard(env, reg, { staff = false } = {}) {
   let sharedEmergency = {};
   try { sharedAddress = JSON.parse(reg.shared_address_json || "{}"); } catch { sharedAddress = {}; }
   try { sharedEmergency = JSON.parse(reg.shared_emergency_json || "{}"); } catch { sharedEmergency = {}; }
-  const status = getRegistrationStatus(reg, people);
+  // Reload so hasMinors and other draft fields match the latest save.
+  let fresh = reg;
+  try {
+    fresh = await env.DB.prepare("SELECT * FROM registrations WHERE id=?").bind(reg.id).first() || reg;
+  } catch (_) { fresh = reg; }
+  const status = getRegistrationStatus(fresh, people);
   return {
     registrationId: reg.id,
     ref: reg.ref,
