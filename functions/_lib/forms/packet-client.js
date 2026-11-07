@@ -2,6 +2,8 @@
 export function packetClientScript({ token, renderSource, wizardSource }) {
   return `
 const TOKEN=${JSON.stringify(token)};
+const EMBED=(()=>{ try{ return new URLSearchParams(location.search).get("embed")||""; }catch(e){ return ""; } })();
+if(EMBED) document.documentElement.classList.add("embed");
 const renderDocumentHtml = ${renderSource};
 ${wizardSource}
 let L=(navigator.language||"en").startsWith("es")?"es":"en";
@@ -86,11 +88,15 @@ function paintStepper(){
   for(const s of flow.steps){
     if(s.id==="finish" && !doneOut) continue;
     const st=statusOf(s.id);
+    const open=s.id===stepId;
+    const item=document.createElement("div");
+    item.className="stepitem "+st+(open?" open":"");
     const b=document.createElement("button");
     b.type="button";
     b.className="stepbtn "+st;
     b.dataset.step=s.id;
-    if (s.id === stepId) b.setAttribute("aria-current", "step");
+    b.setAttribute("aria-expanded", open?"true":"false");
+    if(open) b.setAttribute("aria-current", "step");
     const nm=document.createElement("span");
     nm.className="nm";
     nm.textContent=stepLabel(s.id, L);
@@ -99,8 +105,61 @@ function paintStepper(){
     ss.textContent=statusWord(st);
     b.append(nm, ss);
     b.onclick=()=>onStepClick(s.id);
-    nav.appendChild(b);
+    item.appendChild(b);
+    if(open){
+      const panel=document.createElement("div");
+      panel.className="steppanel";
+      panel.id="stepPanel";
+      item.appendChild(panel);
+    }
+    nav.appendChild(item);
   }
+}
+function scrollToEl(el, block){
+  if(!el) return;
+  if(window.parent && window.parent!==window){
+    const top=Math.max(0, el.getBoundingClientRect().top+(window.scrollY||0)-12);
+    try{ window.parent.postMessage({type:"bnb_embed_scroll", top}, location.origin); }catch(e){}
+    return;
+  }
+  try{ el.scrollIntoView({ block: block||"center" }); }catch(e){}
+}
+let revealedKey="";
+function revealCurrent(){
+  const open=document.querySelector(".stepitem.open");
+  if(!open) return;
+  const key=stepId+":"+docIndex;
+  if(key===revealedKey) return;
+  revealedKey=key;
+  scrollToEl(open, "start");
+}
+let embedWatching=false;
+function watchEmbedHeight(){
+  if(!window.parent || window.parent===window) return;
+  const send=()=>{
+    const wrap=document.querySelector(".wrap");
+    if(!wrap) return;
+    const h=Math.ceil(wrap.getBoundingClientRect().height+48);
+    if(h<80) return;
+    try{ window.parent.postMessage({type:"bnb_embed_height", h}, location.origin); }catch(e){}
+  };
+  send();
+  if(!embedWatching && window.ResizeObserver){
+    embedWatching=true;
+    const obs=new ResizeObserver(()=>send());
+    const wrap=document.querySelector(".wrap");
+    if(wrap) obs.observe(wrap);
+  }
+  setTimeout(send, 200);
+  setTimeout(send, 800);
+}
+function mountCard(card){
+  const panel=$("stepPanel");
+  const app=$("app");
+  if(app) app.innerHTML="";
+  const host=panel||app;
+  if(host && card) host.appendChild(card);
+  watchEmbedHeight();
 }
 function onStepClick(id){
   if(id===stepId) return;
@@ -265,7 +324,7 @@ function enableAgree(agree, hint, why){
 function focusPending(){
   if(!pendingFocus) return;
   const el=document.getElementById("f_"+pendingFocus) || document.querySelector('[name="'+pendingFocus+'"]');
-  if(el){ el.classList.add("bad"); el.scrollIntoView({ block:"center" }); }
+  if(el){ el.classList.add("bad"); scrollToEl(el, "center"); }
   pendingFocus="";
 }
 function renderAbout(){
@@ -428,7 +487,7 @@ function renderMedical(){
   }));
   if(opened){
     const target=card.querySelector("#wrap_"+opened);
-    if(target) setTimeout(()=>{ target.scrollIntoView({ block:"center" }); }, 0);
+    if(target) setTimeout(()=>{ scrollToEl(target, "center"); }, 60);
   }
   return card;
 }
@@ -589,7 +648,7 @@ function renderDocuments(){
     if(agree.disabled){
       enableAgree(agree, hint, why);
       $("err").textContent=L==="es"?"Marca que aceptas y firma, luego pulsa otra vez.":"Check that you agree and sign, then tap again.";
-      try{ agreeLab.scrollIntoView({ block:"center" }); }catch(e){}
+      try{ scrollToEl(agreeLab, "center"); }catch(e){}
       return;
     }
     if(docIndex>=docs.length-1) finishLastDocument(doc, agree, pad, gpad, reuse);
@@ -980,9 +1039,6 @@ async function downloadPdf(key){
 function showDone(out){
   out=out&&typeof out==="object"?out:{};
   closeDocLightbox();
-  const app=$("app");
-  if(!app) return;
-  app.innerHTML="";
   const card=document.createElement("div");
   card.className="card";
   const h=heading(L==="es"?"Listo":"Finish");
@@ -1055,8 +1111,9 @@ function showDone(out){
   back.textContent=L==="es"?"Volver al registro":"Back to registration";
   back.onclick=()=>goBackAfterPacket(out);
   card.append(email, note, back);
-  app.appendChild(card);
   paintStepper();
+  mountCard(card);
+  revealCurrent();
   // Brief pause so "Done" / downloads are visible, then return to registration.
   setTimeout(()=>goBackAfterPacket(out, { auto: true }), 1800);
 }
@@ -1093,14 +1150,10 @@ function render(){
   if($("err")) $("err").textContent="";
   clearMissing();
   document.body.style.overflow="";
-  try{ window.scrollTo(0, 0); }catch(e){}
-  const app=$("app");
-  if(!app) return;
   if(stepId==="finish" && doneOut){
     try{ showDone(doneOut); }catch(e){ try{ console.error(e); }catch(_){} }
     return;
   }
-  app.innerHTML="";
   let card=null;
   try{
     if(stepId==="about") card=renderAbout();
@@ -1124,16 +1177,20 @@ function render(){
     card=fail;
     try{ console.error(e); }catch(_){}
   }
-  if(card) app.appendChild(card);
+  mountCard(card);
   focusPending();
-  if(!flow) return;
-  const probs=stepProblems(stepId, flow, answers);
-  if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
-    const why=document.createElement("p");
-    why.className="mut";
-    why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
-    app.appendChild(why);
+  if(flow){
+    const probs=stepProblems(stepId, flow, answers);
+    if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
+      const why=document.createElement("p");
+      why.className="mut";
+      why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
+      const host=$("stepPanel")||$("app");
+      if(host) host.appendChild(why);
+    }
   }
+  revealCurrent();
+  watchEmbedHeight();
 }
 window.addEventListener("popstate", ()=>{
   const parsed=parseHash(location.hash, flow)||{ stepId:"about", docIndex:0 };

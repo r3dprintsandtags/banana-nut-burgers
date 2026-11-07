@@ -2,13 +2,12 @@ import { onRequestGet } from "../functions/f/[token].js";
 import fs from "fs";
 
 const html = await (await onRequestGet({ params: { token: "demo" } })).text();
-const start = html.indexOf("<script>");
-const end = html.lastIndexOf("</script>");
-if (start < 0 || end < 0) {
+const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+const script = blocks.sort((a, b) => b.length - a.length)[0] || "";
+if (!script) {
   console.error("missing script");
   process.exit(1);
 }
-const script = html.slice(start + 8, end);
 try {
   new Function(script);
   console.log("script ok", script.length);
