@@ -1,5 +1,5 @@
 /** Party / group registration helpers. Reuses ageFromDob, regnum, form_requests. */
-import { ageFromDob } from "./shared.js";
+import { ageFromDob, pickContact } from "./shared.js";
 import { ensureRegistrationNumber } from "./regnum.js";
 import { createRequestForRegistration, packetKeyForActivity, fromRegistrationData } from "./submit.js";
 import { getRegistrationStatus } from "./reg-status.js";
@@ -123,11 +123,65 @@ export async function listParticipants(env, registrationId) {
   ).bind(registrationId).all()).results || [];
 }
 
+async function fillBlankContact(env, participant, picked) {
+  const dob = participant.dob || picked.dob || "";
+  const email = participant.email || picked.email || "";
+  const phone = participant.phone || picked.phone || "";
+  if (dob === (participant.dob || "") && email === (participant.email || "") && phone === (participant.phone || "")) {
+    return participant;
+  }
+  await env.DB.prepare("UPDATE participants SET dob=?, email=?, phone=?, updated_at=? WHERE id=?")
+    .bind(dob, email, phone, Date.now(), participant.id).run();
+  return { ...participant, dob, email, phone };
+}
+
+async function guardianContact(env, participant, data = {}) {
+  let email = "";
+  let phone = "";
+  let name = "";
+  if (participant.guardian_participant_id) {
+    const guardian = await env.DB.prepare(
+      "SELECT first_name, last_name, email, phone FROM participants WHERE id=? AND status<>'removed'"
+    ).bind(participant.guardian_participant_id).first();
+    if (guardian) {
+      name = `${guardian.first_name || ""} ${guardian.last_name || ""}`.trim();
+      email = guardian.email || "";
+      phone = guardian.phone || "";
+    }
+  }
+  if (!email) email = data.email || "";
+  if (!phone) phone = data.phone || "";
+  if (!name) name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+  return { email, phone, name };
+}
+
+/** Fill blank date of birth, phone, and email from the registration or the guardian. */
+export async function hydrateParticipantContact(env, reg, participant, data = {}, customer = null) {
+  const minor = participant.role === "primary" ? false : !!(participant.is_minor || computeIsMinor(participant.dob));
+  const guardian = minor ? await guardianContact(env, participant, data) : {};
+  const picked = pickContact({
+    isMinor: minor,
+    participant,
+    customer: customer || {},
+    registration: data,
+    guardian,
+  });
+  return fillBlankContact(env, participant, picked);
+}
+
 export async function ensurePrimaryParticipant(env, reg, customer, data = {}) {
   const existing = await env.DB.prepare(
     "SELECT * FROM participants WHERE registration_id=? AND role='primary' AND status<>'removed' LIMIT 1"
   ).bind(reg.id).first();
-  if (existing) return existing;
+  if (existing) {
+    const filled = await hydrateParticipantContact(env, reg, existing, data, customer || {});
+    const cust = customer || {};
+    if (filled.email && cust.id && !cust.email) {
+      await env.DB.prepare("UPDATE customers SET email=?, updated_at=? WHERE id=? AND (email IS NULL OR email='')")
+        .bind(filled.email, Date.now(), cust.id).run();
+    }
+    return filled;
+  }
 
   const cust = customer || {};
   const first = String(data.firstName || data.first_name || cust.first_name || "").trim();
@@ -210,8 +264,8 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
   }
   const mode = "here"; // minors always fill with the guardian on this device
   const relationship = String(payload.relationship || (isMinor ? "child" : "self")).slice(0, 40);
-  const email = String(payload.email || "").trim().slice(0, 120);
-  const phone = String(payload.phone || "").replace(/[^\d+]/g, "").slice(0, 32);
+  let email = String(payload.email || "").trim().slice(0, 120);
+  let phone = String(payload.phone || "").replace(/[^\d+]/g, "").slice(0, 32);
   const now = Date.now();
 
   // Guardian is always the primary registrant — no adult-to-adult guardian picker.
@@ -228,10 +282,12 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
       throw Object.assign(new Error("A parent or guardian needs to register first"), { status: 422, code: "GUARDIAN_REQUIRED" });
     }
     guardianParticipantId = primary.id;
+    if (!email) email = String(primary.email || "").trim().slice(0, 120);
+    if (!phone) phone = String(primary.phone || "").replace(/[^\d+]/g, "").slice(0, 32);
     guardianJson = JSON.stringify({
       name: `${primary.first_name || ""} ${primary.last_name || ""}`.trim(),
-      email: primary.email || "",
-      phone: primary.phone || "",
+      email: primary.email || email,
+      phone: primary.phone || phone,
     });
   }
 
@@ -252,7 +308,28 @@ export async function upsertParticipant(env, reg, payload, { primaryCustomer } =
     }
   }
 
-  const contactId = await findOrCreateContact(env, { firstName: first, lastName: last, phone, email, dob });
+  // A minor keeps their own customer row. Copying the guardian phone into the
+  // lookup would rename the guardian's account to the child.
+  let contactId = null;
+  if (isMinor && id) {
+    const existingContact = await env.DB.prepare(
+      "SELECT contact_id FROM participants WHERE id=? AND registration_id=? AND status<>'removed'"
+    ).bind(id, reg.id).first();
+    if (existingContact?.contact_id) {
+      contactId = existingContact.contact_id;
+      await env.DB.prepare("UPDATE customers SET first_name=?, last_name=?, updated_at=? WHERE id=?")
+        .bind(first, last, now, contactId).run();
+    }
+  }
+  if (!contactId) {
+    contactId = await findOrCreateContact(env, {
+      firstName: first,
+      lastName: last,
+      phone: isMinor ? "" : phone,
+      email: isMinor ? "" : email,
+      dob,
+    });
+  }
   let regNum = "";
   try { regNum = await ensureRegistrationNumber(env, contactId); } catch (_) {}
 
@@ -363,11 +440,12 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
     : null;
   if (!customer) {
     // Recover orphaned participants so Start forms is never blocked by a missing contact row.
+    const ownContact = participant.role === "primary";
     const contactId = await findOrCreateContact(env, {
       firstName: participant.first_name || "Guest",
       lastName: participant.last_name || "Diver",
-      phone: participant.phone || "",
-      email: participant.email || "",
+      phone: ownContact ? (participant.phone || "") : "",
+      email: ownContact ? (participant.email || "") : "",
       dob: participant.dob || "",
     });
     await env.DB.prepare("UPDATE participants SET contact_id=?, updated_at=? WHERE id=?")
@@ -378,6 +456,7 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
 
   let data = {};
   try { data = JSON.parse(reg.data || "{}"); } catch { data = {}; }
+  participant = await hydrateParticipantContact(env, reg, participant, data, customer);
 
   let sharedAddr = {};
   let sharedEmg = {};
@@ -428,9 +507,9 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
   const prefill = fromRegistrationData({
     firstName: participant.first_name,
     lastName: participant.last_name,
-    dob: participant.dob,
-    phone: participant.phone || customer.phone,
-    email: participant.email || customer.email,
+    dob: participant.dob || (participant.role === "primary" ? data.dob : ""),
+    phone: participant.phone || customer.phone || data.phone,
+    email: participant.email || customer.email || data.email,
     address: sharedAddr.address || data.address,
     city: sharedAddr.city || data.city,
     state: sharedAddr.state || data.state,
@@ -598,8 +677,15 @@ export async function suggestPastPeople(env, reg, { phone = "", email = "" } = {
 
 export async function partyDashboard(env, reg, { staff = false } = {}) {
   const rows = await listParticipants(env, reg.id);
+  let regData = {};
+  try { regData = JSON.parse(reg.data || "{}"); } catch { regData = {}; }
+  const account = reg.customer_id
+    ? await env.DB.prepare("SELECT * FROM customers WHERE id=?").bind(reg.customer_id).first()
+    : null;
   const people = [];
   for (const row of rows) {
+    const filled = await hydrateParticipantContact(env, reg, row, regData, row.role === "primary" ? account : null);
+    Object.assign(row, filled);
     const sub = await env.DB.prepare(
       `SELECT s.needs_physician, s.signed_pdf_r2_keys, s.registration_number, s.id AS submission_id, r.status AS request_status
        FROM form_requests r

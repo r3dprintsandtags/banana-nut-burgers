@@ -21,7 +21,7 @@
   }
 }
 *{box-sizing:border-box}
-html{overflow-y:scroll;-webkit-overflow-scrolling:touch}
+html{overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
 body{margin:0;background:#06161f url(img/reef-swim.jpg) center/cover fixed no-repeat;color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));overflow-x:hidden;min-height:100%}
 body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,22,31,.5) 0%,rgba(6,22,31,.72) 40%,rgba(6,22,31,.9) 100%)}
 .wrap,.top{position:relative;z-index:1}
@@ -30,12 +30,12 @@ body:before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 .top button{background:rgba(255,255,255,.92);color:#0a2533;border:1px solid rgba(255,255,255,.4);border-radius:99px;min-height:48px;min-width:48px;padding:8px 14px;font-weight:700;cursor:pointer}
 .brand{display:inline-flex;align-items:center;text-decoration:none;line-height:0}.brand img{width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
 h1{font-size:28px;margin:14px 0 4px;color:var(--on-photo);text-shadow:0 2px 14px rgba(0,0,0,.5)}
-h2{font-size:21px;margin:0 0 4px}
+h2{font-size:26px;line-height:1.2;margin:0 0 6px}
 h3{font-size:17px;margin:16px 0 6px}
 .lead{color:var(--on-photo);text-shadow:0 1px 8px rgba(0,0,0,.5);margin:0 0 8px}
-.card{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px;box-shadow:0 16px 48px rgba(0,0,0,.22)}
+.card{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:20px 18px;margin-top:14px;box-shadow:0 16px 48px rgba(0,0,0,.22)}
 .card .instr{color:var(--muted);margin:0 0 12px}
-label{display:block;font-weight:600;margin-top:14px;font-size:15px}
+label{display:block;font-weight:700;margin-top:14px;font-size:16px;line-height:1.35}
 input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--field);color:var(--field-text);min-height:48px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.row{grid-template-columns:1fr}}
 button,.btn{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14px;padding:12px 18px;background:var(--primary);color:var(--primary-text);font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
@@ -65,15 +65,18 @@ button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not
   .st-needs_resign{color:#ffb4b4!important;background:#3d1717;border-color:#ffb4b4}
   .st-waiting_shop{color:#c7c9ff!important;background:#23264d;border-color:#c7c9ff}
 }
-#stepper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:12px 0 0}
-#stepper button{flex-direction:column;gap:4px;padding:8px 4px;min-height:64px;background:var(--surface);color:var(--text);border:1px solid var(--line);font-size:13px;line-height:1.2}
-#stepper button[aria-current="step"]{outline:3px solid var(--ban);outline-offset:1px}
+#stepper{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:12px 0 0;overflow:visible}
+#stepper button{width:100%;flex-direction:row;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;min-height:56px;background:var(--surface);color:var(--text);border:1px solid var(--line);font-size:17px;line-height:1.25;text-align:left}
+#stepper button > span:first-child{flex:1;min-width:0;font-weight:800}
+#stepper button[aria-current="step"]{min-height:76px;font-size:22px;padding:16px 16px;outline:3px solid var(--ban);outline-offset:2px}
 #stepper button.locked{background:var(--disabled);color:var(--disabled-text)}
-#stepper .chip{font-size:11px;padding:2px 6px}
-@media(max-width:520px){#stepper .chip span.w{display:none}}
+#stepper .chip{font-size:13px;padding:4px 10px}
+.switcher{flex-wrap:wrap;overflow:visible}
+.switcher button{flex:1 1 9.5rem;min-height:52px;font-size:16px;padding:10px 14px}
+.switcher button[aria-pressed="true"]{min-height:64px;font-size:18px;padding:12px 16px}
 #lockMsg{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--surface);color:var(--danger);font-weight:700}
-.switcher{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin:0 0 8px}
-.switcher button{flex:none;background:var(--surface);color:var(--text);border:1px solid var(--border);gap:8px}
+.switcher{display:flex;flex-wrap:wrap;gap:8px;overflow:visible;padding:2px 0 8px;margin:0 0 8px}
+.switcher button{flex:1 1 9.5rem;background:var(--surface);color:var(--text);border:1px solid var(--border);gap:8px}
 .switcher button[aria-pressed="true"]{outline:3px solid var(--primary);outline-offset:1px}
 .yesbig{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .yesbig button{min-height:64px;font-size:18px;background:var(--surface);color:var(--text);border:2px solid var(--border)}
@@ -83,7 +86,7 @@ button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not
 .person .checks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .person .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .allset{margin-top:12px;padding:14px;border-radius:12px;border:2px solid var(--ok);color:var(--ok);font-weight:800;background:var(--surface)}
-.embed{width:100%;border:0;display:block;min-height:240px;background:transparent}
+iframe.embed{width:100%;border:0;display:block;min-height:0;height:auto;background:#fff8e6;border-radius:16px;overflow:hidden}
 .doclist{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .docline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft)}
 .docline b{min-width:0;flex:1 1 8rem;overflow-wrap:anywhere}
@@ -95,6 +98,19 @@ button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not
 .pdfview canvas{width:100%;height:auto;display:block;margin:0 0 8px}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
 .bar .in{max-width:760px;margin:0 auto;display:flex;gap:8px}
+@media(min-width:900px){
+  .wrap,.top{max-width:min(1480px, calc(100vw - 48px))}
+  .bar .in{max-width:min(1480px, calc(100vw - 48px))}
+  .card{padding:28px 32px}
+  h2{font-size:32px}
+  #stepper{flex-direction:row}
+  #stepper button{flex:1;width:auto;flex-direction:column;justify-content:center;text-align:center;min-width:0;min-height:108px;font-size:17px;padding:14px 10px}
+  #stepper button > span:first-child{flex:none}
+  #stepper button[aria-current="step"]{flex:1.8;min-height:132px;font-size:26px;padding:16px 12px}
+  #stepper .chip{font-size:13px;white-space:normal;text-align:center}
+  .switcher button[aria-pressed="true"]{min-height:72px;font-size:20px}
+  label{font-size:17px}
+}
 .bar .in button{flex:1}
 .bar #backBtn{flex:0 0 auto;min-width:96px}
 .ref{font-size:26px;font-weight:800;letter-spacing:1px;color:var(--text)}
@@ -859,7 +875,9 @@ function paintMinors(){
     card.className = "person";
     const age = p.age != null ? fmt(x.ageN, { n: p.age }) : "";
     const chip = (label, st) => `<span class="mut" style="font-weight:700">${esc(label)}</span> ${chipHtml(st === "waiting_on_shop" ? "waiting_shop" : (st || "not_started"))}`;
+    const contactBits = [p.phone, p.email].filter(Boolean).join(" · ");
     card.innerHTML = `<div class="top2"><b style="font-size:18px">${esc(p.firstName)} ${esc(p.lastName)}</b><span class="mut">${esc(age)}</span></div>
+      ${contactBits ? `<p class="mut" style="margin:4px 0 0">${esc(contactBits)}</p>` : ""}
       <div class="checks">${chip(x.chkDetails, sp.details)} ${chip(x.chkHealth, sp.health)} ${chip(x.chkDocs, sp.documents)}</div>
       <p class="mut" style="margin:0">${esc(p.sameAddress && p.sameEmergency ? x.sameFor : x.ownFor)}</p>`;
     const acts = document.createElement("div"); acts.className = "acts";
@@ -993,6 +1011,7 @@ async function addChild(){
   $("partySavePerson").disabled = true;
   const r = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
     action: "upsert", ref: draft.ref, token: draft.token, lang: L, firstName: first, lastName: last, dob,
+    phone: V("ph"), email: V("em"),
     relationship: V("pRel") || "child", mode: "here", sameAddress: true, sameEmergency: true, forceDuplicate: dupForce,
   })});
   const out = await r.json().catch(() => ({}));
@@ -1045,7 +1064,7 @@ $("partyPastBtn").onclick = async () => {
     b.onclick = async () => {
       const rr = await fetch("/api/register/participants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         action: "upsert", ref: draft.ref, token: draft.token, lang: L, firstName: s.firstName, lastName: s.lastName, dob: s.dob,
-        phone: s.phone, email: s.email, relationship: s.relationship || "child", mode: "here", sameEmergency: true, sameAddress: true,
+        phone: s.phone || V("ph"), email: s.email || V("em"), relationship: s.relationship || "child", mode: "here", sameEmergency: true, sameAddress: true,
       })});
       const oo = await rr.json().catch(() => ({}));
       if (rr.ok) { party = oo; status = oo.status || status; draft.hasMinors = true; saveLocal(); panel.classList.add("hide"); paintMinors(); paintChrome(); saveDraft(false); }
@@ -1086,6 +1105,7 @@ function embedFrame(link, kind, title){
   const f = document.createElement("iframe");
   f.className = "embed";
   f.title = title;
+  f.setAttribute("scrolling", "no");
   f.src = link + (link.includes("?") ? "&" : "?") + "embed=" + kind + "&lang=" + encodeURIComponent(L);
   return f;
 }
@@ -1161,7 +1181,7 @@ window.addEventListener("message", async (ev) => {
   const frame = frameFor(ev.source);
   if (!frame) return;
   const d = ev.data;
-  if (d.type === "bnb_embed_height" && d.h > 0) frame.style.height = Math.min(Math.max(d.h, 240), 20000) + "px";
+  if (d.type === "bnb_embed_height" && d.h > 0) frame.style.height = Math.min(Math.ceil(d.h) + 12, 24000) + "px";
   else if (d.type === "bnb_embed_saved") { setSaveState("ok"); scheduleStatus(); }
   else if (d.type === "bnb_embed_scroll") window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top + (Number(d.top) || 0) - 120, behavior: "smooth" });
   else if (d.type === "bnb_packet_done") {

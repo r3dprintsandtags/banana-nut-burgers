@@ -2,6 +2,8 @@
 export function packetClientScript({ token, renderSource, wizardSource }) {
   return `
 const TOKEN=${JSON.stringify(token)};
+const EMBED=(()=>{ try{ return new URLSearchParams(location.search).get("embed")||""; }catch(e){ return ""; } })();
+if(EMBED) document.documentElement.classList.add("embed");
 const renderDocumentHtml = ${renderSource};
 ${wizardSource}
 let L=(navigator.language||"en").startsWith("es")?"es":"en";
@@ -86,11 +88,15 @@ function paintStepper(){
   for(const s of flow.steps){
     if(s.id==="finish" && !doneOut) continue;
     const st=statusOf(s.id);
+    const open=s.id===stepId;
+    const item=document.createElement("div");
+    item.className="stepitem "+st+(open?" open":"");
     const b=document.createElement("button");
     b.type="button";
     b.className="stepbtn "+st;
     b.dataset.step=s.id;
-    if (s.id === stepId) b.setAttribute("aria-current", "step");
+    b.setAttribute("aria-expanded", open?"true":"false");
+    if(open) b.setAttribute("aria-current", "step");
     const nm=document.createElement("span");
     nm.className="nm";
     nm.textContent=stepLabel(s.id, L);
@@ -99,8 +105,61 @@ function paintStepper(){
     ss.textContent=statusWord(st);
     b.append(nm, ss);
     b.onclick=()=>onStepClick(s.id);
-    nav.appendChild(b);
+    item.appendChild(b);
+    if(open){
+      const panel=document.createElement("div");
+      panel.className="steppanel";
+      panel.id="stepPanel";
+      item.appendChild(panel);
+    }
+    nav.appendChild(item);
   }
+}
+function scrollToEl(el, block){
+  if(!el) return;
+  if(window.parent && window.parent!==window){
+    const top=Math.max(0, el.getBoundingClientRect().top+(window.scrollY||0)-12);
+    try{ window.parent.postMessage({type:"bnb_embed_scroll", top}, location.origin); }catch(e){}
+    return;
+  }
+  try{ el.scrollIntoView({ block: block||"center" }); }catch(e){}
+}
+let revealedKey="";
+function revealCurrent(){
+  const open=document.querySelector(".stepitem.open");
+  if(!open) return;
+  const key=stepId+":"+docIndex;
+  if(key===revealedKey) return;
+  revealedKey=key;
+  scrollToEl(open, "start");
+}
+let embedWatching=false;
+function watchEmbedHeight(){
+  if(!window.parent || window.parent===window) return;
+  const send=()=>{
+    const wrap=document.querySelector(".wrap");
+    if(!wrap) return;
+    const h=Math.ceil(wrap.scrollHeight+32);
+    if(h<80) return;
+    try{ window.parent.postMessage({type:"bnb_embed_height", h}, location.origin); }catch(e){}
+  };
+  send();
+  if(!embedWatching && window.ResizeObserver){
+    embedWatching=true;
+    const obs=new ResizeObserver(()=>send());
+    const wrap=document.querySelector(".wrap");
+    if(wrap) obs.observe(wrap);
+  }
+  setTimeout(send, 200);
+  setTimeout(send, 800);
+}
+function mountCard(card){
+  const panel=$("stepPanel");
+  const app=$("app");
+  if(app) app.innerHTML="";
+  const host=panel||app;
+  if(host && card) host.appendChild(card);
+  watchEmbedHeight();
 }
 function onStepClick(id){
   if(id===stepId) return;
@@ -265,7 +324,7 @@ function enableAgree(agree, hint, why){
 function focusPending(){
   if(!pendingFocus) return;
   const el=document.getElementById("f_"+pendingFocus) || document.querySelector('[name="'+pendingFocus+'"]');
-  if(el){ el.classList.add("bad"); el.scrollIntoView({ block:"center" }); }
+  if(el){ el.classList.add("bad"); scrollToEl(el, "center"); }
   pendingFocus="";
 }
 function renderAbout(){
@@ -292,11 +351,18 @@ function renderAbout(){
     labEl.htmlFor="f_"+key; labEl.textContent=label;
     const input=document.createElement("input");
     input.id="f_"+key;
-    input.value=answers[key]||"";
-    if(key==="dob"){ input.type="date"; input.max=new Date().toISOString().slice(0,10); }
     if(key==="email") input.type="email";
     if(key==="cell_phone") input.type="tel";
     card.append(labEl, input);
+    if(key==="dob"){
+      input.type="date";
+      input.max=new Date().toISOString().slice(0,10);
+      const dob=String(answers.dob||answers.date_of_birth||"").slice(0,10);
+      input.value=/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dob)?dob:"";
+    } else {
+      input.value=answers[key]||"";
+      if(key==="cell_phone" && !input.value) input.value=answers.phone||"";
+    }
   }
   card.appendChild(actions(()=>go("about"), ()=>{
     for(const [key] of fields) answers[key]=(document.getElementById("f_"+key).value||"").trim();
@@ -428,7 +494,7 @@ function renderMedical(){
   }));
   if(opened){
     const target=card.querySelector("#wrap_"+opened);
-    if(target) setTimeout(()=>{ target.scrollIntoView({ block:"center" }); }, 0);
+    if(target) setTimeout(()=>{ scrollToEl(target, "center"); }, 60);
   }
   return card;
 }
@@ -542,32 +608,39 @@ function renderDocuments(){
   });
   card.appendChild(enlarge);
   const stored=answers.__signatures||{};
-  const reuseOff=stored._reuseOff===true;
-  const hasReuse=String(stored._reuse||"").startsWith("data:image/png");
-  const ownSig=String(stored[doc.key]||"").startsWith("data:image/png");
-  const showPad=reuseOff?!ownSig:!hasReuse;
+  const remembered=(()=>{
+    if(String(stored._reuse||"").startsWith("data:image/png;base64,")) return stored._reuse;
+    for(const d of (flow.docs||[])){
+      if(String(stored[d.key]||"").startsWith("data:image/png;base64,")) return stored[d.key];
+    }
+    return "";
+  })();
   const reuseLab=document.createElement("label");
   reuseLab.className="chk";
   const reuse=document.createElement("input");
   reuse.type="checkbox"; reuse.id="reuse";
-  reuse.checked=!reuseOff;
+  reuse.checked=stored._reuseOff!==true;
   const reuseSpan=document.createElement("span");
-  reuseSpan.textContent=L==="es"?"Usar esta firma":"Use this signature";
+  reuseSpan.textContent=L==="es"?"Usar esta firma en todos los formularios":"Use this signature for all the forms";
   reuseLab.append(reuse, reuseSpan);
+  const showPad=!reuse.checked || !remembered;
   const sigLab=document.createElement("label");
   sigLab.textContent=L==="es"?"Firma":"Signature";
   const pad=document.createElement("canvas");
   pad.id="pad"; pad.className="sigpad"; pad.width=640; pad.height=160;
   const clear=document.createElement("button");
   clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
-  card.append(hint, agreeLab, why, markRead);
-  if(docIndex===0) card.appendChild(reuseLab);
+  card.append(hint, agreeLab, why, markRead, reuseLab);
   if(showPad) card.append(sigLab, pad, clear);
   else {
+    const preview=document.createElement("img");
+    preview.alt=L==="es"?"Firma":"Signature";
+    preview.src=remembered;
+    preview.style.cssText="width:100%;height:140px;object-fit:contain;background:#fff;border:2px solid var(--primary);border-radius:12px";
     const note=document.createElement("p");
     note.className="mut";
-    note.textContent=L==="es"?"Se usa la firma del primer documento.":"Using the signature from the first document.";
-    card.appendChild(note);
+    note.textContent=L==="es"?"Esta firma se usa en todos los formularios.":"This signature is used on every form.";
+    card.append(preview, note);
   }
   let gpad=null;
   const needGuardian=minor && (docIndex===0 || !String(stored.guardian||"").startsWith("data:image/png"));
@@ -578,7 +651,7 @@ function renderDocuments(){
     gpad.id="gpad"; gpad.className="sigpad"; gpad.width=640; gpad.height=140;
     card.append(gl, gpad);
   }
-  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||(docIndex===0&&answers.__signatures._reuse));
+  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||answers.__signatures._reuse);
   card.appendChild(actions(()=>{
     if(docIndex>0) go("documents", docIndex-1);
     else {
@@ -589,7 +662,7 @@ function renderDocuments(){
     if(agree.disabled){
       enableAgree(agree, hint, why);
       $("err").textContent=L==="es"?"Marca que aceptas y firma, luego pulsa otra vez.":"Check that you agree and sign, then tap again.";
-      try{ agreeLab.scrollIntoView({ block:"center" }); }catch(e){}
+      try{ scrollToEl(agreeLab, "center"); }catch(e){}
       return;
     }
     if(docIndex>=docs.length-1) finishLastDocument(doc, agree, pad, gpad, reuse);
@@ -641,10 +714,17 @@ function renderDocuments(){
   }
   if(showPad){
     const draw=wirePad(pad, (url)=>{
-      const rec=recordSignature(answers.__signatures, doc.key, url);
-      if(!rec.ok){ $("err").textContent=rec.error; return; }
-      answers.__signatures=rec.map;
-      if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
+      if(reuse.checked){
+        const applied=applyReusedSignature(answers.__signatures, flow.docs, url);
+        if(!applied.ok){ $("err").textContent=applied.error||(L==="es"?"La firma no se guardó.":"Signature was not saved"); return; }
+        answers.__signatures=applied.map;
+      } else {
+        const rec=recordSignature(answers.__signatures, doc.key, url);
+        if(!rec.ok){ $("err").textContent=rec.error; return; }
+        answers.__signatures=rec.map;
+        answers.__signatures._reuseOff=true;
+        delete answers.__signatures._reuse;
+      }
       saveSigs();
     });
     if(saved){
@@ -655,25 +735,39 @@ function renderDocuments(){
     clear.onclick=()=>{
       draw.clear();
       if(answers.__signatures){
-        delete answers.__signatures[doc.key];
-        if(docIndex===0) delete answers.__signatures._reuse;
+        const shared=answers.__signatures._reuse;
+        if(reuse.checked && shared){
+          for(const d of flow.docs||[]){
+            if(answers.__signatures[d.key]===shared) delete answers.__signatures[d.key];
+          }
+          delete answers.__signatures._reuse;
+        } else delete answers.__signatures[doc.key];
       }
       saveSigs();
     };
   }
-  if(docIndex===0){
-    reuse.addEventListener("change", ()=>{
-      answers.__signatures=answers.__signatures||{};
-      if(reuse.checked){
-        delete answers.__signatures._reuseOff;
-        if(String(answers.__signatures[doc.key]||"").startsWith("data:image/png")) answers.__signatures._reuse=answers.__signatures[doc.key];
-      } else {
-        answers.__signatures._reuseOff=true;
-        delete answers.__signatures._reuse;
+  reuse.addEventListener("change", ()=>{
+    answers.__signatures=answers.__signatures||{};
+    if(reuse.checked){
+      delete answers.__signatures._reuseOff;
+      const url=String(answers.__signatures[doc.key]||remembered||"");
+      if(url.startsWith("data:image/png;base64,")){
+        const applied=applyReusedSignature(answers.__signatures, flow.docs, url);
+        if(applied.ok) answers.__signatures=applied.map;
       }
-      saveSigs();
-    });
-  }
+    } else {
+      answers.__signatures._reuseOff=true;
+      delete answers.__signatures._reuse;
+      const agreed=answers.__agreements||{};
+      for(const d of flow.docs||[]){
+        if(d.key===doc.key) continue;
+        if(agreed[d.key]&&agreed[d.key].accepted===true) continue;
+        delete answers.__signatures[d.key];
+      }
+    }
+    saveSigs();
+    go("documents", docIndex, { replace:true });
+  });
   if(gpad){
     wirePad(gpad, (url)=>{
       const rec=recordSignature(answers.__signatures, "guardian", url);
@@ -718,10 +812,11 @@ function acceptDoc(doc, agree, pad, gpad, reuse, opts){
     return false;
   }
   answers.__signatures=answers.__signatures||{};
-  const reuseOn=docIndex===0 ? !!(reuse&&reuse.checked) : answers.__signatures._reuseOff!==true;
-  if(reuseOn && String(answers.__signatures._reuse||"").startsWith("data:image/png;base64,")){
-    const rec=recordSignature(answers.__signatures, doc.key, answers.__signatures._reuse);
-    if(rec.ok) answers.__signatures=rec.map;
+  const reuseOn=reuse ? !!reuse.checked : answers.__signatures._reuseOff!==true;
+  const sharedUrl=answers.__signatures[doc.key]||answers.__signatures._reuse||"";
+  if(reuseOn && String(sharedUrl).startsWith("data:image/png;base64,")){
+    const applied=applyReusedSignature(answers.__signatures, flow.docs, sharedUrl);
+    if(applied.ok) answers.__signatures=applied.map;
   }
   if(!String(answers.__signatures[doc.key]||"").startsWith("data:image/png;base64,")){
     $("err").textContent=L==="es"?"Firma el documento.":"Sign this document.";
@@ -876,9 +971,12 @@ async function paintPdf(host, bytes){
   const pdfjs=await loadPdfJs();
   const pdf=await pdfjs.getDocument({ data: bytes }).promise;
   host.innerHTML="";
+  const cssWidth=Math.max(host.clientWidth||(host.parentElement&&host.parentElement.clientWidth)||900, 360);
   for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
-    const viewport=page.getViewport({ scale: 1.35 });
+    const base=page.getViewport({ scale: 1 });
+    const scale=Math.min(2.5, Math.max(1.7, (cssWidth * Math.min(window.devicePixelRatio||1, 2)) / base.width));
+    const viewport=page.getViewport({ scale });
     const canvas=document.createElement("canvas");
     canvas.className="pdfpage";
     canvas.width=viewport.width;
@@ -980,9 +1078,6 @@ async function downloadPdf(key){
 function showDone(out){
   out=out&&typeof out==="object"?out:{};
   closeDocLightbox();
-  const app=$("app");
-  if(!app) return;
-  app.innerHTML="";
   const card=document.createElement("div");
   card.className="card";
   const h=heading(L==="es"?"Listo":"Finish");
@@ -1055,8 +1150,9 @@ function showDone(out){
   back.textContent=L==="es"?"Volver al registro":"Back to registration";
   back.onclick=()=>goBackAfterPacket(out);
   card.append(email, note, back);
-  app.appendChild(card);
   paintStepper();
+  mountCard(card);
+  revealCurrent();
   // Brief pause so "Done" / downloads are visible, then return to registration.
   setTimeout(()=>goBackAfterPacket(out, { auto: true }), 1800);
 }
@@ -1093,14 +1189,10 @@ function render(){
   if($("err")) $("err").textContent="";
   clearMissing();
   document.body.style.overflow="";
-  try{ window.scrollTo(0, 0); }catch(e){}
-  const app=$("app");
-  if(!app) return;
   if(stepId==="finish" && doneOut){
     try{ showDone(doneOut); }catch(e){ try{ console.error(e); }catch(_){} }
     return;
   }
-  app.innerHTML="";
   let card=null;
   try{
     if(stepId==="about") card=renderAbout();
@@ -1124,16 +1216,20 @@ function render(){
     card=fail;
     try{ console.error(e); }catch(_){}
   }
-  if(card) app.appendChild(card);
+  mountCard(card);
   focusPending();
-  if(!flow) return;
-  const probs=stepProblems(stepId, flow, answers);
-  if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
-    const why=document.createElement("p");
-    why.className="mut";
-    why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
-    app.appendChild(why);
+  if(flow){
+    const probs=stepProblems(stepId, flow, answers);
+    if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
+      const why=document.createElement("p");
+      why.className="mut";
+      why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
+      const host=$("stepPanel")||$("app");
+      if(host) host.appendChild(why);
+    }
   }
+  revealCurrent();
+  watchEmbedHeight();
 }
 window.addEventListener("popstate", ()=>{
   const parsed=parseHash(location.hash, flow)||{ stepId:"about", docIndex:0 };

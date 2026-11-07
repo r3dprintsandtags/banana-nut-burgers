@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "fs";
 import {
   THEMES, buildFlow, stepLabel, stepProblems, earlierBlock, missingItems, resumeTarget,
-  hashFor, parseHash, documentCanAgree, recordSignature, satisfyHiddenGates, submitFailureView,
+  hashFor, parseHash, documentCanAgree, recordSignature, applyReusedSignature, satisfyHiddenGates, submitFailureView,
   themeContrastIssues, legalBundle, firstOpenDocument,
 } from "../../functions/_lib/forms/wizard.js";
 import { validateAnswers } from "../../functions/_lib/forms/schema.js";
@@ -123,6 +123,21 @@ describe("completion gates", () => {
     assert.equal(documentCanAgree({ overflow: true, sentinelVisible: true }), true);
   });
 
+  it("copies one signature onto every form when asked", () => {
+    const url = "data:image/png;base64," + "a".repeat(80);
+    const docs = [{ key: "intro_code" }, { key: "fit_to_dive" }, { key: "privacy" }];
+    const applied = applyReusedSignature({}, docs, url);
+    assert.equal(applied.ok, true);
+    assert.equal(applied.map.intro_code, url);
+    assert.equal(applied.map.fit_to_dive, url);
+    assert.equal(applied.map.privacy, url);
+    assert.equal(applied.map._reuse, url);
+    const withGuardian = applyReusedSignature({}, docs.concat([{ key: "youth_addendum" }, { key: "guardian" }]), url);
+    assert.equal(withGuardian.map.intro_code, url);
+    assert.equal(withGuardian.map.youth_addendum, undefined);
+    assert.equal(withGuardian.map.guardian, undefined);
+    assert.equal(applyReusedSignature({}, docs, "nope").ok, false);
+  });
   it("saves a real signature and rejects an empty one", () => {
     const bad = recordSignature({}, "fit_to_dive", "data:image/png;base64,aa");
     assert.equal(bad.ok, false);
