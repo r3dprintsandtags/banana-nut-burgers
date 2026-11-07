@@ -1291,15 +1291,13 @@ async function finishRegistration(){
     try { localStorage.setItem("bnb_last_confirm", JSON.stringify(lastConfirm)); } catch (e) {}
     confirmSaveOk = true; confirmSaveFailed = false;
     // Submit clears the draft token, so a status refresh would 401 — mark complete locally.
+    clearTimeout(statusTimer);
     if (status) {
       status.submitted = true;
       status.customerFinished = true;
       status.overall = "complete";
-      for (const id of STEP_IDS) {
-        if (status.steps && status.steps[id]) {
-          status.steps[id] = { status: "done", locked: false };
-        }
-      }
+      status.steps = status.steps || {};
+      for (const id of STEP_IDS) status.steps[id] = { status: "done", locked: false };
       (status.people || []).forEach((p) => {
         p.submitted = true; p.details = "done"; p.health = "done"; p.documents = "done";
       });
