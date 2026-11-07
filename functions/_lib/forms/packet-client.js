@@ -8,6 +8,8 @@ let L=(navigator.language||"en").startsWith("es")?"es":"en";
 try{const saved=localStorage.getItem("bnb_lang");if(saved==="en"||saved==="es")L=saved}catch(e){}
 try{ localStorage.removeItem("bnb_theme"); }catch(e){}
 let payload=null, answers={}, flow=null, stepId="about", docIndex=0, returnTo="", doneOut=null, pendingFocus="", medicalAnchor="", pendingNotice="";
+let embedMode="";
+try{ embedMode=new URLSearchParams(location.search).get("embed")||""; }catch(e){}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function applyTheme(){ /* light-only — matches registration / Banana Nut Burgers brand */ }
@@ -21,6 +23,81 @@ function loadSigs(){
   }catch(e){}
 }
 function saveSigs(){ try{ sessionStorage.setItem(sigKey(), JSON.stringify(answers.__signatures||{})); }catch(e){} }
+function postEmbedSize(){
+  if(window.parent===window) return;
+  const h=Math.ceil(Math.max(document.body.scrollHeight||0, document.documentElement.scrollHeight||0, document.body.offsetHeight||0))+12;
+  try{ window.parent.postMessage({type:"bnb_embed_height", h:Math.max(h, 520)}, location.origin); }catch(e){}
+}
+function fmtDob(iso){
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(iso||""))) return "";
+  const parts=String(iso).split("-").map(Number);
+  try{ return new Intl.DateTimeFormat(L==="es"?"es":"en",{month:"long",day:"numeric",year:"numeric"}).format(new Date(parts[0], parts[1]-1, parts[2])); }
+  catch(e){ return String(iso); }
+}
+function identityBanner(){
+  const box=document.createElement("section");
+  box.className="who";
+  const name=((answers.first_name||"")+" "+(answers.last_name||"")).trim();
+  const h=document.createElement("p");
+  h.className="who-name";
+  h.textContent=name||(L==="es"?"Este buzo":"This diver");
+  box.appendChild(h);
+  const dob=fmtDob(answers.dob);
+  const phone=String(answers.cell_phone||answers.phone||"").trim();
+  const em=String(answers.emergency_contact_name||"").trim();
+  const bits=[];
+  if(dob) bits.push((L==="es"?"Nacimiento: ":"Date of birth: ")+dob);
+  if(phone) bits.push((L==="es"?"Teléfono: ":"Phone: ")+phone);
+  if(em) bits.push((L==="es"?"Emergencia: ":"Emergency: ")+em);
+  for(const line of bits){
+    const meta=document.createElement("p");
+    meta.className="who-meta";
+    meta.textContent=line;
+    box.appendChild(meta);
+  }
+  const missing=[].concat(stepProblems("about", flow, answers), stepProblems("emergency", flow, answers));
+  const note=document.createElement("p");
+  note.className="mut";
+  if(!missing.length && (dob||phone)) note.textContent=L==="es"?"Estos datos ya están en cada formulario. No hace falta escribirlos otra vez.":"These details are already on every form. You do not need to type them again.";
+  else if(missing.length) note.textContent=L==="es"?"Falta un dato de este buzo.":"A detail for this diver is still missing.";
+  if(note.textContent) box.appendChild(note);
+  if(missing.length){
+    const b=document.createElement("button");
+    b.type="button"; b.className="ghost";
+    b.textContent=L==="es"?"Completar datos":"Fill in missing details";
+    b.onclick=()=>{
+      const id=missing[0]&&missing[0].id||"";
+      go(String(id).indexOf("emergency")===0?"emergency":"about");
+    };
+    box.appendChild(b);
+  }
+  return box;
+}
+function trimmedSignature(canvas){
+  try{
+    const ctx=canvas.getContext("2d");
+    const w=canvas.width, h=canvas.height;
+    const img=ctx.getImageData(0,0,w,h).data;
+    let minX=w, minY=h, maxX=0, maxY=0, found=false;
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const i=(y*w+x)*4;
+        if(img[i+3]>16 && (img[i]<248||img[i+1]<248||img[i+2]<248)){
+          found=true;
+          if(x<minX) minX=x; if(y<minY) minY=y; if(x>maxX) maxX=x; if(y>maxY) maxY=y;
+        }
+      }
+    }
+    if(!found) return "";
+    const padPx=14;
+    minX=Math.max(0,minX-padPx); minY=Math.max(0,minY-padPx);
+    maxX=Math.min(w-1,maxX+padPx); maxY=Math.min(h-1,maxY+padPx);
+    const c=document.createElement("canvas");
+    c.width=Math.max(1,maxX-minX+1); c.height=Math.max(1,maxY-minY+1);
+    c.getContext("2d").drawImage(canvas, minX, minY, c.width, c.height, 0, 0, c.width, c.height);
+    return c.toDataURL("image/png");
+  }catch(e){ return canvas.toDataURL("image/png"); }
+}
 function scheduleSave(){
   clearTimeout(scheduleSave._t);
   const seen=answers.__ui&&answers.__ui.medicalSeen===true;
@@ -30,6 +107,7 @@ function scheduleSave(){
     try{
       const r=await fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save",answers,step:stepId})});
       if($("saved")) $("saved").textContent=r.ok?(L==="es"?"Guardado":"Saved"):(L==="es"?"No se guardó":"Not saved");
+      if(r.ok && window.parent!==window){ try{ window.parent.postMessage({type:"bnb_embed_saved"}, location.origin); }catch(e){} }
       if(!r.ok) showRetry(L==="es"?"No se guardó. Tus datos siguen en esta página.":"Not saved. Your answers are still on this page.");
     }catch(e){
       if($("saved")) $("saved").textContent=L==="es"?"Sin conexión":"Offline";
@@ -85,6 +163,7 @@ function paintStepper(){
   nav.innerHTML="";
   for(const s of flow.steps){
     if(s.id==="finish" && !doneOut) continue;
+    if(embedMode && (s.id==="about"||s.id==="emergency"||s.id==="guardian") && !stepProblems(s.id, flow, answers).length) continue;
     const st=statusOf(s.id);
     const b=document.createElement("button");
     b.type="button";
@@ -274,13 +353,16 @@ function renderAbout(){
   card.appendChild(heading(stepLabel("about", L)));
   const note=document.createElement("p");
   note.className="mut";
-  note.textContent=L==="es"?"Estos datos se escriben en cada formulario.":"These details are written onto every form.";
+  const known=!!(answers.first_name&&answers.dob);
+  note.textContent=known
+    ?(L==="es"?"Tomamos estos datos de tu registro. Cámbialos solo si hay un error.":"We filled these in from your registration. Change them only if something is wrong.")
+    :(L==="es"?"Estos datos se escriben en cada formulario.":"These details are written onto every form.");
   card.appendChild(note);
   const fields=[
     ["first_name", L==="es"?"Nombre *":"First name *"],
     ["last_name", L==="es"?"Apellido *":"Last name *"],
     ["dob", L==="es"?"Fecha de nacimiento *":"Date of birth *"],
-    ["cell_phone", L==="es"?"Celular":"Mobile phone"],
+    ["cell_phone", (flow&&flow.minor)?(L==="es"?"Teléfono (el del tutor)":"Phone (parent or guardian)"):(L==="es"?"Celular":"Mobile phone")],
     ["email", "Email"],
     ["address", L==="es"?"Dirección":"Street address"],
     ["city", L==="es"?"Ciudad *":"City *"],
@@ -380,6 +462,7 @@ function renderMedical(){
   intro.className="mut";
   intro.textContent=L==="es"?"Responde con tus datos de hoy. Nada viene marcado: elige Sí o No en cada pregunta. Si respondes Sí, las casillas de esa pregunta se abren aquí.":"Answer for today. Nothing is pre-selected — choose Yes or No on each question. If you answer Yes, that question's boxes open on this page.";
   card.appendChild(intro);
+  card.appendChild(identityBanner());
   let any=false;
   for(const block of flow.medical||[]){
     if(!fieldVisible(block.section.show_if, answers)) continue;
@@ -390,6 +473,7 @@ function renderMedical(){
       any=true;
       const wrap=document.createElement("div");
       wrap.id="wrap_"+f.key;
+      if(f.type==="yes_no"||f.type==="checkbox") wrap.className="qcard";
       wrap.innerHTML=fieldHtml(f);
       card.appendChild(wrap);
     }
@@ -443,16 +527,17 @@ function renderDocuments(){
   pos.id="docPos";
   pos.textContent=(L==="es"?"Documento ":"Document ")+(docIndex+1)+" "+(L==="es"?"de ":"of ")+Math.max(docs.length,1)+": "+(doc.name||"");
   card.appendChild(pos);
+  if(flow) card.appendChild(identityBanner());
   if(!docs.length){
     const empty=document.createElement("p");
     empty.className="err";
     empty.textContent=L==="es"?"No hay documentos en este paquete.":"No documents in this packet.";
     card.appendChild(empty);
-    card.appendChild(actions(()=>go("medical"), ()=>go("review"), L==="es"?"Continuar":"Continue", { sticky:true }));
+    card.appendChild(actions(()=>go("medical"), ()=>go("review"), L==="es"?"Continuar":"Continue", { sticky: !embedMode }));
     return card;
   }
   const list=document.createElement("ol");
-  list.className="doclist";
+  list.className="docpills";
   docs.forEach((d, i)=>{
     const li=document.createElement("li");
     const b=document.createElement("button");
@@ -485,14 +570,14 @@ function renderDocuments(){
     card.appendChild(actions(()=>{
       if(docIndex>0) go("documents", docIndex-1);
       else go("medical");
-    }, ()=>go("documents", docIndex, { replace:true }), L==="es"?"Reintentar":"Retry", { sticky:true }));
+    }, ()=>go("documents", docIndex, { replace:true }), L==="es"?"Reintentar":"Retry", { sticky: !embedMode }));
     return card;
   }
   const minor=!!flow.minor;
   const dateText=new Intl.DateTimeFormat("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}).format(new Date());
   const hint=document.createElement("p");
   hint.className="mut"; hint.id="scrollHint";
-  hint.textContent=L==="es"?"Amplía el documento, llega al final, marca que aceptas y pulsa Siguiente.":"Enlarge the document, reach the end, check that you agree, then tap Next.";
+  hint.textContent=L==="es"?"Lee el formulario. Tu nombre, fecha de nacimiento y teléfono ya están escritos. Luego marca que aceptas y firma.":"Read the form. Your name, date of birth, and phone are already on it. Then check that you agree and sign.";
   const agreeLab=document.createElement("label");
   agreeLab.className="chk";
   const agree=document.createElement("input");
@@ -544,41 +629,79 @@ function renderDocuments(){
   const stored=answers.__signatures||{};
   const reuseOff=stored._reuseOff===true;
   const hasReuse=String(stored._reuse||"").startsWith("data:image/png");
-  const ownSig=String(stored[doc.key]||"").startsWith("data:image/png");
-  const showPad=reuseOff?!ownSig:!hasReuse;
+  const showPad=reuseOff||!hasReuse;
+  const sigCard=document.createElement("div");
+  sigCard.className="sigcard";
+  const sigTitle=document.createElement("h3");
+  sigTitle.textContent=L==="es"?"Firma del buzo":"Diver signature";
+  const sigHelp=document.createElement("p");
+  sigHelp.className="mut";
+  sigHelp.textContent=L==="es"?"Firma una vez. Puedes usar esa misma firma en cada línea que este buzo tenga que firmar.":"Sign once. You can use that same signature on every line this diver needs to sign.";
   const reuseLab=document.createElement("label");
   reuseLab.className="chk";
   const reuse=document.createElement("input");
   reuse.type="checkbox"; reuse.id="reuse";
   reuse.checked=!reuseOff;
   const reuseSpan=document.createElement("span");
-  reuseSpan.textContent=L==="es"?"Usar esta firma":"Use this signature";
+  reuseSpan.textContent=L==="es"?"Usar esta firma en cada línea de firma":"Use this signature on every signature line";
   reuseLab.append(reuse, reuseSpan);
   const sigLab=document.createElement("label");
-  sigLab.textContent=L==="es"?"Firma":"Signature";
+  sigLab.textContent=L==="es"?"Firma aquí":"Sign here";
   const pad=document.createElement("canvas");
-  pad.id="pad"; pad.className="sigpad"; pad.width=640; pad.height=160;
+  pad.id="pad"; pad.className="sigpad"; pad.width=900; pad.height=220;
   const clear=document.createElement("button");
-  clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
-  card.append(hint, agreeLab, why, markRead);
-  if(docIndex===0) card.appendChild(reuseLab);
-  if(showPad) card.append(sigLab, pad, clear);
-  else {
-    const note=document.createElement("p");
-    note.className="mut";
-    note.textContent=L==="es"?"Se usa la firma del primer documento.":"Using the signature from the first document.";
-    card.appendChild(note);
+  clear.type="button"; clear.className="ghost"; clear.style.marginTop="8px";
+  clear.textContent=L==="es"?"Borrar firma":"Clear signature";
+  const redraw=document.createElement("button");
+  redraw.type="button"; redraw.className="ghost"; redraw.style.marginTop="8px";
+  redraw.textContent=L==="es"?"Dibujar otra firma":"Draw a different signature";
+  sigCard.append(sigTitle, sigHelp, reuseLab);
+  if(!showPad){
+    const preview=document.createElement("img");
+    preview.className="sigpreview";
+    preview.alt=L==="es"?"Firma guardada":"Saved signature";
+    preview.src=stored._reuse;
+    const using=document.createElement("p");
+    using.className="mut";
+    using.textContent=L==="es"?"Esta firma se coloca en este formulario y en los demás.":"This signature is placed on this form and the others.";
+    sigCard.append(preview, using, redraw);
+    sigLab.style.display="none";
+    pad.style.display="none";
+    clear.style.display="none";
+    redraw.onclick=()=>{ preview.style.display="none"; using.style.display="none"; redraw.style.display="none"; sigLab.style.display="block"; pad.style.display="block"; clear.style.display="inline-flex"; };
   }
+  sigCard.append(sigLab, pad, clear);
+  card.append(hint, agreeLab, why, markRead, sigCard);
   let gpad=null;
-  const needGuardian=minor && (docIndex===0 || !String(stored.guardian||"").startsWith("data:image/png"));
+  const guardianSaved=String(stored.guardian||"").startsWith("data:image/png");
+  const needGuardian=minor && (!guardianSaved || docIndex===0);
   if(needGuardian){
-    const gl=document.createElement("label");
+    const gcard=document.createElement("div");
+    gcard.className="sigcard";
+    const gl=document.createElement("h3");
     gl.textContent=L==="es"?"Firma del tutor":"Guardian signature";
-    gpad=document.createElement("canvas");
-    gpad.id="gpad"; gpad.className="sigpad"; gpad.width=640; gpad.height=140;
-    card.append(gl, gpad);
+    const gh=document.createElement("p");
+    gh.className="mut";
+    gh.textContent=L==="es"?"Esta firma del tutor se usa en cada línea de tutor.":"This guardian signature is used on every guardian line.";
+    gcard.append(gl, gh);
+    if(guardianSaved && docIndex!==0){
+      const gimg=document.createElement("img");
+      gimg.className="sigpreview"; gimg.alt=""; gimg.src=stored.guardian;
+      gcard.appendChild(gimg);
+    } else {
+      gpad=document.createElement("canvas");
+      gpad.id="gpad"; gpad.className="sigpad"; gpad.width=900; gpad.height=200;
+      gcard.appendChild(gpad);
+      if(guardianSaved){
+        const gnote=document.createElement("p");
+        gnote.className="mut";
+        gnote.textContent=L==="es"?"La firma del tutor ya está guardada. Dibujar de nuevo la reemplaza en todos los formularios.":"The guardian signature is saved. Drawing again replaces it on every form.";
+        gcard.appendChild(gnote);
+      }
+    }
+    card.appendChild(gcard);
   }
-  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||(docIndex===0&&answers.__signatures._reuse));
+  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||answers.__signatures._reuse);
   card.appendChild(actions(()=>{
     if(docIndex>0) go("documents", docIndex-1);
     else {
@@ -594,7 +717,7 @@ function renderDocuments(){
     }
     if(docIndex>=docs.length-1) finishLastDocument(doc, agree, pad, gpad, reuse);
     else acceptDoc(doc, agree, pad, gpad, reuse);
-  }, docIndex>=docs.length-1?(L==="es"?"Listo":"Done"):(L==="es"?"Siguiente documento":"Next document"), { sticky:true }));
+  }, docIndex>=docs.length-1?(L==="es"?"Listo":"Done"):(L==="es"?"Siguiente documento":"Next document"), { sticky: !embedMode }));
   const arm=()=>{
     const end=document.getElementById("docEnd")||paper.querySelector("[data-doc-end]");
     if(!end){
@@ -620,7 +743,9 @@ function renderDocuments(){
   };
   setTimeout(arm, 0);
   if(usePdf){
-    fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"preview",templateKey:doc.key,answers,language:L})})
+    const sigNow=answers.__signatures||{};
+    const sigUrl=String(sigNow[doc.key]||(!sigNow._reuseOff&&sigNow._reuse)||"");
+    fetch("/api/forms/public/"+TOKEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"preview",templateKey:doc.key,answers,language:L,signatureDataUrl:sigUrl.indexOf("data:image/png")===0?sigUrl:"",guardianSignatureDataUrl:String(sigNow.guardian||"").indexOf("data:image/png")===0?sigNow.guardian:""})})
       .then((r)=>{ if(!r.ok) throw new Error("preview"); return r.arrayBuffer(); })
       .then((buf)=>paintPdf(paper, buf))
       .then(()=>arm())
@@ -639,44 +764,50 @@ function renderDocuments(){
         enableAgree(agree, hint, why);
       });
   }
-  if(showPad){
-    const draw=wirePad(pad, (url)=>{
-      const rec=recordSignature(answers.__signatures, doc.key, url);
-      if(!rec.ok){ $("err").textContent=rec.error; return; }
-      answers.__signatures=rec.map;
-      if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
-      saveSigs();
-    });
-    if(saved){
-      const img=new Image();
-      img.onload=()=>{ pad.getContext("2d").drawImage(img,0,0,pad.width,pad.height); };
-      img.src=saved;
+  const draw=wirePad(pad, (url)=>{
+    const ink=trimmedSignature(pad)||url;
+    const rec=recordSignature(answers.__signatures, doc.key, ink);
+    if(!rec.ok){ $("err").textContent=rec.error; return; }
+    answers.__signatures=rec.map;
+    if(reuse.checked){
+      answers.__signatures._reuse=ink;
+      delete answers.__signatures._reuseOff;
+      answers.__signatures=applyReuseSignature(answers.__signatures, (flow.docs||[]).map(function(d){ return d.key; }));
     }
-    clear.onclick=()=>{
-      draw.clear();
-      if(answers.__signatures){
-        delete answers.__signatures[doc.key];
-        if(docIndex===0) delete answers.__signatures._reuse;
-      }
-      saveSigs();
-    };
+    saveSigs();
+  });
+  if(saved){
+    const img=new Image();
+    img.onload=()=>{ pad.getContext("2d").drawImage(img,0,0,pad.width,pad.height); };
+    img.src=saved;
   }
-  if(docIndex===0){
-    reuse.addEventListener("change", ()=>{
-      answers.__signatures=answers.__signatures||{};
-      if(reuse.checked){
-        delete answers.__signatures._reuseOff;
-        if(String(answers.__signatures[doc.key]||"").startsWith("data:image/png")) answers.__signatures._reuse=answers.__signatures[doc.key];
-      } else {
-        answers.__signatures._reuseOff=true;
-        delete answers.__signatures._reuse;
+  clear.onclick=()=>{
+    draw.clear();
+    if(answers.__signatures){
+      delete answers.__signatures[doc.key];
+      if(reuse.checked) delete answers.__signatures._reuse;
+    }
+    saveSigs();
+  };
+  reuse.addEventListener("change", ()=>{
+    answers.__signatures=answers.__signatures||{};
+    if(reuse.checked){
+      delete answers.__signatures._reuseOff;
+      const current=String(answers.__signatures[doc.key]||answers.__signatures._reuse||"");
+      if(current.indexOf("data:image/png")===0){
+        answers.__signatures._reuse=current;
+        answers.__signatures=applyReuseSignature(answers.__signatures, (flow.docs||[]).map(function(d){ return d.key; }));
       }
-      saveSigs();
-    });
-  }
+    } else {
+      answers.__signatures._reuseOff=true;
+      delete answers.__signatures._reuse;
+    }
+    saveSigs();
+  });
   if(gpad){
     wirePad(gpad, (url)=>{
-      const rec=recordSignature(answers.__signatures, "guardian", url);
+      const ink=trimmedSignature(gpad)||url;
+      const rec=recordSignature(answers.__signatures, "guardian", ink);
       if(!rec.ok){ $("err").textContent=rec.error; return; }
       answers.__signatures=rec.map;
       answers.__guardian_signed=true;
@@ -718,22 +849,21 @@ function acceptDoc(doc, agree, pad, gpad, reuse, opts){
     return false;
   }
   answers.__signatures=answers.__signatures||{};
-  const reuseOn=docIndex===0 ? !!(reuse&&reuse.checked) : answers.__signatures._reuseOff!==true;
-  if(reuseOn && String(answers.__signatures._reuse||"").startsWith("data:image/png;base64,")){
-    const rec=recordSignature(answers.__signatures, doc.key, answers.__signatures._reuse);
-    if(rec.ok) answers.__signatures=rec.map;
+  const reuseOn=!!(reuse&&reuse.checked);
+  if(reuseOn){
+    const ink=String(answers.__signatures[doc.key]||answers.__signatures._reuse||"");
+    if(ink.indexOf("data:image/png;base64,")===0){
+      answers.__signatures._reuse=ink;
+      delete answers.__signatures._reuseOff;
+      answers.__signatures=applyReuseSignature(answers.__signatures, (flow.docs||[]).map(function(d){ return d.key; }));
+    }
+  } else if(reuse){
+    answers.__signatures._reuseOff=true;
+    delete answers.__signatures._reuse;
   }
   if(!String(answers.__signatures[doc.key]||"").startsWith("data:image/png;base64,")){
     $("err").textContent=L==="es"?"Firma el documento.":"Sign this document.";
     return false;
-  }
-  if(docIndex===0 && reuseOn){
-    answers.__signatures._reuse=answers.__signatures[doc.key];
-    delete answers.__signatures._reuseOff;
-  }
-  if(docIndex===0 && reuse && !reuse.checked){
-    answers.__signatures._reuseOff=true;
-    delete answers.__signatures._reuse;
   }
   if(flow.minor && !String(answers.__signatures.guardian||"").startsWith("data:image/png;base64,")){
     if($("err")) $("err").textContent=L==="es"?"El tutor debe firmar.":"Guardian signature is required.";
@@ -767,6 +897,7 @@ function renderReview(){
   const card=document.createElement("div");
   card.className="card";
   card.appendChild(heading(stepLabel("review", L)));
+  card.appendChild(identityBanner());
   const items=missingItems(flow, answers, L);
   if(items.length){
     const note=document.createElement("p");
@@ -878,7 +1009,8 @@ async function paintPdf(host, bytes){
   host.innerHTML="";
   for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
-    const viewport=page.getViewport({ scale: 1.35 });
+    const cssWidth=Math.max((host&&host.clientWidth)||360, 320);
+    const viewport=page.getViewport({ scale: Math.min(2.4, Math.max(1.7, (cssWidth/520))) });
     const canvas=document.createElement("canvas");
     canvas.className="pdfpage";
     canvas.width=viewport.width;
@@ -896,6 +1028,7 @@ async function paintPdf(host, bytes){
   end.setAttribute("data-doc-end","1");
   end.style.height="32px";
   host.appendChild(end);
+  postEmbedSize();
 }
 function closeDocLightbox(){
   const box=document.getElementById("docLightbox");
@@ -1126,6 +1259,9 @@ function render(){
   }
   if(card) app.appendChild(card);
   focusPending();
+  postEmbedSize();
+  setTimeout(postEmbedSize, 80);
+  setTimeout(postEmbedSize, 500);
   if(!flow) return;
   const probs=stepProblems(stepId, flow, answers);
   if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
@@ -1154,8 +1290,13 @@ function setLang(next, opts){
 }
 $("langBtn").onclick=()=>setLang(L==="en"?"es":"en");
 window.addEventListener("message",(ev)=>{
-  if(!ev.data||ev.data.type!=="bnb_set_lang") return;
-  setLang(ev.data.lang);
+  if(!ev.data) return;
+  if(ev.data.type==="bnb_set_lang") setLang(ev.data.lang);
+  if(ev.data.type==="bnb_focus" && flow){
+    const key=ev.data.docKey||"";
+    const i=(flow.docs||[]).findIndex(function(d){ return d.key===key; });
+    if(i>=0 && stepId==="documents") go("documents", i, { replace:true });
+  }
 });
 window.addEventListener("storage",(ev)=>{
   if(ev.key!=="bnb_lang") return;
@@ -1192,6 +1333,7 @@ if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
   bump();
 }
 (async()=>{
+  if(embedMode) document.body.classList.add("embed");
   applyTheme();
   syncLangBtn();
   $("title").textContent=L==="es"?"Cargando…":"Loading…";
@@ -1202,6 +1344,9 @@ if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
   answers=out.answers||{};
   delete answers.__signatures;
   loadSigs();
+  if(!answers.cell_phone && answers.phone) answers.cell_phone=answers.phone;
+  if(!answers.phone && answers.cell_phone) answers.phone=answers.cell_phone;
+  if(!answers.full_name_print) answers.full_name_print=((answers.first_name||"")+" "+(answers.last_name||"")).trim();
   if(!answers.__visited) answers.__visited=[];
   rebuild();
   $("title").textContent=(out.packet&&out.packet.name)||out.shopName||"Forms";
@@ -1209,6 +1354,11 @@ if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
   const resume=fromHash||resumeTarget(flow, answers);
   stepId=resume.stepId;
   docIndex=resume.docIndex||0;
+  if((stepId==="about"||stepId==="emergency"||stepId==="guardian") && !stepProblems(stepId, flow, answers).length){
+    const again=resumeTarget(flow, Object.assign({}, answers, {__ui:null}));
+    stepId=again.stepId;
+    docIndex=again.docIndex||0;
+  }
   const block=earlierBlock(stepId, flow, answers);
   if(block) stepId=block.stepId;
   history.replaceState({ stepId, docIndex }, "", location.pathname+location.search+hashFor(stepId, docIndex));

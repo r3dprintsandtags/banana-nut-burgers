@@ -1,7 +1,8 @@
 import { json, sha256, str } from "../../../_shared.js";
 import { formAudit, loadPacketTemplates, submitFormRequest } from "../../../_lib/forms/submit.js";
 import { fillPdf, officialBytes, officialFont, stampMapFor } from "../../../_lib/forms/pdf.js";
-import { resolveShared } from "../../../_lib/forms/shared.js";
+import { resolveShared, mergeDraftOverPrefill } from "../../../_lib/forms/shared.js";
+import { rememberPacketIdentity } from "../../../_lib/forms/party.js";
 import { getShopSetting } from "../../../_lib/forms/regnum.js";
 import { over45Prefill } from "../../../_lib/forms/physician.js";
 import { ageFromDob } from "../../../_lib/forms/shared.js";
@@ -80,7 +81,7 @@ export async function onRequestGet({ env, params, request }) {
   try { prefill = JSON.parse(row.prefill_json || "{}"); } catch { prefill = {}; }
   let draft = {};
   try { draft = JSON.parse(row.draft_json || "{}"); } catch { draft = {}; }
-  let answers = resolveShared({ answers: { ...prefill, ...draft }, customer: customer || {}, shop });
+  let answers = resolveShared({ answers: mergeDraftOverPrefill(prefill, draft), customer: customer || {}, shop });
   answers = over45Prefill(answers).answers;
 
   const age = ageFromDob(answers.dob);
@@ -124,13 +125,24 @@ export async function onRequestPost({ request, env, params }) {
     const map = stampMapFor(key);
     if (!map || map.reference || map.status === "missing-pdf") return json({ error: "No official PDF for this form yet" }, 404);
     const answers = { ...(b.answers || {}) };
+    const pngFrom = (url) => {
+      const s = String(url || "");
+      if (!s.startsWith("data:image/png;base64,")) return null;
+      try { return Uint8Array.from(atob(s.split(",")[1]), (c) => c.charCodeAt(0)); }
+      catch { return null; }
+    };
+    const stored = answers.__signatures || {};
+    const signaturePngBytes = pngFrom(b.signatureDataUrl || stored[key] || stored._reuse);
+    const guardianPng = pngFrom(b.guardianSignatureDataUrl || stored.guardian);
     delete answers.__signatures;
     const { bytes } = await fillPdf({
       templateBytes: await officialBytes(env, key),
       fontBytes: await officialFont(env),
       answers,
       registrationNumber: "",
-      includeSignature: false,
+      includeSignature: !!(signaturePngBytes || guardianPng),
+      signaturePngBytes,
+      guardianPng,
       audit: { templateKey: key },
     });
     return new Response(bytes, {
@@ -148,6 +160,7 @@ export async function onRequestPost({ request, env, params }) {
       delete savedAnswers.__signatures;
     }
     await env.DB.prepare("UPDATE form_requests SET draft_json=? WHERE id=?").bind(JSON.stringify(savedAnswers).slice(0, 400000), row.id).run();
+    try { await rememberPacketIdentity(env, row, savedAnswers); } catch (_) { /* identity write-back must not block the draft */ }
     const ipHash = await hashIP(env.SESSION_SECRET || "bnb", request.headers.get("CF-Connecting-IP") || "");
     await formAudit(env, { requestId: row.id, event: "saved", actor: "customer", ipHash });
     return json({ ok: true, saved: true });
@@ -186,6 +199,7 @@ export async function onRequestPost({ request, env, params }) {
   }
 
   if (b.action === "submit") {
+    try { await rememberPacketIdentity(env, row, b.answers || {}); } catch (_) { /* identity write-back must not block submit */ }
     const ip = request.headers.get("CF-Connecting-IP") || "";
     const turnstileOk = await verifyTurnstile(env, b.turnstileToken, ip);
     // Rate limit: 10 submits / IP / 10 min via audit count

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { resolveShared, NEVER_PREFILL } from "../../functions/_lib/forms/shared.js";
+import { resolveShared, NEVER_PREFILL, mergeDraftOverPrefill, packetPrefill } from "../../functions/_lib/forms/shared.js";
 import { evaluateShowIf, validateAnswers } from "../../functions/_lib/forms/schema.js";
 import { formatRegNumber } from "../../functions/_lib/forms/regnum.js";
 
@@ -25,6 +25,45 @@ describe("shared field resolution", () => {
     });
     assert.equal(out.fit_q1, undefined);
     assert.ok(NEVER_PREFILL.has("guardian_name"));
+  });
+});
+
+describe("packet identity is asked once", () => {
+  it("keeps a blank draft from erasing date of birth and phone", () => {
+    const merged = mergeDraftOverPrefill(
+      { first_name: "Maria", dob: "1990-04-02", cell_phone: "+504 9876-3374", city: "West End" },
+      { dob: "", cell_phone: "", city: "Coxen Hole", dm_q1: "no" },
+    );
+    assert.equal(merged.dob, "1990-04-02");
+    assert.equal(merged.cell_phone, "+504 9876-3374");
+    assert.equal(merged.city, "Coxen Hole");
+    assert.equal(merged.dm_q1, "no");
+  });
+
+  it("fills the primary diver from the registration, even if the roster row is still empty", () => {
+    const out = packetPrefill({
+      participant: { role: "primary", first_name: "Maria", last_name: "Lopez", dob: "", phone: "" },
+      data: { firstName: "Maria", lastName: "Lopez", dob: "1990-04-02", phone: "50498763374", city: "West End", emergencyName: "Ana", emergencyPhone: "50411112222" },
+      customer: {},
+    });
+    assert.equal(out.dob, "1990-04-02");
+    assert.equal(out.cell_phone, "50498763374");
+    assert.equal(out.city, "West End");
+    assert.equal(out.emergency_contact_phone, "50411112222");
+  });
+
+  it("keeps a minor's own date of birth and uses the guardian phone", () => {
+    const out = packetPrefill({
+      participant: { role: "guest", is_minor: 1, first_name: "Luis", last_name: "Lopez", dob: "2016-08-09", phone: "" },
+      data: { firstName: "Maria", lastName: "Lopez", dob: "1990-04-02", phone: "50498763374", city: "West End", emergencyName: "Ana", emergencyPhone: "50411112222" },
+      guardian: { name: "Maria Lopez", phone: "50498763374", relationship: "parent/guardian" },
+    });
+    assert.equal(out.first_name, "Luis");
+    assert.equal(out.dob, "2016-08-09");
+    assert.equal(out.cell_phone, "50498763374");
+    assert.equal(out.guardian_name, "Maria Lopez");
+    assert.equal(out.city, "West End");
+    assert.notEqual(out.dob, "1990-04-02");
   });
 });
 

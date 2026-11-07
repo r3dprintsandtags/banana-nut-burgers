@@ -1,7 +1,7 @@
 /** Party / group registration helpers. Reuses ageFromDob, regnum, form_requests. */
-import { ageFromDob } from "./shared.js";
+import { ageFromDob, packetPrefill } from "./shared.js";
 import { ensureRegistrationNumber } from "./regnum.js";
-import { createRequestForRegistration, packetKeyForActivity, fromRegistrationData } from "./submit.js";
+import { createRequestForRegistration, packetKeyForActivity } from "./submit.js";
 import { getRegistrationStatus } from "./reg-status.js";
 import { sha256 } from "../../_shared.js";
 
@@ -127,7 +127,29 @@ export async function ensurePrimaryParticipant(env, reg, customer, data = {}) {
   const existing = await env.DB.prepare(
     "SELECT * FROM participants WHERE registration_id=? AND role='primary' AND status<>'removed' LIMIT 1"
   ).bind(reg.id).first();
-  if (existing) return existing;
+  if (existing) {
+    const first = String(data.firstName || data.first_name || existing.first_name || "").trim() || existing.first_name;
+    const last = String(data.lastName || data.last_name || existing.last_name || "").trim() || existing.last_name;
+    const incomingDob = String(data.dob || "").trim();
+    if (incomingDob && computeIsMinor(incomingDob)) {
+      throw Object.assign(
+        new Error("A parent or guardian needs to register first. Please ask them to open this link."),
+        { status: 422, code: "GUARDIAN_REQUIRED" }
+      );
+    }
+    const dob = incomingDob || existing.dob || "";
+    const phone = String(data.phone || cust.phone || existing.phone || "").trim();
+    const email = String(data.email || cust.email || existing.email || "").trim();
+    if (
+      first === existing.first_name && last === existing.last_name
+      && dob === (existing.dob || "") && phone === (existing.phone || "") && email === (existing.email || "")
+    ) return existing;
+    const now = Date.now();
+    await env.DB.prepare(
+      "UPDATE participants SET first_name=?, last_name=?, dob=?, email=?, phone=?, updated_at=? WHERE id=?"
+    ).bind(first, last, dob, email, phone, now, existing.id).run();
+    return env.DB.prepare("SELECT * FROM participants WHERE id=?").bind(existing.id).first();
+  }
 
   const cust = customer || {};
   const first = String(data.firstName || data.first_name || cust.first_name || "").trim();
@@ -402,46 +424,50 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
       .bind(regNum, Date.now(), participant.id).run();
   }
 
-  // Guardian prefill for minors (name only — never medical). Re-evaluate minor at open time.
-  let guardianName = "";
-  let guardianRel = "";
-  if (participant.is_minor || computeIsMinor(participant.dob)) {
+  // Guardian identity for minors (name and phone only — never medical).
+  let guardian = null;
+  if (participant.is_minor || computeIsMinor(participant.dob) || (participant.role !== "primary" && computeIsMinor(participant.dob))) {
+    let name = "";
+    let phone = "";
     if (participant.guardian_participant_id) {
       const g = await env.DB.prepare("SELECT * FROM participants WHERE id=? AND status<>'removed'")
         .bind(participant.guardian_participant_id).first();
       if (g) {
-        guardianName = `${g.first_name || ""} ${g.last_name || ""}`.trim();
-        guardianRel = "parent/guardian";
+        name = `${g.first_name || ""} ${g.last_name || ""}`.trim();
+        phone = g.phone || "";
       }
     }
-    if (!guardianName) {
-      try {
-        const gj = JSON.parse(participant.guardian_json || "{}");
-        guardianName = String(gj.name || "").trim();
-      } catch (_) {}
-    }
-    if (!guardianName) {
-      guardianName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-    }
+    try {
+      const gj = JSON.parse(participant.guardian_json || "{}");
+      if (!name) name = String(gj.name || "").trim();
+      if (!phone) phone = String(gj.phone || "").trim();
+    } catch (_) {}
+    if (!name) name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+    if (!phone) phone = data.phone || "";
+    if (name || phone) guardian = { name, phone, relationship: "parent/guardian" };
   }
 
-  const prefill = fromRegistrationData({
-    firstName: participant.first_name,
-    lastName: participant.last_name,
-    dob: participant.dob,
-    phone: participant.phone || customer.phone,
-    email: participant.email || customer.email,
-    address: sharedAddr.address || data.address,
-    city: sharedAddr.city || data.city,
-    state: sharedAddr.state || data.state,
-    zip: sharedAddr.zip || data.zip,
-    emergencyName: sharedEmg.name || data.emergencyName,
-    emergencyRelationship: sharedEmg.relationship || data.emergencyRelationship,
-    emergencyPhone: sharedEmg.phone || data.emergencyPhone,
-    registration_number: regNum,
-    guardian_name: guardianName,
-    guardian_relationship: guardianRel,
+  const prefill = packetPrefill({
+    participant,
+    data,
+    customer: customer || {},
+    guardian,
+    sharedAddr,
+    sharedEmg,
+    registrationNumber: regNum,
   });
+
+  // Keep the roster in step with the registration so later screens are not asked again.
+  const nextPhone = String(prefill.cell_phone || "").trim();
+  const nextDob = String(prefill.dob || "").trim();
+  const phoneMissing = !String(participant.phone || "").trim() && nextPhone;
+  const primaryDob = participant.role === "primary" && nextDob && nextDob !== String(participant.dob || "");
+  const primaryPhone = participant.role === "primary" && nextPhone && nextPhone !== String(participant.phone || "");
+  if (phoneMissing || primaryDob || primaryPhone) {
+    await env.DB.prepare(
+      "UPDATE participants SET phone=CASE WHEN ?<>'' THEN ? ELSE phone END, dob=CASE WHEN ?<>'' AND role='primary' THEN ? ELSE dob END, updated_at=? WHERE id=?"
+    ).bind(nextPhone, nextPhone, nextDob, nextDob, Date.now(), participant.id).run();
+  }
 
   const packetKey = packetKeyForActivity(reg.activity || data.activity);
   const existing = await env.DB.prepare(
@@ -489,6 +515,46 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
     formLink: `${base}/f/${created.token}`, requestId: created.requestId, status: "sent",
     token: created.token, prefill,
   };
+}
+
+/** Write non-medical identity from a packet back onto the diver and, for the primary, the registration. */
+export async function rememberPacketIdentity(env, row, answers = {}) {
+  if (!env?.DB || !row?.participant_id) return;
+  const p = await env.DB.prepare("SELECT * FROM participants WHERE id=?").bind(row.participant_id).first();
+  if (!p || p.status === "removed") return;
+  const first = String(answers.first_name || "").trim();
+  const last = String(answers.last_name || "").trim();
+  const dob = String(answers.dob || "").trim();
+  const phone = String(answers.cell_phone || answers.phone || "").trim();
+  const email = String(answers.email || "").trim();
+  const validDob = /^\d{4}-\d{2}-\d{2}$/.test(dob) ? dob : "";
+  if (first || last || validDob || phone || email) {
+    await env.DB.prepare(
+      `UPDATE participants SET
+        first_name=COALESCE(NULLIF(?,''), first_name),
+        last_name=COALESCE(NULLIF(?,''), last_name),
+        dob=COALESCE(NULLIF(?,''), dob),
+        phone=COALESCE(NULLIF(?,''), phone),
+        email=COALESCE(NULLIF(?,''), email),
+        updated_at=?
+       WHERE id=?`
+    ).bind(first, last, validDob, phone, email, Date.now(), p.id).run();
+  }
+  if (p.role !== "primary" || !row.registration_id) return;
+  const reg = await env.DB.prepare("SELECT data FROM registrations WHERE id=?").bind(row.registration_id).first();
+  if (!reg) return;
+  let data = {};
+  try { data = JSON.parse(reg.data || "{}"); } catch { data = {}; }
+  let changed = false;
+  if (validDob && data.dob !== validDob) { data.dob = validDob; changed = true; }
+  if (phone && data.phone !== phone) { data.phone = phone; changed = true; }
+  if (first && data.firstName !== first) { data.firstName = first; changed = true; }
+  if (last && data.lastName !== last) { data.lastName = last; changed = true; }
+  if (email && !data.email) { data.email = email; changed = true; }
+  if (answers.city && !data.city) { data.city = answers.city; changed = true; }
+  if (!changed) return;
+  await env.DB.prepare("UPDATE registrations SET data=?, updated_at=? WHERE id=?")
+    .bind(JSON.stringify(data).slice(0, 8000), Date.now(), row.registration_id).run();
 }
 
 /** After a form_request completes, sync participant status (youth addendum gate, medical flag). */
