@@ -351,11 +351,18 @@ function renderAbout(){
     labEl.htmlFor="f_"+key; labEl.textContent=label;
     const input=document.createElement("input");
     input.id="f_"+key;
-    input.value=answers[key]||"";
-    if(key==="dob"){ input.type="date"; input.max=new Date().toISOString().slice(0,10); }
     if(key==="email") input.type="email";
     if(key==="cell_phone") input.type="tel";
     card.append(labEl, input);
+    if(key==="dob"){
+      input.type="date";
+      input.max=new Date().toISOString().slice(0,10);
+      const dob=String(answers.dob||answers.date_of_birth||"").slice(0,10);
+      input.value=/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dob)?dob:"";
+    } else {
+      input.value=answers[key]||"";
+      if(key==="cell_phone" && !input.value) input.value=answers.phone||"";
+    }
   }
   card.appendChild(actions(()=>go("about"), ()=>{
     for(const [key] of fields) answers[key]=(document.getElementById("f_"+key).value||"").trim();
@@ -601,32 +608,39 @@ function renderDocuments(){
   });
   card.appendChild(enlarge);
   const stored=answers.__signatures||{};
-  const reuseOff=stored._reuseOff===true;
-  const hasReuse=String(stored._reuse||"").startsWith("data:image/png");
-  const ownSig=String(stored[doc.key]||"").startsWith("data:image/png");
-  const showPad=reuseOff?!ownSig:!hasReuse;
+  const remembered=(()=>{
+    if(String(stored._reuse||"").startsWith("data:image/png;base64,")) return stored._reuse;
+    for(const d of (flow.docs||[])){
+      if(String(stored[d.key]||"").startsWith("data:image/png;base64,")) return stored[d.key];
+    }
+    return "";
+  })();
   const reuseLab=document.createElement("label");
   reuseLab.className="chk";
   const reuse=document.createElement("input");
   reuse.type="checkbox"; reuse.id="reuse";
-  reuse.checked=!reuseOff;
+  reuse.checked=stored._reuseOff!==true;
   const reuseSpan=document.createElement("span");
-  reuseSpan.textContent=L==="es"?"Usar esta firma":"Use this signature";
+  reuseSpan.textContent=L==="es"?"Usar esta firma en todos los formularios":"Use this signature for all the forms";
   reuseLab.append(reuse, reuseSpan);
+  const showPad=!reuse.checked || !remembered;
   const sigLab=document.createElement("label");
   sigLab.textContent=L==="es"?"Firma":"Signature";
   const pad=document.createElement("canvas");
   pad.id="pad"; pad.className="sigpad"; pad.width=640; pad.height=160;
   const clear=document.createElement("button");
   clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
-  card.append(hint, agreeLab, why, markRead);
-  if(docIndex===0) card.appendChild(reuseLab);
+  card.append(hint, agreeLab, why, markRead, reuseLab);
   if(showPad) card.append(sigLab, pad, clear);
   else {
+    const preview=document.createElement("img");
+    preview.alt=L==="es"?"Firma":"Signature";
+    preview.src=remembered;
+    preview.style.cssText="width:100%;height:140px;object-fit:contain;background:#fff;border:2px solid var(--primary);border-radius:12px";
     const note=document.createElement("p");
     note.className="mut";
-    note.textContent=L==="es"?"Se usa la firma del primer documento.":"Using the signature from the first document.";
-    card.appendChild(note);
+    note.textContent=L==="es"?"Esta firma se usa en todos los formularios.":"This signature is used on every form.";
+    card.append(preview, note);
   }
   let gpad=null;
   const needGuardian=minor && (docIndex===0 || !String(stored.guardian||"").startsWith("data:image/png"));
@@ -637,7 +651,7 @@ function renderDocuments(){
     gpad.id="gpad"; gpad.className="sigpad"; gpad.width=640; gpad.height=140;
     card.append(gl, gpad);
   }
-  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||(docIndex===0&&answers.__signatures._reuse));
+  const saved=showPad&&answers.__signatures&&(answers.__signatures[doc.key]||answers.__signatures._reuse);
   card.appendChild(actions(()=>{
     if(docIndex>0) go("documents", docIndex-1);
     else {
@@ -700,10 +714,17 @@ function renderDocuments(){
   }
   if(showPad){
     const draw=wirePad(pad, (url)=>{
-      const rec=recordSignature(answers.__signatures, doc.key, url);
-      if(!rec.ok){ $("err").textContent=rec.error; return; }
-      answers.__signatures=rec.map;
-      if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
+      if(reuse.checked){
+        const applied=applyReusedSignature(answers.__signatures, flow.docs, url);
+        if(!applied.ok){ $("err").textContent=applied.error||(L==="es"?"La firma no se guardó.":"Signature was not saved"); return; }
+        answers.__signatures=applied.map;
+      } else {
+        const rec=recordSignature(answers.__signatures, doc.key, url);
+        if(!rec.ok){ $("err").textContent=rec.error; return; }
+        answers.__signatures=rec.map;
+        answers.__signatures._reuseOff=true;
+        delete answers.__signatures._reuse;
+      }
       saveSigs();
     });
     if(saved){
@@ -714,25 +735,39 @@ function renderDocuments(){
     clear.onclick=()=>{
       draw.clear();
       if(answers.__signatures){
-        delete answers.__signatures[doc.key];
-        if(docIndex===0) delete answers.__signatures._reuse;
+        const shared=answers.__signatures._reuse;
+        if(reuse.checked && shared){
+          for(const d of flow.docs||[]){
+            if(answers.__signatures[d.key]===shared) delete answers.__signatures[d.key];
+          }
+          delete answers.__signatures._reuse;
+        } else delete answers.__signatures[doc.key];
       }
       saveSigs();
     };
   }
-  if(docIndex===0){
-    reuse.addEventListener("change", ()=>{
-      answers.__signatures=answers.__signatures||{};
-      if(reuse.checked){
-        delete answers.__signatures._reuseOff;
-        if(String(answers.__signatures[doc.key]||"").startsWith("data:image/png")) answers.__signatures._reuse=answers.__signatures[doc.key];
-      } else {
-        answers.__signatures._reuseOff=true;
-        delete answers.__signatures._reuse;
+  reuse.addEventListener("change", ()=>{
+    answers.__signatures=answers.__signatures||{};
+    if(reuse.checked){
+      delete answers.__signatures._reuseOff;
+      const url=String(answers.__signatures[doc.key]||remembered||"");
+      if(url.startsWith("data:image/png;base64,")){
+        const applied=applyReusedSignature(answers.__signatures, flow.docs, url);
+        if(applied.ok) answers.__signatures=applied.map;
       }
-      saveSigs();
-    });
-  }
+    } else {
+      answers.__signatures._reuseOff=true;
+      delete answers.__signatures._reuse;
+      const agreed=answers.__agreements||{};
+      for(const d of flow.docs||[]){
+        if(d.key===doc.key) continue;
+        if(agreed[d.key]&&agreed[d.key].accepted===true) continue;
+        delete answers.__signatures[d.key];
+      }
+    }
+    saveSigs();
+    go("documents", docIndex, { replace:true });
+  });
   if(gpad){
     wirePad(gpad, (url)=>{
       const rec=recordSignature(answers.__signatures, "guardian", url);
@@ -777,10 +812,11 @@ function acceptDoc(doc, agree, pad, gpad, reuse, opts){
     return false;
   }
   answers.__signatures=answers.__signatures||{};
-  const reuseOn=docIndex===0 ? !!(reuse&&reuse.checked) : answers.__signatures._reuseOff!==true;
-  if(reuseOn && String(answers.__signatures._reuse||"").startsWith("data:image/png;base64,")){
-    const rec=recordSignature(answers.__signatures, doc.key, answers.__signatures._reuse);
-    if(rec.ok) answers.__signatures=rec.map;
+  const reuseOn=reuse ? !!reuse.checked : answers.__signatures._reuseOff!==true;
+  const sharedUrl=answers.__signatures[doc.key]||answers.__signatures._reuse||"";
+  if(reuseOn && String(sharedUrl).startsWith("data:image/png;base64,")){
+    const applied=applyReusedSignature(answers.__signatures, flow.docs, sharedUrl);
+    if(applied.ok) answers.__signatures=applied.map;
   }
   if(!String(answers.__signatures[doc.key]||"").startsWith("data:image/png;base64,")){
     $("err").textContent=L==="es"?"Firma el documento.":"Sign this document.";

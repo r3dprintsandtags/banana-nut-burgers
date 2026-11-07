@@ -4,13 +4,13 @@ import { packetClientScript } from "../_lib/forms/packet-client.js";
 import {
   ageYears, fieldVisible, isAckSection, legalBundle, buildFlow, stepLabel, stepProblems,
   earlierBlock, missingItems, resumeTarget, firstOpenDocument, hashFor, parseHash, documentCanAgree,
-  recordSignature, submitFailureView,
+  recordSignature, applyReusedSignature, submitFailureView,
 } from "../_lib/forms/wizard.js";
 
 const wizardSource = [
   ageYears, fieldVisible, isAckSection, legalBundle, buildFlow, stepLabel, stepProblems,
   earlierBlock, missingItems, resumeTarget, firstOpenDocument, hashFor, parseHash, documentCanAgree,
-  recordSignature, submitFailureView,
+  recordSignature, applyReusedSignature, submitFailureView,
 ].map((fn) => fn.toString()).join("\n");
 
 export async function onRequestGet({ params }) {

@@ -25,6 +25,45 @@ export function ageFromDob(dobIso, asOf = new Date()) {
   return age;
 }
 
+/** Keep a saved answer, but do not let a blank draft wipe a prefilled value. */
+export function mergeFilled(base = {}, overlay = {}) {
+  const out = { ...(base || {}) };
+  for (const [key, value] of Object.entries(overlay || {})) {
+    if (value && typeof value === "object") {
+      out[key] = value;
+      continue;
+    }
+    const blank = value === undefined || value === null || String(value).trim() === "";
+    const kept = out[key] !== undefined && out[key] !== null && String(out[key]).trim() !== "";
+    if (blank && kept) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+export function cleanDob(value) {
+  const match = String(value || "").trim().match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : "";
+}
+
+function firstFilled(...values) {
+  for (const value of values) {
+    const text = String(value ?? "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+/** Identity fields for one person. Minors inherit a blank phone or email from the guardian. */
+export function pickContact({ isMinor = false, participant = {}, customer = {}, registration = {}, guardian = {} } = {}) {
+  const minor = !!isMinor;
+  return {
+    dob: cleanDob(firstFilled(participant.dob, minor ? "" : registration.dob)),
+    email: firstFilled(participant.email, customer.email, minor ? guardian.email : "", registration.email),
+    phone: firstFilled(participant.phone, customer.phone, minor ? guardian.phone : "", registration.phone),
+  };
+}
+
 export function computeFullName(answers) {
   const f = (answers.first_name || "").trim();
   const l = (answers.last_name || "").trim();

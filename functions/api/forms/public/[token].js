@@ -1,7 +1,7 @@
 import { json, sha256, str } from "../../../_shared.js";
 import { formAudit, loadPacketTemplates, submitFormRequest } from "../../../_lib/forms/submit.js";
 import { fillPdf, officialBytes, officialFont, stampMapFor } from "../../../_lib/forms/pdf.js";
-import { resolveShared } from "../../../_lib/forms/shared.js";
+import { resolveShared, mergeFilled } from "../../../_lib/forms/shared.js";
 import { getShopSetting } from "../../../_lib/forms/regnum.js";
 import { over45Prefill } from "../../../_lib/forms/physician.js";
 import { ageFromDob } from "../../../_lib/forms/shared.js";
@@ -80,7 +80,7 @@ export async function onRequestGet({ env, params, request }) {
   try { prefill = JSON.parse(row.prefill_json || "{}"); } catch { prefill = {}; }
   let draft = {};
   try { draft = JSON.parse(row.draft_json || "{}"); } catch { draft = {}; }
-  let answers = resolveShared({ answers: { ...prefill, ...draft }, customer: customer || {}, shop });
+  let answers = resolveShared({ answers: mergeFilled(prefill, draft), customer: customer || {}, shop });
   answers = over45Prefill(answers).answers;
 
   const age = ageFromDob(answers.dob);

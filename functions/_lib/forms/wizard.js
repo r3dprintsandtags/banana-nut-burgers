@@ -285,6 +285,24 @@ export function recordSignature(map, key, dataUrl) {
   return { ok: true, map: next };
 }
 
+/** Copy one signature onto every document. The diver signs once when the box is checked. */
+export function applyReusedSignature(map, docs, dataUrl) {
+  const probe = recordSignature(map, "__probe", dataUrl);
+  if (!probe.ok) return probe;
+  let next = { ...(map || {}) };
+  const url = String(dataUrl || "");
+  const keep = new Set(["youth_addendum", "guardian"]);
+  for (const doc of docs || []) {
+    if (!doc || !doc.key || keep.has(doc.key)) continue;
+    const saved = recordSignature(next, doc.key, url);
+    if (saved.ok) next = saved.map;
+  }
+  next._reuse = url;
+  delete next._reuseOff;
+  delete next.__probe;
+  return { ok: true, map: next };
+}
+
 /** Ack-only checkboxes are accepted with the document. Guardian pad counts as the guardian signature. Does not touch medical answers. */
 export function satisfyHiddenGates(templates, answers) {
   const next = { ...(answers || {}) };

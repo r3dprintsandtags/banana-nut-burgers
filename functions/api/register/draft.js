@@ -30,6 +30,11 @@ export async function onRequestPost({ request, env }) {
     await env.DB.prepare("UPDATE registrations SET data=?, activity=?, planned_date=?, participants=?, booking_ref=?, updated_at=? WHERE id=?")
       .bind(JSON.stringify(data).slice(0, 8000), str(data.activity, 60), str(data.plannedDate, 10),
         Math.min(20, Math.max(1, parseInt(data.participants, 10) || 1)), str(data.bookingRef, 40), now, reg.id).run();
+    const email = str(data.email, 120).toLowerCase();
+    if (reg.customer_id && email) {
+      await env.DB.prepare("UPDATE customers SET email=?, updated_at=? WHERE id=? AND (email IS NULL OR email='')")
+        .bind(email, now, reg.customer_id).run();
+    }
     return json({ ok: true, ref: reg.ref, updatedAt: new Date(now).toISOString() });
   }
 
@@ -94,5 +99,5 @@ export async function onRequestGet({ request, env }) {
   let data = {};
   try { data = JSON.parse(reg.data || "{}"); } catch (e) {}
   const customer = await env.DB.prepare("SELECT first_name,last_name,preferred_name,phone,email FROM customers WHERE id=?").bind(reg.customer_id).first();
-  return json({ ok: true, ref: reg.ref, data: { ...data, firstName: customer?.first_name || data.firstName || "", lastName: customer?.last_name || data.lastName || "", preferredName: customer?.preferred_name || "", phone: customer?.phone || "", email: customer?.email || "" }, updatedAt: new Date(reg.updated_at).toISOString() });
+  return json({ ok: true, ref: reg.ref, data: { ...data, firstName: customer?.first_name || data.firstName || "", lastName: customer?.last_name || data.lastName || "", preferredName: data.preferredName || customer?.preferred_name || "", phone: data.phone || customer?.phone || "", email: data.email || customer?.email || "" }, updatedAt: new Date(reg.updated_at).toISOString() });
 }
