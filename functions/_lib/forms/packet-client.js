@@ -139,7 +139,7 @@ function watchEmbedHeight(){
   const send=()=>{
     const wrap=document.querySelector(".wrap");
     if(!wrap) return;
-    const h=Math.ceil(wrap.getBoundingClientRect().height+48);
+    const h=Math.ceil(wrap.scrollHeight+32);
     if(h<80) return;
     try{ window.parent.postMessage({type:"bnb_embed_height", h}, location.origin); }catch(e){}
   };
@@ -971,9 +971,12 @@ async function paintPdf(host, bytes){
   const pdfjs=await loadPdfJs();
   const pdf=await pdfjs.getDocument({ data: bytes }).promise;
   host.innerHTML="";
+  const cssWidth=Math.max(host.clientWidth||(host.parentElement&&host.parentElement.clientWidth)||900, 360);
   for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
-    const viewport=page.getViewport({ scale: 1.35 });
+    const base=page.getViewport({ scale: 1 });
+    const scale=Math.min(2.5, Math.max(1.7, (cssWidth * Math.min(window.devicePixelRatio||1, 2)) / base.width));
+    const viewport=page.getViewport({ scale });
     const canvas=document.createElement("canvas");
     canvas.className="pdfpage";
     canvas.width=viewport.width;

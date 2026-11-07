@@ -42,7 +42,8 @@ h2{font-size:22px;margin:0 0 8px;color:var(--text)}
 h3{font-size:20px;line-height:1.3;margin:18px 0 8px;color:var(--text)}
 .wrap{max-width:720px;margin:0 auto}
 html.embed,html.embed body{min-height:0;height:auto;overflow:hidden}
-html.embed body{padding:12px 12px 20px;background:var(--bg)}
+html.embed body{padding:8px 8px 12px;background:var(--bg)}
+html.embed .wrap{max-width:none;width:100%}
 html.embed .brand,html.embed #langBtn{display:none}
 html.embed .bar{margin:0 0 4px;min-height:0}
 html.embed h1{font-size:26px;margin:0 0 12px}
@@ -70,7 +71,7 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 .boxhead{margin-top:16px;font-weight:800;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-weight:700;color:var(--text)}
 .chk input{width:22px;height:22px;min-height:22px;flex:none}
-.doc,.paper{max-height:min(78vh,920px);overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;cursor:zoom-in;font-size:16px;line-height:1.5}
+.doc,.paper{max-height:none;overflow:visible;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;font-size:17px;line-height:1.5}
 .doc canvas,.paper canvas{width:100%!important;height:auto!important;border:0!important;border-radius:0!important;touch-action:pan-y!important;pointer-events:none}
 .paper .filled{color:#08315c!important;font-weight:800;border-bottom:1px solid #08315c}
 .paper .cap,.paper .blank{color:#3d5160!important}
@@ -88,9 +89,9 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 .stepbtn .nm{font-weight:800;font-size:18px;line-height:1.25;flex:1;min-width:0}
 .stepbtn .ss{color:var(--muted);font-size:13px;font-weight:800;margin-left:auto;flex:none;text-transform:uppercase;letter-spacing:.4px}
 .stepitem.open{border:2px solid var(--primary);background:var(--surface);box-shadow:0 10px 28px rgba(7,90,120,.14)}
-.stepitem.open .stepbtn{min-height:76px;padding:18px 18px 10px;align-items:flex-start}
-.stepitem.open .nm{font-size:26px;line-height:1.15}
-.stepitem.open .ss{font-size:14px;padding-top:6px}
+.stepitem.open .stepbtn{min-height:76px;padding:18px 18px 10px;align-items:flex-start;flex-wrap:wrap}
+.stepitem.open .nm{flex:1 1 100%;font-size:26px;line-height:1.15}
+.stepitem.open .ss{margin-left:0;font-size:14px;padding-top:4px}
 .steppanel{padding:4px 18px 20px}
 .steppanel .card{background:transparent;border:0;box-shadow:none;padding:0;margin:0}
 .steppanel h2#stepHeading{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -116,7 +117,8 @@ button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);
 @media(min-width:900px){
   body{font-size:18px}
   h1{font-size:36px}
-  .wrap{max-width:1040px}
+  .wrap{max-width:min(1480px, calc(100vw - 48px))}
+  html.embed .wrap{max-width:none}
   html.embed h1{font-size:32px}
   .stepitem .stepbtn{min-height:68px;padding:16px 20px}
   .stepbtn .nm{font-size:20px}
@@ -128,9 +130,9 @@ button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);
   .steppanel .mut,.steppanel .note,.steppanel .docpos{font-size:18px}
   .steppanel input,.steppanel select,.steppanel textarea{font-size:18px;min-height:60px}
   .steppanel .yesno label{min-height:68px;font-size:20px}
-  .doc,.paper{max-height:min(82vh,1100px);font-size:17px}
+  .doc,.paper{font-size:18px;padding:16px}
   #pad,#gpad,canvas.sigpad{height:240px}
-  .actions.sticky{max-width:1040px}
+  .actions.sticky{max-width:min(1480px, calc(100vw - 48px))}
 }
 </style>
 </head>
