@@ -45,11 +45,20 @@ h2{font-size:18px;margin:0 0 8px;color:var(--text)}
 .card p,.card li,.card label,.card h2,.card h3,.card span{color:var(--text)}
 .mut{color:var(--muted);font-size:14px}
 .card .mut,.docpos{color:var(--muted)}
-label{display:block;font-weight:700;margin-top:12px;font-size:14px}
-input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--paper);color:var(--paper-text);min-height:48px}
+label{display:block;font-weight:700;margin-top:0;font-size:15px;line-height:1.4}
+.field{display:flex;flex-direction:column;gap:8px;margin:0 0 18px}
+.field label{margin:0}
+input,select,textarea{width:100%;font:inherit;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--paper);color:var(--paper-text);min-height:48px}
 .bad,.bad input{outline:3px solid var(--danger)}
-.yesno{display:flex;gap:10px;margin-top:6px}
-.yesno label{margin:0;display:flex;gap:6px;align-items:center;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer}
+.q{margin:0 0 4px;padding:16px 0 18px;border-bottom:1px solid color-mix(in srgb,var(--border) 45%, transparent)}
+.q > label,.q .note{font-size:16px;line-height:1.45}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.yesno label{margin:0;display:flex;gap:10px;align-items:center;padding:14px 16px;min-height:52px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);cursor:pointer;font-size:16px}
+@media(max-width:560px){
+  .yesno{grid-template-columns:1fr}
+  body{padding:12px 12px calc(112px + env(safe-area-inset-bottom,0px))}
+  .card{padding:16px 14px}
+}
 .yesno label.picked,.yesno label:has(input:checked){border-color:var(--primary);background:color-mix(in srgb,var(--primary) 18%,var(--surface));font-weight:800}
 .yesno input{accent-color:var(--primary);width:18px;height:18px;min-height:18px}
 button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14px;padding:12px 16px;background:var(--primary);color:var(--primary-text);font-weight:700;min-height:48px}
@@ -63,7 +72,7 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 .boxhead{margin-top:16px;font-weight:800;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text)}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-weight:700;color:var(--text)}
 .chk input{width:22px;height:22px;min-height:22px;flex:none}
-.doc,.paper{max-height:min(70vh,640px);overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;cursor:zoom-in}
+.doc,.paper{max-height:none;overflow:visible;border:1px solid var(--border);border-radius:12px;padding:16px;margin:14px 0;background:#fff!important;color:#0a2533!important;white-space:pre-wrap;cursor:zoom-in;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 .doc canvas,.paper canvas{width:100%!important;height:auto!important;border:0!important;border-radius:0!important;touch-action:pan-y!important;pointer-events:none}
 .paper .filled{color:#08315c!important;font-weight:800;border-bottom:1px solid #08315c}
 .paper .cap,.paper .blank{color:#3d5160!important}
@@ -72,7 +81,7 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 #docLightbox.open{display:flex}
 #docLightbox .lbbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex:none}
 #docLightbox .lbbar b{color:#f5fbff}
-#docLightbox .lbscroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;background:#fff;border-radius:12px;padding:12px;-webkit-user-select:none;user-select:none}
+#docLightbox .lbscroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;background:#fff;border-radius:12px;padding:12px;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 #docLightbox .lbscroll img,#docLightbox .lbscroll canvas{width:100%;height:auto;display:block;margin:0 0 8px}
 .sigblock{margin-top:12px;padding-top:8px;border-top:1px solid #c5b89a}
 .stepper{display:flex;flex-direction:column;flex-wrap:nowrap;gap:8px;margin:12px 0;overflow:visible}
@@ -83,11 +92,18 @@ button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:14
 .stepbtn.attention{box-shadow:inset 8px 0 0 var(--danger)}
 .stepbtn.locked{background:var(--disabled);color:var(--disabled-text)}
 .stepbtn.complete .ss{color:#0d6b3d}
-.doclist{list-style:none;padding:0;margin:8px 0}
-.doclist button{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--border);margin-top:6px;text-align:left}
-.actions{display:flex;gap:8px;margin-top:16px}
+.doclist{list-style:none;padding:0;margin:16px 0;display:flex;flex-direction:column;gap:12px}
+.doclist button{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--border);margin:0;text-align:left;padding:16px 18px;min-height:56px;line-height:1.35}
+.actions{display:flex;gap:12px;margin-top:20px}
 .actions button{flex:1}
 .actions.sticky{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--border);max-width:640px;margin-left:auto;margin-right:auto}
+html.embed,html.embed body{min-height:0;height:auto}
+html.embed body{padding:4px 4px 12px;background:transparent}
+html.embed .wrap > .bar,html.embed h1#title{display:none}
+html.embed .actions.sticky{position:static;max-width:none;margin:20px 0 0;padding:0;background:transparent;border:0;backdrop-filter:none}
+html.embed .card{margin-top:8px}
+.doc-tools{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.doc-tools button{width:100%}
 button:disabled{opacity:1;background:var(--disabled);color:var(--disabled-text);cursor:not-allowed}
 #retry,#missing{background:var(--surface);color:var(--text);border:1px solid var(--danger);border-radius:12px;padding:12px;margin-top:12px}
 #missing .miss{display:block;width:100%;margin-top:8px;background:var(--surface);color:var(--text);border:1px solid var(--border);text-align:left}

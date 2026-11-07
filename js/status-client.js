@@ -38,11 +38,26 @@ function primaryAction(status, ctx) {
   const here = next && next.step === c.step && (next.personId == null || c.personId == null || next.personId === c.personId);
   const person = (status.people || []).find((p) => p.id === (next && next.personId)) || null;
   if (here && next.step === "health" && person) {
-    const left = (person.tasks.find((t2) => t2.id === "health") || {}).left || 0;
+    const taskLeft = (person.tasks.find((t2) => t2.id === "health") || {}).left;
+    const left = c.healthLeft != null ? c.healthLeft : (taskLeft || 0);
+    const who = person.self ? (es ? "t\u00fa" : "you") : person.firstName;
     const name5 = person.self ? es ? "tus" : "your" : es ? "de " + person.firstName : person.firstName + "'s";
+    const packetStep = c.packetStep || "";
+    const questionsDone = c.healthLeft === 0 && packetStep && packetStep !== "medical" && packetStep !== "about" && packetStep !== "emergency" && packetStep !== "guardian";
+    if (questionsDone) {
+      const reviewing = packetStep === "review" || packetStep === "finish";
+      return {
+        kind: "focus",
+        label: reviewing
+          ? (es ? "Revisar (" + who + ")" : "Review (" + who + ")")
+          : (es ? "Siguiente documento (" + who + ")" : "Next document (" + who + ")"),
+        target: next,
+        ownerLabel: name5
+      };
+    }
     return {
       kind: "focus",
-      label: es ? "Responde " + left + " pregunta" + (left === 1 ? "" : "s") + " m\xE1s (" + (person.self ? "t\xFA" : person.firstName) + ")" : "Answer " + left + " more question" + (left === 1 ? "" : "s") + " (" + (person.self ? "you" : person.firstName) + ")",
+      label: es ? "Responde " + left + " pregunta" + (left === 1 ? "" : "s") + " m\xE1s (" + who + ")" : "Answer " + left + " more question" + (left === 1 ? "" : "s") + " (" + who + ")",
       target: next,
       ownerLabel: name5
     };

@@ -38,6 +38,18 @@ describe("show_if / validate", () => {
     const errs = validateAnswers(schema, { dob: "2015-01-01", __consent_accepted: true }, "en");
     assert.ok(errs.some((e) => e.key === "guardian_name"));
   });
+  it("does not require a mobile phone for a minor", () => {
+    const schema = { sections: [{ fields: [
+      { key: "dob", type: "dob", required: true },
+      { key: "cell_phone", type: "phone", required: true, label: "Mobile phone" },
+    ] }] };
+    const minor = validateAnswers(schema, { dob: "2015-01-01", cell_phone: "none", __consent_accepted: true, guardian_name: "G", guardian_signature: "signed" }, "en");
+    assert.equal(minor.some((e) => e.key === "cell_phone"), false);
+    const blank = validateAnswers(schema, { dob: "2015-01-01", __consent_accepted: true, guardian_name: "G", guardian_signature: "signed" }, "en");
+    assert.equal(blank.some((e) => e.key === "cell_phone"), false);
+    const adult = validateAnswers(schema, { dob: "1990-01-01", __consent_accepted: true }, "en");
+    assert.ok(adult.some((e) => e.key === "cell_phone"));
+  });
 });
 
 describe("registration number format", () => {

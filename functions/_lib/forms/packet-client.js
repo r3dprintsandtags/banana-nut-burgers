@@ -4,6 +4,9 @@ export function packetClientScript({ token, renderSource, wizardSource }) {
 const TOKEN=${JSON.stringify(token)};
 const renderDocumentHtml = ${renderSource};
 ${wizardSource}
+try{
+  if(new URLSearchParams(location.search).has("embed") || (window.parent && window.parent!==window)) document.documentElement.classList.add("embed");
+}catch(e){}
 let L=(navigator.language||"en").startsWith("es")?"es":"en";
 try{const saved=localStorage.getItem("bnb_lang");if(saved==="en"||saved==="es")L=saved}catch(e){}
 try{ localStorage.removeItem("bnb_theme"); }catch(e){}
@@ -21,6 +24,20 @@ function loadSigs(){
   }catch(e){}
 }
 function saveSigs(){ try{ sessionStorage.setItem(sigKey(), JSON.stringify(answers.__signatures||{})); }catch(e){} }
+function postParent(msg){
+  try{ if(window.parent && window.parent!==window) window.parent.postMessage(msg, location.origin); }catch(e){}
+}
+let reportedH=0;
+function reportEmbed(){
+  const wrap=document.querySelector(".wrap");
+  const h=Math.ceil((wrap ? wrap.offsetHeight : 0) + 12);
+  const left=flow ? stepProblems("medical", flow, answers).length : 0;
+  if(h > 40 && Math.abs(h - reportedH) >= 4){
+    reportedH=h;
+    postParent({ type:"bnb_embed_height", h });
+  }
+  postParent({ type:"bnb_embed_progress", step: stepId, healthLeft: left, docIndex });
+}
 function scheduleSave(){
   clearTimeout(scheduleSave._t);
   const seen=answers.__ui&&answers.__ui.medicalSeen===true;
@@ -276,11 +293,14 @@ function renderAbout(){
   note.className="mut";
   note.textContent=L==="es"?"Estos datos se escriben en cada formulario.":"These details are written onto every form.";
   card.appendChild(note);
+  const phoneLabel=flow&&flow.minor
+    ? (L==="es"?"Celular (opcional para menores)":"Mobile phone (optional for minors)")
+    : (L==="es"?"Celular":"Mobile phone");
   const fields=[
     ["first_name", L==="es"?"Nombre *":"First name *"],
     ["last_name", L==="es"?"Apellido *":"Last name *"],
     ["dob", L==="es"?"Fecha de nacimiento *":"Date of birth *"],
-    ["cell_phone", L==="es"?"Celular":"Mobile phone"],
+    ["cell_phone", phoneLabel],
     ["email", "Email"],
     ["address", L==="es"?"Dirección":"Street address"],
     ["city", L==="es"?"Ciudad *":"City *"],
@@ -288,6 +308,8 @@ function renderAbout(){
     ["zip", "ZIP *"],
   ];
   for(const [key, label] of fields){
+    const wrap=document.createElement("div");
+    wrap.className="field";
     const labEl=document.createElement("label");
     labEl.htmlFor="f_"+key; labEl.textContent=label;
     const input=document.createElement("input");
@@ -295,8 +317,9 @@ function renderAbout(){
     input.value=answers[key]||"";
     if(key==="dob"){ input.type="date"; input.max=new Date().toISOString().slice(0,10); }
     if(key==="email") input.type="email";
-    if(key==="cell_phone") input.type="tel";
-    card.append(labEl, input);
+    if(key==="cell_phone"){ input.type="tel"; input.autocomplete="tel"; if(flow&&flow.minor) input.placeholder=L==="es"?"No es obligatorio":"Not required"; }
+    wrap.append(labEl, input);
+    card.appendChild(wrap);
   }
   card.appendChild(actions(()=>go("about"), ()=>{
     for(const [key] of fields) answers[key]=(document.getElementById("f_"+key).value||"").trim();
@@ -318,13 +341,16 @@ function renderEmergency(){
     ["emergency_contact_phone", L==="es"?"Teléfono *":"Phone *"],
   ];
   for(const [key, label] of fields){
+    const wrap=document.createElement("div");
+    wrap.className="field";
     const labEl=document.createElement("label");
     labEl.htmlFor="f_"+key; labEl.textContent=label;
     const input=document.createElement("input");
     input.id="f_"+key; input.value=answers[key]||"";
     if(key.endsWith("email")) input.type="email";
     if(key.endsWith("phone")) input.type="tel";
-    card.append(labEl, input);
+    wrap.append(labEl, input);
+    card.appendChild(wrap);
   }
   card.appendChild(actions(()=>{ const i=flow.steps.findIndex(s=>s.id==="emergency"); go(flow.steps[Math.max(i-1,0)].id); }, ()=>{
     for(const [key] of fields) answers[key]=(document.getElementById("f_"+key).value||"").trim();
@@ -341,9 +367,11 @@ function renderGuardian(){
   p.textContent=L==="es"?"El participante es menor de 18. El tutor firma el consentimiento de la tienda. El anexo juvenil oficial de SSI se archiva antes del buceo.":"The participant is under 18. The guardian signs the shop consent. The official SSI Youth Addendum is filed before the dive.";
   card.appendChild(p);
   for(const [key, label] of [["guardian_name", L==="es"?"Nombre del tutor *":"Guardian name *"],["guardian_relationship", L==="es"?"Parentesco":"Relationship"]]){
+    const wrap=document.createElement("div"); wrap.className="field";
     const labEl=document.createElement("label"); labEl.textContent=label; labEl.htmlFor="f_"+key;
     const input=document.createElement("input"); input.id="f_"+key; input.value=answers[key]||"";
-    card.append(labEl, input);
+    wrap.append(labEl, input);
+    card.appendChild(wrap);
   }
   card.appendChild(actions(()=>go("emergency"), ()=>{
     answers.guardian_name=document.getElementById("f_guardian_name").value.trim();
@@ -389,6 +417,7 @@ function renderMedical(){
       if(!fieldVisible(f.show_if, answers)) continue;
       any=true;
       const wrap=document.createElement("div");
+      wrap.className="q";
       wrap.id="wrap_"+f.key;
       wrap.innerHTML=fieldHtml(f);
       card.appendChild(wrap);
@@ -532,15 +561,22 @@ function renderDocuments(){
     paper.appendChild(wait);
   }
   card.appendChild(paper);
+  const tools=document.createElement("div");
+  tools.className="doc-tools";
   const enlarge=document.createElement("button");
   enlarge.type="button"; enlarge.className="doc-enlarge"; enlarge.id="docEnlarge";
   enlarge.textContent=L==="es"?"Ampliar documento (recomendado en el teléfono)":"Enlarge document (recommended on phone)";
   enlarge.onclick=(ev)=>{ ev.preventDefault(); openDocLightbox(paper, { onRead:()=>enableAgree(agree, hint, why) }); };
+  const shot=document.createElement("button");
+  shot.type="button"; shot.className="ghost"; shot.id="docShot";
+  shot.textContent=L==="es"?"Guardar captura":"Save screenshot";
+  shot.onclick=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); saveDocScreenshot(paper); };
+  tools.append(enlarge, shot);
   paper.addEventListener("click",(ev)=>{
     if(ev.target.closest("button,a,input,label")) return;
     openDocLightbox(paper, { onRead:()=>enableAgree(agree, hint, why) });
   });
-  card.appendChild(enlarge);
+  card.appendChild(tools);
   const stored=answers.__signatures||{};
   const reuseOff=stored._reuseOff===true;
   const hasReuse=String(stored._reuse||"").startsWith("data:image/png");
@@ -552,7 +588,7 @@ function renderDocuments(){
   reuse.type="checkbox"; reuse.id="reuse";
   reuse.checked=!reuseOff;
   const reuseSpan=document.createElement("span");
-  reuseSpan.textContent=L==="es"?"Usar esta firma":"Use this signature";
+  reuseSpan.textContent=L==="es"?"Adoptar mi firma en todos los formularios":"Adopt my signature for all forms";
   reuseLab.append(reuse, reuseSpan);
   const sigLab=document.createElement("label");
   sigLab.textContent=L==="es"?"Firma":"Signature";
@@ -560,13 +596,12 @@ function renderDocuments(){
   pad.id="pad"; pad.className="sigpad"; pad.width=640; pad.height=160;
   const clear=document.createElement("button");
   clear.type="button"; clear.className="ghost"; clear.textContent=L==="es"?"Borrar firma":"Clear signature";
-  card.append(hint, agreeLab, why, markRead);
-  if(docIndex===0) card.appendChild(reuseLab);
+  card.append(hint, agreeLab, why, markRead, reuseLab);
   if(showPad) card.append(sigLab, pad, clear);
   else {
     const note=document.createElement("p");
     note.className="mut";
-    note.textContent=L==="es"?"Se usa la firma del primer documento.":"Using the signature from the first document.";
+    note.textContent=L==="es"?"Esta firma se usa en todos los formularios.":"This signature is used on every form.";
     card.appendChild(note);
   }
   let gpad=null;
@@ -644,8 +679,8 @@ function renderDocuments(){
       const rec=recordSignature(answers.__signatures, doc.key, url);
       if(!rec.ok){ $("err").textContent=rec.error; return; }
       answers.__signatures=rec.map;
-      if(reuse.checked){ answers.__signatures._reuse=url; delete answers.__signatures._reuseOff; }
-      saveSigs();
+      if(reuse.checked) adoptSignature(url);
+      else saveSigs();
     });
     if(saved){
       const img=new Image();
@@ -655,25 +690,27 @@ function renderDocuments(){
     clear.onclick=()=>{
       draw.clear();
       if(answers.__signatures){
-        delete answers.__signatures[doc.key];
-        if(docIndex===0) delete answers.__signatures._reuse;
+        if(reuse.checked){
+          for(const d of (flow.docs||[])) delete answers.__signatures[d.key];
+          delete answers.__signatures._reuse;
+        } else delete answers.__signatures[doc.key];
       }
       saveSigs();
     };
   }
-  if(docIndex===0){
-    reuse.addEventListener("change", ()=>{
-      answers.__signatures=answers.__signatures||{};
-      if(reuse.checked){
-        delete answers.__signatures._reuseOff;
-        if(String(answers.__signatures[doc.key]||"").startsWith("data:image/png")) answers.__signatures._reuse=answers.__signatures[doc.key];
-      } else {
-        answers.__signatures._reuseOff=true;
-        delete answers.__signatures._reuse;
-      }
-      saveSigs();
-    });
-  }
+  reuse.addEventListener("change", ()=>{
+    answers.__signatures=answers.__signatures||{};
+    if(reuse.checked){
+      const url=signatureUrl(answers.__signatures[doc.key]) || signatureUrl(answers.__signatures._reuse);
+      if(url) adoptSignature(url);
+      else delete answers.__signatures._reuseOff;
+    } else {
+      answers.__signatures._reuseOff=true;
+      delete answers.__signatures._reuse;
+    }
+    saveSigs();
+    go("documents", docIndex, { replace:true });
+  });
   if(gpad){
     wirePad(gpad, (url)=>{
       const rec=recordSignature(answers.__signatures, "guardian", url);
@@ -720,8 +757,7 @@ function acceptDoc(doc, agree, pad, gpad, reuse, opts){
   answers.__signatures=answers.__signatures||{};
   const reuseOn=docIndex===0 ? !!(reuse&&reuse.checked) : answers.__signatures._reuseOff!==true;
   if(reuseOn && String(answers.__signatures._reuse||"").startsWith("data:image/png;base64,")){
-    const rec=recordSignature(answers.__signatures, doc.key, answers.__signatures._reuse);
-    if(rec.ok) answers.__signatures=rec.map;
+    adoptSignature(answers.__signatures._reuse);
   }
   if(!String(answers.__signatures[doc.key]||"").startsWith("data:image/png;base64,")){
     $("err").textContent=L==="es"?"Firma el documento.":"Sign this document.";
@@ -850,7 +886,7 @@ async function submitPacket(){
 }
 function stepForError(key){
   if(!key) return "review";
-  if(["first_name","last_name","dob","city","state","zip"].includes(key)) return "about";
+  if(["first_name","last_name","dob","city","state","zip","cell_phone","phone"].includes(key)) return "about";
   if(String(key).startsWith("emergency_")) return "emergency";
   if(String(key).startsWith("guardian")) return flow.minor?"guardian":"about";
   if(String(key).startsWith("agree_")||String(key).startsWith("sign_")||String(key).startsWith("doc_")) return "documents";
@@ -896,6 +932,78 @@ async function paintPdf(host, bytes){
   end.setAttribute("data-doc-end","1");
   end.style.height="32px";
   host.appendChild(end);
+  reportEmbed();
+}
+function signatureUrl(value){
+  const url=String(value||"");
+  return url.startsWith("data:image/png;base64,") ? url : "";
+}
+function adoptSignature(url){
+  const png=signatureUrl(url);
+  if(!png) return;
+  answers.__signatures=answers.__signatures||{};
+  delete answers.__signatures._reuseOff;
+  answers.__signatures._reuse=png;
+  for(const d of (flow&&flow.docs)||[]){
+    const rec=recordSignature(answers.__signatures, d.key, png);
+    if(rec.ok) answers.__signatures=rec.map;
+  }
+  answers.__signatures._reuse=png;
+  saveSigs();
+}
+function downloadDataUrl(url, name){
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=name||"form-screenshot.png";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+function saveDocScreenshot(paper){
+  if(!paper) return;
+  const pages=[...paper.querySelectorAll("canvas.pdfpage")].filter((c)=>c.width>0 && c.height>0);
+  if(pages.length){
+    const width=Math.max(...pages.map((c)=>c.width));
+    const gap=24;
+    const height=pages.reduce((sum,c)=>sum+c.height, gap*(pages.length+1));
+    if(height>0 && height<14000){
+      const out=document.createElement("canvas");
+      out.width=width; out.height=height;
+      const ctx=out.getContext("2d");
+      ctx.fillStyle="#ffffff";
+      ctx.fillRect(0,0,width,height);
+      let y=gap;
+      for(const c of pages){ ctx.drawImage(c, 0, y); y+=c.height+gap; }
+      downloadDataUrl(out.toDataURL("image/png"), "form-screenshot.png");
+      return;
+    }
+    pages.forEach((c,i)=>downloadDataUrl(c.toDataURL("image/png"), "form-page-"+(i+1)+".png"));
+    return;
+  }
+  const text=(paper.innerText||"").trim();
+  const canvas=document.createElement("canvas");
+  const ctx=canvas.getContext("2d");
+  ctx.font="18px system-ui,sans-serif";
+  const lines=[];
+  for(const para of (text||(L==="es"?"Documento":"Document")).split("\\n")){
+    let line="";
+    const words=para.split(/\\s+/).filter(Boolean);
+    if(!words.length){ lines.push(""); continue; }
+    for(const word of words){
+      const trial=line?line+" "+word:word;
+      if(ctx.measureText(trial).width>760){ if(line) lines.push(line); line=word; }
+      else line=trial;
+    }
+    if(line) lines.push(line);
+  }
+  canvas.width=800;
+  canvas.height=Math.max(240, lines.length*28+48);
+  ctx.fillStyle="#ffffff";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#0a2533";
+  ctx.font="18px system-ui,sans-serif";
+  lines.forEach((ln,i)=>ctx.fillText(ln,20,40+i*28));
+  downloadDataUrl(canvas.toDataURL("image/png"), "form-screenshot.png");
 }
 function closeDocLightbox(){
   const box=document.getElementById("docLightbox");
@@ -1126,14 +1234,17 @@ function render(){
   }
   if(card) app.appendChild(card);
   focusPending();
-  if(!flow) return;
-  const probs=stepProblems(stepId, flow, answers);
-  if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
-    const why=document.createElement("p");
-    why.className="mut";
-    why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
-    app.appendChild(why);
+  if(flow){
+    const probs=stepProblems(stepId, flow, answers);
+    if(probs.length && stepId!=="review" && stepId!=="documents" && stepId!=="finish"){
+      const why=document.createElement("p");
+      why.className="mut";
+      why.textContent=(L==="es"?"Para continuar: ":"To continue: ")+probs.map(p=>p.label).slice(0,3).join(", ");
+      app.appendChild(why);
+    }
   }
+  reportEmbed();
+  setTimeout(reportEmbed, 80);
 }
 window.addEventListener("popstate", ()=>{
   const parsed=parseHash(location.hash, flow)||{ stepId:"about", docIndex:0 };
@@ -1154,8 +1265,28 @@ function setLang(next, opts){
 }
 $("langBtn").onclick=()=>setLang(L==="en"?"es":"en");
 window.addEventListener("message",(ev)=>{
-  if(!ev.data||ev.data.type!=="bnb_set_lang") return;
-  setLang(ev.data.lang);
+  if(!ev.data) return;
+  if(ev.data.type==="bnb_set_lang"){ setLang(ev.data.lang); return; }
+  if(ev.data.type!=="bnb_focus" || !flow) return;
+  const want=ev.data.step||"";
+  const left=stepProblems("medical", flow, answers);
+  if(left.length){
+    pendingFocus=left[0].id;
+    if(stepId!=="medical") go("medical");
+    else render();
+    return;
+  }
+  if(stepId==="review" && (want==="review" || want==="finish" || !want)){
+    const b=$("nextBtn");
+    if(b && !b.disabled) b.click();
+    return;
+  }
+  if(want && want===stepId){
+    const b=$("nextBtn");
+    if(b && !b.disabled) b.click();
+    return;
+  }
+  if(want && want!==stepId && flow.steps.some((s)=>s.id===want)) go(want, want==="documents"?docIndex:0);
 });
 window.addEventListener("storage",(ev)=>{
   if(ev.key!=="bnb_lang") return;
@@ -1191,6 +1322,10 @@ if(/[?&]kiosk=1(?:&|$)/.test(location.search)){
   ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev, bump, {passive:true}));
   bump();
 }
+try{
+  const ro=new ResizeObserver(()=>reportEmbed());
+  ro.observe(document.body);
+}catch(e){}
 (async()=>{
   applyTheme();
   syncLangBtn();

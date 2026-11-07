@@ -47,6 +47,10 @@ export function validateAnswers(schema, answers, lang = "en") {
     const v = answers[f.key];
     const empty = v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)
       || (f.type === "checkbox" && v !== true && v !== "yes" && v !== 1);
+    const minor = ageFromDob(answers.dob);
+    const minorPhone = minor != null && minor < 18 && (f.key === "cell_phone" || f.key === "phone");
+    // A minor does not need their own mobile number. A parent number already on the registration is enough.
+    if (minorPhone) continue;
     if (f.required && empty) errors.push({ key: f.key, message: `${labelOf(f, lang)} is required` });
     if (empty) continue;
     if (f.type === "email" && !/.+@.+\..+/.test(String(v))) errors.push({ key: f.key, message: "Invalid email" });
