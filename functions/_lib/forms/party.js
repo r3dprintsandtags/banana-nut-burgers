@@ -429,7 +429,7 @@ export async function openParticipantPacket(env, reg, participant, requestUrl) {
     firstName: participant.first_name,
     lastName: participant.last_name,
     dob: participant.dob,
-    phone: participant.phone || customer.phone,
+    phone: participant.phone || customer.phone || data.phone || "",
     email: participant.email || customer.email,
     address: sharedAddr.address || data.address,
     city: sharedAddr.city || data.city,

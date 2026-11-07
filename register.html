@@ -83,7 +83,7 @@ button:disabled{background:var(--disabled);color:var(--disabled-text);cursor:not
 .person .checks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .person .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .allset{margin-top:12px;padding:14px;border-radius:12px;border:2px solid var(--ok);color:var(--ok);font-weight:800;background:var(--surface)}
-.embed{width:100%;border:0;display:block;min-height:240px;background:transparent}
+.embed{width:100%;border:0;display:block;min-height:70vh;background:var(--surface);border-radius:12px}
 .doclist{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .docline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft)}
 .docline b{min-width:0;flex:1 1 8rem;overflow-wrap:anywhere}
@@ -476,6 +476,7 @@ let kioskMode = /(?:^|[?&])kiosk=1(?:&|$)/.test(location.search);
 let availCache = {}, availSlotCap = 8;
 let lastConfirm = null;
 let packetLinks = {};
+let embedProgress = null;
 let finishing = false;
 let draft = {};
 try { draft = JSON.parse(localStorage.getItem("bnb_reg_draft") || "{}"); } catch (e) { draft = {}; }
@@ -701,7 +702,12 @@ function defaultPerson(id){
 function currentAction(){
   if (step === "landing") return null;
   if (!status) return { kind: "save", label: (L === "es" ? "Siguiente: " : "Next: ") + t().stMinors };
-  return primaryAction(status, { step, personId, lang: L });
+  const ctx = { step, personId, lang: L };
+  if (embedProgress && embedProgress.personId === personId && (step === "health" || step === "sign")) {
+    ctx.packetStep = embedProgress.step;
+    ctx.healthLeft = embedProgress.healthLeft;
+  }
+  return primaryAction(status, ctx);
 }
 function paintChrome(){
   paintStepper();
@@ -763,7 +769,7 @@ function focusTask(target){
   }
   const frame = document.querySelector("#" + (step === "health" ? "healthBody" : "signBody") + " iframe");
   if (frame && frame.contentWindow) {
-    frame.contentWindow.postMessage({ type: "bnb_focus", docKey: target.docKey || "" }, location.origin);
+    frame.contentWindow.postMessage({ type: "bnb_focus", docKey: target.docKey || "", step: (embedProgress && embedProgress.step) || "" }, location.origin);
     frame.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
@@ -780,6 +786,7 @@ function go(id, pid, opts){
   opts = opts || {};
   if (step === "about" && id !== "about") saveDraft(false);
   step = id;
+  if (personId !== (pid || null)) embedProgress = null;
   personId = pid || null;
   draft.ui = { step, personId }; saveLocal();
   document.querySelectorAll("[data-step]").forEach(s => s.classList.toggle("hide", s.dataset.step !== id));
@@ -1066,7 +1073,11 @@ function paintSwitcher(box, kind){
     const b = document.createElement("button");
     b.type = "button";
     b.setAttribute("aria-pressed", p.id === personId ? "true" : "false");
-    const st = kind === "health" ? p.health : p.documents;
+    let st = kind === "health" ? p.health : p.documents;
+    if (embedProgress && embedProgress.personId === p.id && (!st || st === "not_started")) st = "in_progress";
+    const word = (STATUS_WORDS[L] || STATUS_WORDS.en || {})[st || "not_started"] || st || "Not started";
+    const pending = kind === "health" ? (L === "es" ? "Salud" : "Health") : (L === "es" ? "Documentos" : "Documents");
+    b.title = (p.self ? t().you : p.firstName) + " — " + pending + ": " + word;
     b.innerHTML = `<span>${esc(p.self ? t().you : p.firstName)}</span>${chipHtml(st || "not_started")}`;
     b.onclick = () => go(step, p.id, { replace: false });
     box.appendChild(b);
@@ -1152,6 +1163,7 @@ async function paintPerson(){
     return;
   }
   body.appendChild(embedFrame(info.link, kind, ($(kind + "Line").textContent || name)));
+  if ((kind === "health" ? sp.health : sp.documents) === "not_started") scheduleStatus();
 }
 function frameFor(win){
   return [...document.querySelectorAll("iframe.embed")].find(f => f.contentWindow === win) || null;
@@ -1162,6 +1174,16 @@ window.addEventListener("message", async (ev) => {
   if (!frame) return;
   const d = ev.data;
   if (d.type === "bnb_embed_height" && d.h > 0) frame.style.height = Math.min(Math.max(d.h, 240), 20000) + "px";
+  else if (d.type === "bnb_embed_progress") {
+    const nextProg = { step: d.step || "", healthLeft: Number(d.healthLeft) || 0, docIndex: Number(d.docIndex) || 0, personId };
+    const sameProg = embedProgress && embedProgress.step === nextProg.step && embedProgress.healthLeft === nextProg.healthLeft && embedProgress.personId === nextProg.personId;
+    embedProgress = nextProg;
+    if (!sameProg) {
+      paintChrome();
+      const box = $(step === "sign" ? "signSwitch" : "healthSwitch");
+      if (box && (step === "health" || step === "sign")) paintSwitcher(box, step);
+    }
+  }
   else if (d.type === "bnb_embed_saved") { setSaveState("ok"); scheduleStatus(); }
   else if (d.type === "bnb_embed_scroll") window.scrollTo({ top: window.scrollY + frame.getBoundingClientRect().top + (Number(d.top) || 0) - 120, behavior: "smooth" });
   else if (d.type === "bnb_packet_done") {

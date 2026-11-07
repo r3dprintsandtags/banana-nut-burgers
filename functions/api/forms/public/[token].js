@@ -80,7 +80,12 @@ export async function onRequestGet({ env, params, request }) {
   try { prefill = JSON.parse(row.prefill_json || "{}"); } catch { prefill = {}; }
   let draft = {};
   try { draft = JSON.parse(row.draft_json || "{}"); } catch { draft = {}; }
-  let answers = resolveShared({ answers: { ...prefill, ...draft }, customer: customer || {}, shop });
+  const merged = { ...prefill, ...draft };
+  const mergedAge = ageFromDob(merged.dob || prefill.dob);
+  if (mergedAge != null && mergedAge < 18 && !String(merged.cell_phone || "").trim() && prefill.cell_phone) {
+    merged.cell_phone = prefill.cell_phone;
+  }
+  let answers = resolveShared({ answers: merged, customer: customer || {}, shop });
   answers = over45Prefill(answers).answers;
 
   const age = ageFromDob(answers.dob);
